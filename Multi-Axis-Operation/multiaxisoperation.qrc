@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/multiaxis">
+        <file>Resources/connect-off.png</file>
+        <file>Resources/connect-off@2x.png</file>
+        <file>Resources/connect-ok.png</file>
+        <file>Resources/connect-ok@2x.png</file>
+        <file>Resources/settings.png</file>
+        <file>Resources/settings@2x.png</file>
+        <file>Resources/AMIlogo.png</file>
+    </qresource>
+</RCC>
