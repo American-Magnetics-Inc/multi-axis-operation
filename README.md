@@ -8,9 +8,9 @@ This repository is the source code and binary distribution point for the Multi-A
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/5e791dd0fa0fd50f56d80b4c0e05bbea39ac5f3b/help/images/screenshot.png)
 
-**The current application version is 0.60**.
+**The current application version is 0.60.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
-The Multi-Axis Operation application *requires* the AMI Magnet-DAQ application as a prerequisite. Magnet-DAQ is also open source subject to GPL v3 or later.
+The Multi-Axis Operation application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. Magnet-DAQ is also open-source subject to GPL v3 or later.
 
 The Multi-Axis Operation application contains a first revision of a Help file which is fairly complete and should be adequate to understand how to use the application to control a multi-axis system. This application is still a work in progress. There are several features still remaining to implement. *This first release is primarily suited for the manufacturer and system integrators to test the magnet operation. Later features will try to address the needs of a customer base for experimental applications.*
 
