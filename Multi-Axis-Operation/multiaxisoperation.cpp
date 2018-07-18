@@ -3,12 +3,19 @@
 #include "magnetparams.h"
 #include "conversions.h"
 #include "aboutdialog.h"
+#include "parser.h"
 
 // minimum programmable ramp rate (A/s) for purposes of multi-axis control
 const double MIN_RAMP_RATE = 0.001;
 
 // load/save settings file version
-const int SAVE_FILE_VERSION = 2;
+const int SAVE_FILE_VERSION = 3;
+
+// stdin parsing support
+Parser *parser;
+
+// quench logged flag to prevent duplicate log messages
+bool quenchLogged = false;
 
 
 //---------------------------------------------------------------------------
@@ -26,6 +33,8 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	ui.vectorsTableWidget->setMinimumNumCols(5);
 
 	// initialization
+	loadedCoordinates = SPHERICAL_COORDINATES;
+	systemState = DISCONNECTED;
 	magnetParams = NULL;
 	xProcess = NULL;
 	yProcess = NULL;
@@ -40,10 +49,17 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	connected = false;
 	passCnt = 0;
 	simulation = false;
-	vectorError = false;
+	vectorError = NO_VECTOR_ERROR;
+	targetSource = NO_SOURCE;
 	presentVector = -1;
 	lastVector = -1;
+	presentPolar = -1;
+	lastPolar = -1;
 	errorStatusIsActive = false;
+	xTarget = 0.0;
+	yTarget = 0.0;
+	zTarget = 0.0;
+	remainingTime = 0;
 
 	// setup status bar
 	statusConnectState = new QLabel("", this);
@@ -64,7 +80,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	statusConnectState->setStyleSheet("color: red; font: bold;");
 	statusConnectState->setText("DISCONNECTED");
 
-	// restore window position and gui state
+	// restore window position and state
 	QSettings settings;
 
 	// restore different geometry for different DPI screens
@@ -74,10 +90,34 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	fieldUnits = (FieldUnits)(settings.value("FieldUnits").toInt());
 	convention = (SphericalConvention)(settings.value("SphericalConvention").toInt());
 	ui.actionAutosave_Report->setChecked(settings.value("AutosaveReport").toBool());
+	
+	// restore tab positions from last exit
+	int vectorTabIndex = settings.value("Tabs/VectorTabIndex").toInt();
+	int alignTabIndex = settings.value("Tabs/AlignTabIndex").toInt();
+	int polarTabIndex = settings.value("Tabs/PolarTabIndex").toInt();
+
+	if (polarTabIndex != ui.mainTabWidget->indexOf(ui.rotationTab))
+	{
+		ui.mainTabWidget->removeTab(ui.mainTabWidget->indexOf(ui.rotationTab));
+		ui.mainTabWidget->insertTab(polarTabIndex, ui.rotationTab, "Rotation in Sample Alignment Tab");
+	}
+
+	if (alignTabIndex != ui.mainTabWidget->indexOf(ui.alignmentTab))
+	{
+		ui.mainTabWidget->removeTab(ui.mainTabWidget->indexOf(ui.alignmentTab));
+		ui.mainTabWidget->insertTab(alignTabIndex, ui.alignmentTab, "Sample Alignment");
+	}
+
+	ui.mainTabWidget->setCurrentIndex(settings.value("CurrentTab").toInt());
+
+	// restore alignment tab settings
+	alignmentTabInitState();
 
 	// disable vector selection until connect
 	ui.manualVectorControlGroupBox->setEnabled(false);
 	ui.autostepStartButton->setEnabled(false);
+	ui.manualPolarControlGroupBox->setEnabled(false);
+	ui.autostepStartButtonPolar->setEnabled(false);
 
 	// create data collection timer
 	dataTimer = new QTimer(this);
@@ -89,10 +129,20 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	switchHeatingTimer->setInterval(1000);
 	connect(switchHeatingTimer, SIGNAL(timeout()), this, SLOT(switchHeatingTimerTick()));
 
+	// create switch cooling timer
+	switchCoolingTimer = new QTimer(this);
+	switchCoolingTimer->setInterval(1000);
+	connect(switchCoolingTimer, SIGNAL(timeout()), this, SLOT(switchCoolingTimerTick()));
+
 	// create autostep timer
 	autostepTimer = new QTimer(this);
 	autostepTimer->setInterval(1000);	// update once per second
 	connect(autostepTimer, SIGNAL(timeout()), this, SLOT(autostepTimerTick()));
+
+	// create polar autostep timer
+	autostepPolarTimer = new QTimer(this);
+	autostepPolarTimer->setInterval(1000);	// update once per second
+	connect(autostepPolarTimer, SIGNAL(timeout()), this, SLOT(autostepPolarTimerTick()));
 
 	// create error status timer
 	errorStatusTimer = new QTimer(this);
@@ -108,18 +158,23 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	thetaStr = ui.magnetThetaLabel->text();
 	phiStr = ui.magnetPhiLabel->text();
 
-	// connect toolbar actions
+	// connect toolbar and menu actions
 	connect(ui.actionAbout, SIGNAL(triggered()), this, SLOT(actionAbout()));
+	connect(ui.actionAbout_2, SIGNAL(triggered()), this, SLOT(actionAbout()));
 	connect(ui.actionView_Help, SIGNAL(triggered()), this, SLOT(actionHelp()));
+	connect(ui.actionHelp, SIGNAL(triggered()), this, SLOT(actionHelp()));
 	connect(ui.actionConnect, SIGNAL(triggered()), this, SLOT(actionConnect()));
 	connect(ui.actionLoad_Settings, SIGNAL(triggered()), this, SLOT(actionLoad_Settings()));
 	connect(ui.actionSave_Settings, SIGNAL(triggered()), this, SLOT(actionSave_Settings()));
 	connect(ui.actionDefine, SIGNAL(triggered()), this, SLOT(actionDefine()));
 	connect(ui.actionLoad_Vector_Table, SIGNAL(triggered()), this, SLOT(actionLoad_Vector_Table()));
 	connect(ui.actionSave_Vector_Table, SIGNAL(triggered()), this, SLOT(actionSave_Vector_Table()));
+	connect(ui.actionLoad_Polar_Table, SIGNAL(triggered()), this, SLOT(actionLoad_Polar_Table()));
+	connect(ui.actionSave_Polar_Table, SIGNAL(triggered()), this, SLOT(actionSave_Polar_Table()));
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionShow_Cartesian_Coordinates, SIGNAL(triggered()), this, SLOT(actionShow_Cartesian_Coordinates()));
 	connect(ui.actionShow_Spherical_Coordinates, SIGNAL(triggered()), this, SLOT(actionShow_Spherical_Coordinates()));
+	connect(ui.actionPersistentMode, SIGNAL(triggered()), this, SLOT(actionPersistentMode()));
 	connect(ui.actionPause, SIGNAL(triggered()), this, SLOT(actionPause()));
 	connect(ui.actionRamp, SIGNAL(triggered()), this, SLOT(actionRamp()));
 	connect(ui.actionZero, SIGNAL(triggered()), this, SLOT(actionZero()));
@@ -129,6 +184,10 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	connect(ui.actionUse_ISO_Convention, SIGNAL(triggered()), this, SLOT(actionChange_Convention()));
 	connect(ui.action_SphericalHelp, SIGNAL(triggered()), this, SLOT(actionConvention_Help()));
 	connect(ui.actionGenerate_Excel_Report, SIGNAL(triggered()), this, SLOT(actionGenerate_Excel_Report()));
+
+	// other actions
+	connect(ui.vectorsTableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(vectorSelectionChanged()));
+	connect(ui.polarTableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(polarSelectionChanged()));
 
 	// create magnetParams dialog
 	magnetParams = new MagnetParams();
@@ -141,18 +200,68 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 
 	updateWindowTitle();
 
+	/************************************************************
+	The command line parser allows options:
+
+	-p	Start the stdin/stdout parser function (for QProcess use).
+	--simulate	Start in localhost simulation mode (for AMI use only).
+	************************************************************/
+
 	// parse command line options
-	QCommandLineParser parser;
+	QCommandLineParser cmdLineParse;
 
 	// Connect to simulated system (--simulate)
 	QCommandLineOption portOption("simulate");
-	parser.addOption(portOption);
+	cmdLineParse.addOption(portOption);
+
+	// A boolean option with multiple names (-p, --parser)
+	QCommandLineOption parsingOption(QStringList() << "p" << "parser",
+		QCoreApplication::translate("main", "Enable stdin parsing for interprocess communication."));
+	cmdLineParse.addOption(parsingOption);
 
 	// Process the actual command line arguments given by the user
-	parser.process(*(QCoreApplication::instance()));
+	cmdLineParse.process(*(QCoreApplication::instance()));
 
-	if (parser.isSet(portOption))
+	if (cmdLineParse.isSet(portOption))
 		simulation = true;	// use simulated system
+
+	useParser = cmdLineParse.isSet(parsingOption);
+
+	if (useParser)	// start stdin/stdout parser for scripting control
+	{
+		QThread* parserThread = new QThread;
+		parser = new Parser(NULL);
+
+		parser->setDataSource(this);
+		parser->moveToThread(parserThread);
+		connect(parser, SIGNAL(error_msg(QString)), this, SLOT(parserErrorString(QString)));
+		connect(parserThread, SIGNAL(started()), parser, SLOT(process()));
+		connect(parser, SIGNAL(finished()), parserThread, SLOT(quit()));
+		connect(parser, SIGNAL(finished()), parser, SLOT(deleteLater()));
+		connect(parserThread, SIGNAL(finished()), parserThread, SLOT(deleteLater()));
+
+		// connect cross-thread actions
+		connect(parser, SIGNAL(system_connect()), this, SLOT(system_connect()));
+		connect(parser, SIGNAL(system_disconnect()), this, SLOT(system_disconnect()));
+		connect(parser, SIGNAL(ramp()), this, SLOT(actionRamp()));
+		connect(parser, SIGNAL(pause()), this, SLOT(actionPause()));
+		connect(parser, SIGNAL(zero()), this, SLOT(actionZero()));
+		connect(parser, SIGNAL(load_settings(FILE *, bool *)), this, SLOT(load_settings(FILE *,bool *)));
+		connect(parser, SIGNAL(save_settings(FILE *, bool *)), this, SLOT(save_settings(FILE *, bool *)));
+		connect(parser, SIGNAL(set_align1(double, double, double)), this, SLOT(set_align1(double, double, double)));
+		connect(parser, SIGNAL(set_align2(double, double, double)), this, SLOT(set_align2(double, double, double)));
+		connect(parser, SIGNAL(set_align1_active()), this, SLOT(set_align1_active()));
+		connect(parser, SIGNAL(set_align2_active()), this, SLOT(set_align2_active()));
+		connect(parser, SIGNAL(set_units(int)), this, SLOT(set_units(int)));
+		connect(parser, SIGNAL(set_vector(double, double, double, int)), this, SLOT(set_vector(double, double, double, int)));
+		connect(parser, SIGNAL(set_vector_cartesian(double, double, double, int)), this, SLOT(set_vector_cartesian(double, double, double, int)));
+		connect(parser, SIGNAL(goto_vector(int)), this, SLOT(goto_vector(int)));
+		connect(parser, SIGNAL(set_polar(double, double, int)), this, SLOT(set_polar(double, double, int)));
+		connect(parser, SIGNAL(goto_polar(int)), this, SLOT(goto_polar(int)));
+		connect(parser, SIGNAL(set_persistence(bool)), this, SLOT(set_persistence(bool)));
+
+		parserThread->start();
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -170,6 +279,13 @@ void MultiAxisOperation::updateWindowTitle()
 //---------------------------------------------------------------------------
 MultiAxisOperation::~MultiAxisOperation()
 {
+	// stop and destroy parser and associated thread if it exists
+	if (parser)
+	{
+		parser->stop();
+		parser = NULL;
+	}
+
 	closeConnection();
 
 	// delete timers
@@ -177,6 +293,8 @@ MultiAxisOperation::~MultiAxisOperation()
 	dataTimer = NULL;
 	delete switchHeatingTimer;
 	switchHeatingTimer = NULL;
+	delete switchCoolingTimer;
+	switchCoolingTimer = NULL;
 	delete autostepTimer;
 	autostepTimer = NULL;
 	delete errorStatusTimer;
@@ -196,12 +314,20 @@ MultiAxisOperation::~MultiAxisOperation()
 	settings.setValue("FieldUnits", (int)fieldUnits);
 	settings.setValue("SphericalConvention", (int)convention);
 	settings.setValue("AutosaveReport", ui.actionAutosave_Report->isChecked());
+	settings.setValue("CurrentTab", ui.mainTabWidget->currentIndex());
+	settings.setValue("Tabs/VectorTabIndex", ui.mainTabWidget->indexOf(ui.vectorTableTab));
+	settings.setValue("Tabs/AlignTabIndex", ui.mainTabWidget->indexOf(ui.alignmentTab));
+	settings.setValue("Tabs/PolarTabIndex", ui.mainTabWidget->indexOf(ui.rotationTab));
+
+	// save alignment tab state
+	alignmentTabSaveState();
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::closeConnection()
 {
 	connected = false;
+	systemState = DISCONNECTED;
 
 	// close and delete all connected processes
 	if (xProcess)
@@ -230,9 +356,13 @@ void MultiAxisOperation::closeConnection()
 	ui.actionLoad_Settings->setEnabled(true);
 	ui.manualVectorControlGroupBox->setEnabled(false);
 	ui.autostepStartButton->setEnabled(false);
+	ui.manualPolarControlGroupBox->setEnabled(false);
+	ui.autostepStartButtonPolar->setEnabled(false);
 
 	statusState->clear();
 	ui.actionConnect->setChecked(false);
+
+	alignmentTabDisconnect();
 }
 
 //---------------------------------------------------------------------------
@@ -261,6 +391,8 @@ void MultiAxisOperation::actionConnect(void)
 	bool y_activated = !magnetParams->GetYAxisParams()->activate;
 	bool z_activated = !magnetParams->GetZAxisParams()->activate;
 	longestHeatingTime = 0;
+	longestCoolingTime = 0;
+	switchInstalled = false;
 
 	if (ui.actionConnect->isChecked())
 	{
@@ -268,11 +400,11 @@ void MultiAxisOperation::actionConnect(void)
 		QApplication::setOverrideCursor(Qt::WaitCursor);
 		statusConnectState->setStyleSheet("color: green; font: bold;");
 		statusConnectState->setText("CONNECTING...");
-		statusMisc->setText("Launching processes, please wait...");
+		setStatusMsg("Launching processes, please wait...");
 		
 		progressDialog.setFont(QFont("Segoe UI", 9));
 		progressDialog.setLabelText(QString("Launching processes, please wait...                   "));
-		progressDialog.setWindowTitle("Multi-Axis Operation Connect...");
+		progressDialog.setWindowTitle("Multi-Axis Connect");
 		progressDialog.show();
 		progressDialog.setWindowModality(Qt::WindowModal);
 		progressDialog.setValue(0);
@@ -293,7 +425,7 @@ void MultiAxisOperation::actionConnect(void)
 		if (progressDialog.wasCanceled())
 		{
 			closeConnection();
-			statusMisc->setText("Connect action canceled");
+			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -313,7 +445,7 @@ void MultiAxisOperation::actionConnect(void)
 		if (progressDialog.wasCanceled())
 		{
 			closeConnection();
-			statusMisc->setText("Connect action canceled");
+			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -333,7 +465,7 @@ void MultiAxisOperation::actionConnect(void)
 		if (progressDialog.wasCanceled())
 		{
 			closeConnection();
-			statusMisc->setText("Connect action canceled");
+			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -346,10 +478,12 @@ void MultiAxisOperation::actionConnect(void)
 				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked());
 				x_activated = true;
 
-				// switch heating required?
+				// switch heating/cooling required?
 				if (magnetParams->GetXAxisParams()->switchInstalled)
 				{
+					switchInstalled = true;
 					longestHeatingTime = magnetParams->GetXAxisParams()->switchHeatingTime;
+					longestCoolingTime = magnetParams->GetXAxisParams()->switchCoolingTime;
 				}
 			}
 		}
@@ -359,7 +493,7 @@ void MultiAxisOperation::actionConnect(void)
 		if (progressDialog.wasCanceled())
 		{
 			closeConnection();
-			statusMisc->setText("Connect action canceled");
+			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -372,10 +506,16 @@ void MultiAxisOperation::actionConnect(void)
 				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked());
 				y_activated = true;
 
-				// switch heating required?
-				if (magnetParams->GetYAxisParams()->switchInstalled && (magnetParams->GetYAxisParams()->switchHeatingTime > longestHeatingTime))
+				// switch heating/cooling required?
+				if (magnetParams->GetYAxisParams()->switchInstalled)
 				{
-					longestHeatingTime = magnetParams->GetYAxisParams()->switchHeatingTime;
+					switchInstalled = true;
+
+					if (magnetParams->GetYAxisParams()->switchHeatingTime > longestHeatingTime)
+						longestHeatingTime = magnetParams->GetYAxisParams()->switchHeatingTime;
+
+					if (magnetParams->GetYAxisParams()->switchCoolingTime > longestCoolingTime)
+						longestCoolingTime = magnetParams->GetYAxisParams()->switchCoolingTime;
 				}
 			}
 		}
@@ -385,7 +525,7 @@ void MultiAxisOperation::actionConnect(void)
 		if (progressDialog.wasCanceled())
 		{
 			closeConnection();
-			statusMisc->setText("Connect action canceled");
+			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -398,10 +538,16 @@ void MultiAxisOperation::actionConnect(void)
 				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked());
 				z_activated = true;
 
-				// switch heating required?
-				if (magnetParams->GetZAxisParams()->switchInstalled && (magnetParams->GetZAxisParams()->switchHeatingTime > longestHeatingTime))
+				// switch heating/cooling required?
+				if (magnetParams->GetZAxisParams()->switchInstalled)
 				{
-					longestHeatingTime = magnetParams->GetZAxisParams()->switchHeatingTime;
+					switchInstalled = true;
+
+					if (magnetParams->GetZAxisParams()->switchHeatingTime > longestHeatingTime)
+						longestHeatingTime = magnetParams->GetZAxisParams()->switchHeatingTime;
+
+					if (magnetParams->GetZAxisParams()->switchCoolingTime > longestCoolingTime)
+						longestCoolingTime = magnetParams->GetZAxisParams()->switchCoolingTime;
 				}
 			}
 		}
@@ -418,20 +564,26 @@ void MultiAxisOperation::actionConnect(void)
 			dataTimer->start();
 
 			// if a switch is present, wait the heating time
-			if (longestHeatingTime > 0)
+			if (switchInstalled)
 			{
 				// switch heating already initiated by ProcessManager::sendParams()
 				// start switch heating timer
-				statusMisc->setText("Heating switches, please wait...");
+				systemState = SYSTEM_HEATING;
+				setStatusMsg("Heating switches, please wait...");
 				elapsedHeatingTicks = 0;
 				switchHeatingTimer->start();
+
+				ui.actionPersistentMode->setChecked(false);
+				ui.actionPersistentMode->setEnabled(true);
 				ui.menuBar->setEnabled(false);
 				ui.mainTabWidget->setEnabled(false);
 				ui.mainToolBar->setEnabled(false);
 			}
 			else
 			{
-				statusMisc->setText("All active axes initialized successfully");
+				ui.actionPersistentMode->setChecked(false);
+				ui.actionPersistentMode->setEnabled(false);
+				setStatusMsg("All active axes initialized successfully");
 			}
 
 			statusConnectState->setStyleSheet("color: green; font: bold;");
@@ -439,6 +591,7 @@ void MultiAxisOperation::actionConnect(void)
 			
 			statusState->setStyleSheet("color: black; font: bold;");
 			statusState->setText("PAUSED");
+			systemState = SYSTEM_PAUSED;
 
 			// don't change field units while connected
 			ui.actionKilogauss->setEnabled(false);
@@ -453,11 +606,16 @@ void MultiAxisOperation::actionConnect(void)
 			// allow vector selection
 			ui.manualVectorControlGroupBox->setEnabled(true);
 			ui.autostepStartButton->setEnabled(true);
+			ui.manualPolarControlGroupBox->setEnabled(true);
+			ui.autostepStartButtonPolar->setEnabled(true);
+
+			// setup sample alignment interface on connect
+			alignmentTabConnect();
 		}
 		else // something went wrong, indicate an error
 		{
 			closeConnection();
-			statusMisc->setText("Failed to communicate with all active magnet axes");
+			setStatusMsg("Failed to communicate with all active magnet axes");
 		}
 
 EXIT:
@@ -507,155 +665,216 @@ void MultiAxisOperation::actionLoad_Settings(void)
 		}
 		else
 		{
-			AxesParams *params;
-			QTextStream stream(pFile, QIODevice::ReadOnly);
-			int version;
-
-			// read file version
-			version = stream.readLine().toInt();
-
-			if (version >= 1)
-			{
-				// paths
-				lastSavePath = stream.readLine();
-				lastVectorsLoadPath = stream.readLine();
-				lastVectorsSavePath = stream.readLine();
-				lastReportPath = stream.readLine();
-
-				// preferences and ui settings
-				ui.actionShow_Cartesian_Coordinates->setChecked((bool)(stream.readLine().toInt()));
-				actionShow_Cartesian_Coordinates();
-				ui.actionShow_Spherical_Coordinates->setChecked((bool)(stream.readLine().toInt()));
-				actionShow_Spherical_Coordinates();
-				fieldUnits = (FieldUnits)(stream.readLine().toInt());
-				setFieldUnits(fieldUnits, true);
-				convention = (SphericalConvention)(stream.readLine().toInt());
-				setSphericalConvention(convention, true);
-				ui.actionAutosave_Report->setChecked((bool)(stream.readLine().toInt()));
-				ui.startIndexEdit->setText(stream.readLine());
-				ui.endIndexEdit->setText(stream.readLine());
-
-				// magnet params
-				magnetParams->setMagnetID(stream.readLine());
-				magnetParams->setMagnitudeLimit(stream.readLine().toDouble());
-
-				// x-axis params
-				params = magnetParams->GetXAxisParams();
-				loadParams(&stream, params);
-
-				// y-axis params
-				params = magnetParams->GetYAxisParams();
-				loadParams(&stream, params);
-
-				// z-axis params
-				params = magnetParams->GetZAxisParams();
-				loadParams(&stream, params);
-
-				// reload vector table
-				ui.vectorsTableWidget->setRowCount(stream.readLine().toInt());
-
-				// load columns count
-				int columnCount = stream.readLine().toInt();
-
-				if (version == 1)
-				{
-					if (columnCount > ui.vectorsTableWidget->columnCount())
-					{
-						ui.vectorsTableWidget->setColumnCount(columnCount);
-
-						if (columnCount >= 8)
-						{
-							ui.vectorsTableWidget->setHorizontalHeaderItem(5, new QTableWidgetItem("X Quench (A)"));
-							ui.vectorsTableWidget->horizontalHeaderItem(5)->font().setBold(true);
-							ui.vectorsTableWidget->setHorizontalHeaderItem(6, new QTableWidgetItem("Y Quench (A)"));
-							ui.vectorsTableWidget->horizontalHeaderItem(6)->font().setBold(true);
-							ui.vectorsTableWidget->setHorizontalHeaderItem(7, new QTableWidgetItem("Z Quench (A)"));
-							ui.vectorsTableWidget->horizontalHeaderItem(7)->font().setBold(true);
-						}
-					}
-					else
-						ui.vectorsTableWidget->setColumnCount(columnCount);
-				}
-				else if (version == 2)
-				{
-					// recover horizontal header labels (v2)
-					if (columnCount > ui.vectorsTableWidget->columnCount())
-						ui.vectorsTableWidget->setColumnCount(columnCount);
-					else
-						ui.vectorsTableWidget->setColumnCount(columnCount);
-
-					for (int i = 0; i < columnCount; i++)
-					{
-						// read saved header label
-						QString tempStr = stream.readLine();
-						QTableWidgetItem *item;
-
-						item = ui.vectorsTableWidget->horizontalHeaderItem(i);
-
-						if (item == NULL)
-							ui.vectorsTableWidget->setHorizontalHeaderItem(i, item = new QTableWidgetItem(tempStr));
-						else
-							ui.vectorsTableWidget->horizontalHeaderItem(i)->setText(tempStr);
-
-						ui.vectorsTableWidget->horizontalHeaderItem(i)->font().setBold(true);
-					}
-
-					if (convention == MATHEMATICAL)
-					{
-						ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(thetaStr);
-						ui.vectorsTableWidget->horizontalHeaderItem(2)->setText(phiStr);
-					}
-					else
-					{
-						ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(phiStr);
-						ui.vectorsTableWidget->horizontalHeaderItem(2)->setText(thetaStr);
-					}
-				}
-
-				// recover table text for each item
-				for (int i = 0; i < ui.vectorsTableWidget->rowCount(); i++)
-				{
-					for (int j = 0; j < columnCount; j++)
-					{
-						QTableWidgetItem *item;
-
-						item = ui.vectorsTableWidget->item(i, j);
-
-						// read saved text
-						QString tempStr = stream.readLine();
-
-						if (item == NULL)
-							ui.vectorsTableWidget->setItem(i, j, item = new QTableWidgetItem(tempStr));
-						else
-							item->setText(tempStr);
-
-						if (j == 4)
-							item->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
-						else
-							item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-					}
-				}
-
-				if (version == 2)
-				{
-					// recover coordinate system selection
-					loadedCoordinates = (CoordinatesSelection)(stream.readLine().toInt());
-
-					if (loadedCoordinates == CARTESIAN_COORDINATES)
-						setTableHeader();
-				}
-				else
-					loadedCoordinates = SPHERICAL_COORDINATES;	// only type supported < v2
-			}
+			// load it!
+			loadFromFile(pFile);
 
 			fclose(pFile);
 
 			// sync the UI with the newly loaded values
 			magnetParams->syncUI();
+			magnetParams->save();
 			
 			updateWindowTitle();
+			vectorSelectionChanged();
+			polarSelectionChanged();
 		}
 	}
+}
+
+//---------------------------------------------------------------------------
+bool MultiAxisOperation::loadFromFile(FILE *pFile)
+{
+	AxesParams *params;
+	QTextStream stream(pFile, QIODevice::ReadOnly);
+	int version;
+
+	// read file version
+	version = stream.readLine().toInt();
+
+	if (version >= 1)
+	{
+		// paths
+		lastSavePath = stream.readLine();
+		lastVectorsLoadPath = stream.readLine();
+		lastVectorsSavePath = stream.readLine();
+		lastReportPath = stream.readLine();
+
+		// preferences and ui settings
+		ui.actionShow_Cartesian_Coordinates->setChecked((bool)(stream.readLine().toInt()));
+		actionShow_Cartesian_Coordinates();
+		ui.actionShow_Spherical_Coordinates->setChecked((bool)(stream.readLine().toInt()));
+		actionShow_Spherical_Coordinates();
+		fieldUnits = (FieldUnits)(stream.readLine().toInt());
+		setFieldUnits(fieldUnits, true);
+		convention = (SphericalConvention)(stream.readLine().toInt());
+		setSphericalConvention(convention, true);
+		ui.actionAutosave_Report->setChecked((bool)(stream.readLine().toInt()));
+		ui.startIndexEdit->setText(stream.readLine());
+		ui.endIndexEdit->setText(stream.readLine());
+
+		// magnet params
+		magnetParams->setMagnetID(stream.readLine());
+		magnetParams->setMagnitudeLimit(stream.readLine().toDouble());
+
+		// x-axis params
+		params = magnetParams->GetXAxisParams();
+		loadParams(&stream, params);
+
+		// y-axis params
+		params = magnetParams->GetYAxisParams();
+		loadParams(&stream, params);
+
+		// z-axis params
+		params = magnetParams->GetZAxisParams();
+		loadParams(&stream, params);
+
+		// reload vector table
+		ui.vectorsTableWidget->setRowCount(stream.readLine().toInt());
+
+		// load columns count
+		int columnCount = stream.readLine().toInt();
+
+		if (version == 1)
+		{
+			if (columnCount > ui.vectorsTableWidget->columnCount())
+			{
+				ui.vectorsTableWidget->setColumnCount(columnCount);
+
+				if (columnCount >= 8)
+				{
+					ui.vectorsTableWidget->setHorizontalHeaderItem(5, new QTableWidgetItem("X Quench (A)"));
+					ui.vectorsTableWidget->horizontalHeaderItem(5)->font().setBold(true);
+					ui.vectorsTableWidget->setHorizontalHeaderItem(6, new QTableWidgetItem("Y Quench (A)"));
+					ui.vectorsTableWidget->horizontalHeaderItem(6)->font().setBold(true);
+					ui.vectorsTableWidget->setHorizontalHeaderItem(7, new QTableWidgetItem("Z Quench (A)"));
+				}
+			}
+			else
+				ui.vectorsTableWidget->setColumnCount(columnCount);
+		}
+		else if (version >= 2)
+		{
+			// recover horizontal header labels (v2)
+			if (columnCount > ui.vectorsTableWidget->columnCount())
+				ui.vectorsTableWidget->setColumnCount(columnCount);
+			else
+				ui.vectorsTableWidget->setColumnCount(columnCount);
+
+			for (int i = 0; i < columnCount; i++)
+			{
+				// read saved header label
+				QString tempStr = stream.readLine();
+				QTableWidgetItem *item;
+
+				item = ui.vectorsTableWidget->horizontalHeaderItem(i);
+
+				if (item == NULL)
+					ui.vectorsTableWidget->setHorizontalHeaderItem(i, item = new QTableWidgetItem(tempStr));
+				else
+					ui.vectorsTableWidget->horizontalHeaderItem(i)->setText(tempStr);
+			}
+
+			if (convention == MATHEMATICAL)
+			{
+				ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(thetaStr);
+				ui.vectorsTableWidget->horizontalHeaderItem(2)->setText(phiStr);
+			}
+			else
+			{
+				ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(phiStr);
+				ui.vectorsTableWidget->horizontalHeaderItem(2)->setText(thetaStr);
+			}
+		}
+
+		// recover table text for each item
+		for (int i = 0; i < ui.vectorsTableWidget->rowCount(); i++)
+		{
+			for (int j = 0; j < columnCount; j++)
+			{
+				QTableWidgetItem *item;
+
+				item = ui.vectorsTableWidget->item(i, j);
+
+				// read saved text
+				QString tempStr = stream.readLine();
+
+				if (item == NULL)
+					ui.vectorsTableWidget->setItem(i, j, item = new QTableWidgetItem(tempStr));
+				else
+					item->setText(tempStr);
+
+				if (j == 4)
+					item->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+				else
+					item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+			}
+		}
+
+		if (version >= 2)
+		{
+			// recover coordinate system selection
+			loadedCoordinates = (CoordinatesSelection)(stream.readLine().toInt());
+
+			if (loadedCoordinates == CARTESIAN_COORDINATES)
+				setTableHeader();
+		}
+		else
+			loadedCoordinates = SPHERICAL_COORDINATES;	// only type supported < v2
+
+		if (version >= 3)
+		{
+			// recover alignment tab contents
+			alignmentTabLoadFromStream(&stream);
+
+			// reload polar table
+			ui.polarTableWidget->setRowCount(stream.readLine().toInt());
+
+			// load columns count
+			int columnCount = stream.readLine().toInt();
+
+			// recover horizontal header labels
+			ui.polarTableWidget->setColumnCount(columnCount);
+
+			for (int i = 0; i < columnCount; i++)
+			{
+				// read saved header label
+				QString tempStr = stream.readLine();
+				QTableWidgetItem *item;
+
+				item = ui.polarTableWidget->horizontalHeaderItem(i);
+
+				if (item == NULL)
+					ui.polarTableWidget->setHorizontalHeaderItem(i, item = new QTableWidgetItem(tempStr));
+				else
+					ui.polarTableWidget->horizontalHeaderItem(i)->setText(tempStr);
+			}
+
+			ui.polarTableWidget->horizontalHeaderItem(1)->setText(thetaStr);
+
+			// recover table text for each item
+			for (int i = 0; i < ui.polarTableWidget->rowCount(); i++)
+			{
+				for (int j = 0; j < columnCount; j++)
+				{
+					QTableWidgetItem *item;
+
+					item = ui.polarTableWidget->item(i, j);
+
+					// read saved text
+					QString tempStr = stream.readLine();
+
+					if (item == NULL)
+						ui.polarTableWidget->setItem(i, j, item = new QTableWidgetItem(tempStr));
+					else
+						item->setText(tempStr);
+
+					item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+				}
+			}
+		}
+	}
+
+	return true;
 }
 
 //---------------------------------------------------------------------------
@@ -704,89 +923,135 @@ void MultiAxisOperation::actionSave_Settings(void)
 		}
 		else
 		{
-			AxesParams *params;
-			QTextStream stream(pFile, QIODevice::ReadWrite);
+			// save it!
+			saveToFile(pFile);
 
-			QSettings settings;
-			lastSavePath = settings.value("LastSavePath").toString();
-			lastVectorsLoadPath = settings.value("LastVectorFilePath").toString();
-			lastVectorsSavePath = settings.value("LastVectorSavePath").toString();
-			lastReportPath = settings.value("LastReportPath").toString();
-
-			// save file version
-			stream << SAVE_FILE_VERSION << "\n";
-
-			// paths
-			stream << lastSavePath << "\n";
-			stream << lastVectorsLoadPath << "\n";
-			stream << lastVectorsSavePath << "\n";
-			stream << lastReportPath << "\n";
-
-			// preferences and ui settings
-			stream << ui.actionShow_Cartesian_Coordinates->isChecked() << "\n";
-			stream << ui.actionShow_Spherical_Coordinates->isChecked() << "\n";
-			stream << fieldUnits << "\n";
-			stream << convention << "\n";
-			stream << ui.actionAutosave_Report->isChecked() << "\n";
-			stream << ui.startIndexEdit->text() << "\n";
-			stream << ui.endIndexEdit->text() << "\n";
-
-			// magnet params
-			stream << magnetParams->getMagnetID() << "\n";
-			stream << magnetParams->getMagnitudeLimit() << "\n";
-
-			// x-axis params
-			params = magnetParams->GetXAxisParams();
-			saveParams(&stream, params);
-
-			// y-axis params
-			params = magnetParams->GetYAxisParams();
-			saveParams(&stream, params);
-
-			// z-axis params
-			params = magnetParams->GetZAxisParams();
-			saveParams(&stream, params);
-
-			// save vector table
-			stream << ui.vectorsTableWidget->rowCount() << "\n";
-			stream << ui.vectorsTableWidget->columnCount() << "\n";
-
-			// save horizontal header labels
-			for (int i = 0; i < ui.vectorsTableWidget->columnCount(); i++)
-			{
-				QTableWidgetItem *item;
-
-				item = ui.vectorsTableWidget->horizontalHeaderItem(i);
-
-				if (item == NULL)
-					stream << "\n";
-				else
-					stream << item->text() << "\n";
-			}
-
-			// save vector table contents
-			for (int i = 0; i < ui.vectorsTableWidget->rowCount(); i++)
-			{
-				for (int j = 0; j < ui.vectorsTableWidget->columnCount(); j++)
-				{
-					QTableWidgetItem *item;
-
-					item = ui.vectorsTableWidget->item(i, j);
-
-					if (item == NULL)
-						stream << "\n";
-					else
-						stream << item->text() << "\n";
-				}
-			}
-
-			// save coordinate selection
-			stream << loadedCoordinates << "\n";
-
-			stream.flush();
 			fclose(pFile);
 		}
 	}
+}
+
+//---------------------------------------------------------------------------
+bool MultiAxisOperation::saveToFile(FILE *pFile)
+{
+	AxesParams *params;
+	QTextStream stream(pFile, QIODevice::ReadWrite);
+
+	QSettings settings;
+	lastSavePath = settings.value("LastSavePath").toString();
+	lastVectorsLoadPath = settings.value("LastVectorFilePath").toString();
+	lastVectorsSavePath = settings.value("LastVectorSavePath").toString();
+	lastReportPath = settings.value("LastReportPath").toString();
+
+	// save file version
+	stream << SAVE_FILE_VERSION << "\n";
+
+	// paths
+	stream << lastSavePath << "\n";
+	stream << lastVectorsLoadPath << "\n";
+	stream << lastVectorsSavePath << "\n";
+	stream << lastReportPath << "\n";
+
+	// preferences and ui settings
+	stream << ui.actionShow_Cartesian_Coordinates->isChecked() << "\n";
+	stream << ui.actionShow_Spherical_Coordinates->isChecked() << "\n";
+	stream << fieldUnits << "\n";
+	stream << convention << "\n";
+	stream << ui.actionAutosave_Report->isChecked() << "\n";
+	stream << ui.startIndexEdit->text() << "\n";
+	stream << ui.endIndexEdit->text() << "\n";
+
+	// magnet params
+	stream << magnetParams->getMagnetID() << "\n";
+	stream << magnetParams->getMagnitudeLimit() << "\n";
+
+	// x-axis params
+	params = magnetParams->GetXAxisParams();
+	saveParams(&stream, params);
+
+	// y-axis params
+	params = magnetParams->GetYAxisParams();
+	saveParams(&stream, params);
+
+	// z-axis params
+	params = magnetParams->GetZAxisParams();
+	saveParams(&stream, params);
+
+	// save vector table
+	stream << ui.vectorsTableWidget->rowCount() << "\n";
+	stream << ui.vectorsTableWidget->columnCount() << "\n";
+
+	// save horizontal header labels
+	for (int i = 0; i < ui.vectorsTableWidget->columnCount(); i++)
+	{
+		QTableWidgetItem *item;
+
+		item = ui.vectorsTableWidget->horizontalHeaderItem(i);
+
+		if (item == NULL)
+			stream << "\n";
+		else
+			stream << item->text() << "\n";
+	}
+
+	// save vector table contents
+	for (int i = 0; i < ui.vectorsTableWidget->rowCount(); i++)
+	{
+		for (int j = 0; j < ui.vectorsTableWidget->columnCount(); j++)
+		{
+			QTableWidgetItem *item;
+
+			item = ui.vectorsTableWidget->item(i, j);
+
+			if (item == NULL)
+				stream << "\n";
+			else
+				stream << item->text() << "\n";
+		}
+	}
+
+	// save coordinate selection
+	stream << loadedCoordinates << "\n";
+
+	// save alignment tab contents
+	alignmentTabSaveToStream(&stream);
+
+	// save polar table
+	stream << ui.polarTableWidget->rowCount() << "\n";
+	stream << ui.polarTableWidget->columnCount() << "\n";
+
+	// save horizontal header labels
+	for (int i = 0; i < ui.polarTableWidget->columnCount(); i++)
+	{
+		QTableWidgetItem *item;
+
+		item = ui.polarTableWidget->horizontalHeaderItem(i);
+
+		if (item == NULL)
+			stream << "\n";
+		else
+			stream << item->text() << "\n";
+	}
+
+	// save polar table contents
+	for (int i = 0; i < ui.polarTableWidget->rowCount(); i++)
+	{
+		for (int j = 0; j < ui.polarTableWidget->columnCount(); j++)
+		{
+			QTableWidgetItem *item;
+
+			item = ui.polarTableWidget->item(i, j);
+
+			if (item == NULL)
+				stream << "\n";
+			else
+				stream << item->text() << "\n";
+		}
+	}
+
+	stream.flush();
+
+	return true;
 }
 
 //---------------------------------------------------------------------------
@@ -832,6 +1097,7 @@ void MultiAxisOperation::actionShow_Cartesian_Coordinates(void)
 		ui.magnetYValue->setVisible(true);
 		ui.magnetZLabel->setVisible(true);
 		ui.magnetZValue->setVisible(true);
+		ui.magnetFieldLabel->setVisible(true);
 	}
 	else
 	{
@@ -841,6 +1107,9 @@ void MultiAxisOperation::actionShow_Cartesian_Coordinates(void)
 		ui.magnetYValue->setVisible(false);
 		ui.magnetZLabel->setVisible(false);
 		ui.magnetZValue->setVisible(false);
+
+		if (!ui.actionShow_Spherical_Coordinates->isChecked())
+			ui.magnetFieldLabel->setVisible(false);
 	}
 }
 
@@ -855,6 +1124,7 @@ void MultiAxisOperation::actionShow_Spherical_Coordinates(void)
 		ui.magnetThetaValue->setVisible(true);
 		ui.magnetPhiLabel->setVisible(true);
 		ui.magnetPhiValue->setVisible(true);
+		ui.magnetFieldLabel->setVisible(true);
 	}
 	else
 	{
@@ -864,6 +1134,9 @@ void MultiAxisOperation::actionShow_Spherical_Coordinates(void)
 		ui.magnetThetaValue->setVisible(false);
 		ui.magnetPhiLabel->setVisible(false);
 		ui.magnetPhiValue->setVisible(false);
+
+		if (!ui.actionShow_Cartesian_Coordinates->isChecked())
+			ui.magnetFieldLabel->setVisible(false);
 	}
 }
 
@@ -945,7 +1218,8 @@ void MultiAxisOperation::actionRamp(void)
 void MultiAxisOperation::actionZero(void)
 {
 	sendNextVector(0, 0, 0);
-	statusMisc->setText("Active Vector : Zero Field Vector");
+	setStatusMsg("Target Vector : Zero Field Vector");
+	targetSource = NO_SOURCE;
 }
 
 //---------------------------------------------------------------------------
@@ -954,6 +1228,8 @@ void MultiAxisOperation::actionChange_Units(void)
 	FieldUnits newUnits = (FieldUnits)!ui.actionKilogauss->isChecked();
 	setFieldUnits(newUnits, false);
 	convertFieldValues(newUnits, true);
+	convertAlignmentFieldValues(newUnits);
+	convertPolarFieldValues(newUnits);
 }
 
 //---------------------------------------------------------------------------
@@ -971,13 +1247,37 @@ void MultiAxisOperation::actionConvention_Help(void)
 }
 
 //---------------------------------------------------------------------------
+void MultiAxisOperation::setStatusMsg(QString msg)
+{
+	// always save the msg
+	lastStatusString = msg;
+
+	if (!errorStatusIsActive)	// show it now!
+		statusMisc->setText(msg);
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::showErrorString(QString errMsg)
 {
-	errorStatusIsActive = true;
-	if (lastVector >= 0 && lastVector < ui.vectorsTableWidget->rowCount())
-		ui.vectorsTableWidget->selectRow(lastVector);
+	// reselect last good vector row if applicable
+	if (targetSource == VECTOR_TABLE)
+	{
+		if (lastVector >= 0 && lastVector < ui.vectorsTableWidget->rowCount())
+		{
+			ui.vectorsTableWidget->selectRow(lastVector);
+			presentVector = lastVector;
+		}
+	}
+	else if (targetSource == POLAR_TABLE)
+	{
+		if (lastPolar >= 0 && lastPolar < ui.polarTableWidget->rowCount())
+		{
+			ui.polarTableWidget->selectRow(lastPolar);
+			presentPolar = lastPolar;
+		}
+	}
 
-	lastStatusString = statusMisc->text();
+	errorStatusIsActive = true;
 	statusMisc->setStyleSheet("color: red; font: bold");
 	statusMisc->setText("ERROR: " + errMsg);
 	qDebug() << statusMisc->text();		// send to log
@@ -985,10 +1285,19 @@ void MultiAxisOperation::showErrorString(QString errMsg)
 }
 
 //---------------------------------------------------------------------------
+void MultiAxisOperation::parserErrorString(QString errMsg)
+{
+	errorStatusIsActive = true;
+	statusMisc->setStyleSheet("color: red; font: bold");
+	statusMisc->setText("Remote Error: " + errMsg);
+	QTimer::singleShot(5000, this, SLOT(errorStatusTimeout()));
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::errorStatusTimeout(void)
 {
 	statusMisc->setStyleSheet("");
-	statusMisc->setText(lastStatusString);
+	statusMisc->setText(lastStatusString);	// restore normal messages
 	errorStatusIsActive = false;
 }
 
@@ -1035,6 +1344,15 @@ void MultiAxisOperation::setFieldUnits(FieldUnits newUnits, bool updateMenuState
 
 		tempStr = ui.vectorsTableWidget->horizontalHeaderItem(0)->text().replace("(T)", "(kG)");
 		ui.vectorsTableWidget->horizontalHeaderItem(0)->setText(tempStr);
+
+		tempStr = ui.alignMagLabel1->text().replace("(T)", "(kG)");
+		ui.alignMagLabel1->setText(tempStr);
+
+		tempStr = ui.alignMagLabel2->text().replace("(T)", "(kG)");
+		ui.alignMagLabel2->setText(tempStr);
+
+		tempStr = ui.polarTableWidget->horizontalHeaderItem(0)->text().replace("(T)", "(kG)");
+		ui.polarTableWidget->horizontalHeaderItem(0)->setText(tempStr);
 	}
 	else if (newUnits == TESLA)
 	{
@@ -1047,6 +1365,15 @@ void MultiAxisOperation::setFieldUnits(FieldUnits newUnits, bool updateMenuState
 
 		tempStr = ui.vectorsTableWidget->horizontalHeaderItem(0)->text().replace("(kG)", "(T)");
 		ui.vectorsTableWidget->horizontalHeaderItem(0)->setText(tempStr);
+
+		tempStr = ui.alignMagLabel1->text().replace("(kG)", "(T)");
+		ui.alignMagLabel1->setText(tempStr);
+
+		tempStr = ui.alignMagLabel2->text().replace("(kG)", "(T)");
+		ui.alignMagLabel2->setText(tempStr);
+
+		tempStr = ui.polarTableWidget->horizontalHeaderItem(0)->text().replace("(kG)", "(T)");
+		ui.polarTableWidget->horizontalHeaderItem(0)->setText(tempStr);
 	}
 
 	fieldUnits = newUnits;
@@ -1139,6 +1466,10 @@ void MultiAxisOperation::setSphericalConvention(SphericalConvention selection, b
 	{
 		ui.magnetThetaLabel->setText(thetaStr);
 		ui.magnetPhiLabel->setText(phiStr);
+		ui.alignThetaLabel1->setText(thetaStr);
+		ui.alignThetaLabel2->setText(thetaStr);
+		ui.alignPhiLabel1->setText(phiStr);
+		ui.alignPhiLabel2->setText(phiStr);
 		if (loadedCoordinates == SPHERICAL_COORDINATES) // don't relabel tables in Cartesian coordinates
 		{
 			ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(thetaStr);
@@ -1149,6 +1480,10 @@ void MultiAxisOperation::setSphericalConvention(SphericalConvention selection, b
 	{
 		ui.magnetThetaLabel->setText(phiStr);
 		ui.magnetPhiLabel->setText(thetaStr);
+		ui.alignThetaLabel1->setText(phiStr);
+		ui.alignThetaLabel2->setText(phiStr);
+		ui.alignPhiLabel1->setText(thetaStr);
+		ui.alignPhiLabel2->setText(thetaStr);
 		if (loadedCoordinates == SPHERICAL_COORDINATES) // don't relabel tables in Cartesian coordinates
 		{
 			ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(phiStr);
@@ -1199,7 +1534,7 @@ void MultiAxisOperation::dataTimerTick(void)
 				else
 				{
 					// wrong units
-					showUnitsError("Remote X-axis units have been changed. Please verify remote units selection and reconnect.");
+					showUnitsError("Remote X-axis field units have been changed. Please verify remote units selection and reconnect.");
 					return;
 				}
 			}
@@ -1241,7 +1576,7 @@ void MultiAxisOperation::dataTimerTick(void)
 				else
 				{
 					// wrong units
-					showUnitsError("Remote Y-axis units have been changed. Please verify remote units selection and reconnect.");
+					showUnitsError("Remote Y-axis field units have been changed. Please verify remote units selection and reconnect.");
 					return;
 				}
 			}
@@ -1283,7 +1618,7 @@ void MultiAxisOperation::dataTimerTick(void)
 				else
 				{
 					// wrong units
-					showUnitsError("Remote Z-axis units have been changed. Please verify remote units selection and reconnect.");
+					showUnitsError("Remote Z-axis field units have been changed. Please verify remote units selection and reconnect.");
 					return;
 				}
 			}
@@ -1318,6 +1653,7 @@ void MultiAxisOperation::dataTimerTick(void)
 	{
 		bool autoSave = false;
 		magnetState = QUENCH;
+		systemState = SYSTEM_QUENCH;
 		statusState->setStyleSheet("color: red; font: bold;");
 		statusState->setText("QUENCH!");
 		
@@ -1326,95 +1662,146 @@ void MultiAxisOperation::dataTimerTick(void)
 		{
 			autoSave = true;	// do the autosave on quench condition
 			stopAutostep();
-			statusMisc->setText("Auto-Stepping aborted due to quench detection");
+			setStatusMsg("Auto-Stepping aborted due to quench detection");
 		}
 
-		// mark vector as fail
-		if (presentVector >= 0)
+		if (autostepPolarTimer->isActive())
 		{
-			QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 4);
+			stopPolarAutostep();
+			setStatusMsg("Polar Auto-Stepping aborted due to quench detection");
+		}
 
-			if (cell)
-				cell->setText("Fail");
-
-			// if needed, add columns for X/Y/Z quench currents
-			if (ui.vectorsTableWidget->columnCount() < 6)
+		// mark vector as fail only in Vector Table
+		if (targetSource == VECTOR_TABLE)
+		{
+			if (presentVector >= 0)
 			{
-				ui.vectorsTableWidget->setColumnCount(8);
-				ui.vectorsTableWidget->setHorizontalHeaderItem(5, new QTableWidgetItem("X Quench (A)"));
-				ui.vectorsTableWidget->horizontalHeaderItem(5)->font().setBold(true);
-				ui.vectorsTableWidget->setHorizontalHeaderItem(6, new QTableWidgetItem("Y Quench (A)"));
-				ui.vectorsTableWidget->horizontalHeaderItem(6)->font().setBold(true);
-				ui.vectorsTableWidget->setHorizontalHeaderItem(7, new QTableWidgetItem("Z Quench (A)"));
-				ui.vectorsTableWidget->horizontalHeaderItem(7)->font().setBold(true);
-				ui.vectorsTableWidget->repaint();
-			}
+				QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 4);
 
-			// add quench data
-			if (x_activated && xState == QUENCH)
-			{
-				bool ok;
-				QString cellStr = QString::number(xProcess->getQuenchCurrent(&ok), 'f', 3);
+				if (cell)
+					cell->setText("Fail");
 
-				if (ok)
+				// if needed, add columns for X/Y/Z quench currents
+				if (ui.vectorsTableWidget->columnCount() < 6)
 				{
-					QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 5);
+					ui.vectorsTableWidget->setColumnCount(8);
+					ui.vectorsTableWidget->setHorizontalHeaderItem(5, new QTableWidgetItem("X Quench (A)"));
+					ui.vectorsTableWidget->horizontalHeaderItem(5)->font().setBold(true);
+					ui.vectorsTableWidget->setHorizontalHeaderItem(6, new QTableWidgetItem("Y Quench (A)"));
+					ui.vectorsTableWidget->horizontalHeaderItem(6)->font().setBold(true);
+					ui.vectorsTableWidget->setHorizontalHeaderItem(7, new QTableWidgetItem("Z Quench (A)"));
+					ui.vectorsTableWidget->horizontalHeaderItem(7)->font().setBold(true);
+					ui.vectorsTableWidget->repaint();
+				}
 
-					if (cell == NULL)
-						ui.vectorsTableWidget->setItem(presentVector, 5, cell = new QTableWidgetItem(cellStr));
-					else
-						cell->setText(cellStr);
+				// add quench data
+				if (x_activated && xState == QUENCH)
+				{
+					bool ok;
+					QString cellStr = QString::number(xProcess->getQuenchCurrent(&ok), 'g', 3);
 
-					cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+					if (ok)
+					{
+						QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 5);
+
+						if (cell == NULL)
+							ui.vectorsTableWidget->setItem(presentVector, 5, cell = new QTableWidgetItem(cellStr));
+						else
+							cell->setText(cellStr);
+
+						cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+					}
+				}
+
+				if (y_activated && yState == QUENCH)
+				{
+					bool ok;
+					QString cellStr = QString::number(yProcess->getQuenchCurrent(&ok), 'g', 3);
+
+					if (ok)
+					{
+						QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 6);
+
+						if (cell == NULL)
+							ui.vectorsTableWidget->setItem(presentVector, 6, cell = new QTableWidgetItem(cellStr));
+						else
+							cell->setText(cellStr);
+
+						cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+					}
+				}
+
+				if (z_activated && zState == QUENCH)
+				{
+					bool ok;
+					QString cellStr = QString::number(zProcess->getQuenchCurrent(&ok), 'g', 3);
+
+					if (ok)
+					{
+						QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 7);
+
+						if (cell == NULL)
+							ui.vectorsTableWidget->setItem(presentVector, 7, cell = new QTableWidgetItem(cellStr));
+						else
+							cell->setText(cellStr);
+
+						cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+					}
 				}
 			}
+
+			doAutosaveReport();
+		}
+		else if (!quenchLogged) // log only once
+		{
+			// Save quench data in log
+			bool ok;
+			QString msg = "Quench Detect!! ";
+
+			if (x_activated && xState == QUENCH)
+				msg += ": X=" + QString::number(xProcess->getQuenchCurrent(&ok), 'g', 3) + " A";
 
 			if (y_activated && yState == QUENCH)
-			{
-				bool ok;
-				QString cellStr = QString::number(yProcess->getQuenchCurrent(&ok), 'f', 3);
-
-				if (ok)
-				{
-					QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 6);
-
-					if (cell == NULL)
-						ui.vectorsTableWidget->setItem(presentVector, 6, cell = new QTableWidgetItem(cellStr));
-					else
-						cell->setText(cellStr);
-
-					cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-				}
-			}
+				msg += ": Y=" + QString::number(yProcess->getQuenchCurrent(&ok), 'g', 3) + " A";
 
 			if (z_activated && zState == QUENCH)
-			{
-				bool ok;
-				QString cellStr = QString::number(zProcess->getQuenchCurrent(&ok), 'f', 3);
-
-				if (ok)
-				{
-					QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 7);
-
-					if (cell == NULL)
-						ui.vectorsTableWidget->setItem(presentVector, 7, cell = new QTableWidgetItem(cellStr));
-					else
-						cell->setText(cellStr);
-
-					cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
-				}
-			}
+				msg += ": Z=" + QString::number(zProcess->getQuenchCurrent(&ok), 'g', 3) + " A";
+			
+			qDebug() << msg;
+			quenchLogged = true;
 		}
-
-		doAutosaveReport();
+	}
+	else if (switchHeatingTimer->isActive())
+	{
+		magnetState = SWITCH_HEATING;
+		systemState = SYSTEM_HEATING;
+		statusState->setStyleSheet("color: black; font: bold;");
+		statusState->setText("HEATING SWITCH");
+	}
+	else if (switchCoolingTimer->isActive())
+	{
+		magnetState = SWITCH_COOLING;
+		systemState = SYSTEM_COOLING;
+		statusState->setStyleSheet("color: black; font: bold;");
+		statusState->setText("COOLING SWITCH");
 	}
 	else if ((x_activated && xState == RAMPING) ||
 			 (y_activated && yState == RAMPING) ||
 			 (z_activated && zState == RAMPING))
 	{
+		if (remainingTime)
+			remainingTime--;	// decrement by one second
+
 		magnetState = RAMPING;
+		systemState = SYSTEM_RAMPING;
 		statusState->setStyleSheet("color: black; font: bold;");
-		statusState->setText("RAMPING");
+
+		if (remainingTime)
+			statusState->setText("RAMPING (" + QString::number(remainingTime) + ")");
+		else
+			statusState->setText("RAMPING");
+
+		quenchLogged = false;
 	}
 	else if ((!x_activated || (x_activated && xState == HOLDING)) &&
 			 (!y_activated || (y_activated && yState == HOLDING)) &&
@@ -1429,32 +1816,37 @@ void MultiAxisOperation::dataTimerTick(void)
 		else if (passCnt >= 2 || magnetState == HOLDING)
 		{
 			magnetState = HOLDING;
+			systemState = SYSTEM_HOLDING;
 			statusState->setStyleSheet("color: green; font: bold;");
 			statusState->setText("HOLDING");
+			quenchLogged = false;
 
-			// mark vector as pass
-			if (presentVector >= 0 && !vectorError)
+			// mark vector as pass only in Vector Table
+			if (targetSource == VECTOR_TABLE)
 			{
-				QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 4);
+				if (presentVector >= 0 && !vectorError)
+				{
+					QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 4);
 
-				if (cell)
-					cell->setText("Pass");
+					if (cell)
+						cell->setText("Pass");
 
-				// clear any quench data
-				cell = ui.vectorsTableWidget->item(presentVector, 5);
+					// clear any quench data
+					cell = ui.vectorsTableWidget->item(presentVector, 5);
 
-				if (cell)
-					cell->setText("");
+					if (cell)
+						cell->setText("");
 
-				cell = ui.vectorsTableWidget->item(presentVector, 6);
+					cell = ui.vectorsTableWidget->item(presentVector, 6);
 
-				if (cell)
-					cell->setText("");
+					if (cell)
+						cell->setText("");
 
-				cell = ui.vectorsTableWidget->item(presentVector, 7);
+					cell = ui.vectorsTableWidget->item(presentVector, 7);
 
-				if (cell)
-					cell->setText("");
+					if (cell)
+						cell->setText("");
+				}
 			}
 
 			passCnt = 0;	// reset
@@ -1465,24 +1857,30 @@ void MultiAxisOperation::dataTimerTick(void)
 			 (z_activated && zState == PAUSED))
 	{
 		magnetState = PAUSED;
+		systemState = SYSTEM_PAUSED;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("PAUSED");
+		quenchLogged = false;
 	}
 	else if ((x_activated && xState == ZEROING) ||
 			 (y_activated && yState == ZEROING) ||
 			 (z_activated && zState == ZEROING))
 	{
 		magnetState = ZEROING;
+		systemState = SYSTEM_ZEROING;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("ZEROING");
+		quenchLogged = false;
 	}
 	else if ((!x_activated || (x_activated && xState == AT_ZERO)) &&
 			 (!y_activated || (y_activated && yState == AT_ZERO)) &&
 			 (!z_activated || (z_activated && zState == AT_ZERO)))
 	{
 		magnetState = AT_ZERO;
+		systemState = SYSTEM_AT_ZERO;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("AT ZERO");
+		quenchLogged = false;
 	} 
 }
 
@@ -1499,32 +1897,80 @@ void MultiAxisOperation::switchHeatingTimerTick(void)
 		ui.mainTabWidget->setEnabled(true);
 		ui.mainToolBar->setEnabled(true);
 
-		statusMisc->setText("All active axes initialized successfully; switches heated");
+		// allow target changes
+		ui.makeAlignActiveButton1->setEnabled(true);
+		ui.makeAlignActiveButton2->setEnabled(true);
+		ui.manualVectorControlGroupBox->setEnabled(true);
+		ui.autoStepGroupBox->setEnabled(true);
+		ui.manualPolarControlGroupBox->setEnabled(true);
+		ui.autoStepGroupBoxPolar->setEnabled(true);
+		ui.actionRamp->setEnabled(true);
+		ui.actionPause->setEnabled(true);
+		ui.actionZero->setEnabled(true);
+
+		setStatusMsg("All active axes initialized successfully; switches heated");
 	}
 	else
 	{
-		// update the heating countdown
-		QString tempStr = statusMisc->text();
-		int index = tempStr.indexOf('(');
-		if (index >= 1)
-			tempStr.truncate(index - 1);
+		if (!errorStatusIsActive)
+		{
+			// update the heating countdown
+			QString tempStr = statusMisc->text();
+			int index = tempStr.indexOf('(');
+			if (index >= 1)
+				tempStr.truncate(index - 1);
 
-		QString timeStr = " (" + QString::number(longestHeatingTime - elapsedHeatingTicks) + " sec remaining)";
-		statusMisc->setText(tempStr + timeStr);
+			QString timeStr = " (" + QString::number(longestHeatingTime - elapsedHeatingTicks) + " sec remaining)";
+			setStatusMsg(tempStr + timeStr);
+		}
 	}
 }
 
 //---------------------------------------------------------------------------
-bool MultiAxisOperation::sendNextVector(double x, double y, double z)
+void MultiAxisOperation::switchCoolingTimerTick(void)
 {
-	// Sends next vector down to axes, using the maxRampRate for each axis
-	// to determine the ramp rate required for each axes to arrive at the
-	// next vector simultaneously. The vector must be specified in cartesian
-	// coordinates.
-	double deltaX, deltaY, deltaZ;	// kG
-	double xTime, yTime, zTime;		// sec
-	double xRampRate, yRampRate, zRampRate;	// A/sec
+	elapsedCoolingTicks++;
 
+	if (elapsedCoolingTicks >= longestCoolingTime)
+	{
+		// release interface to continue
+		switchCoolingTimer->stop();
+		ui.menuBar->setEnabled(true);
+		ui.mainTabWidget->setEnabled(true);
+		ui.mainToolBar->setEnabled(true);
+
+		// disallow target changes
+		ui.makeAlignActiveButton1->setEnabled(false);
+		ui.makeAlignActiveButton2->setEnabled(false);
+		ui.manualVectorControlGroupBox->setEnabled(false);
+		ui.autoStepGroupBox->setEnabled(false);
+		ui.manualPolarControlGroupBox->setEnabled(false);
+		ui.autoStepGroupBoxPolar->setEnabled(false);
+		ui.actionRamp->setEnabled(false);
+		ui.actionPause->setEnabled(false);
+		ui.actionZero->setEnabled(false);
+
+		setStatusMsg("All installed switches cooled, magnet in persistent mode");
+	}
+	else
+	{
+		if (!errorStatusIsActive)
+		{
+			// update the cooling countdown
+			QString tempStr = statusMisc->text();
+			int index = tempStr.indexOf('(');
+			if (index >= 1)
+				tempStr.truncate(index - 1);
+
+			QString timeStr = " (" + QString::number(longestCoolingTime - elapsedCoolingTicks) + " sec remaining)";
+			setStatusMsg(tempStr + timeStr);
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+VectorError MultiAxisOperation::checkNextVector(double x, double y, double z, QString label)
+{
 	// check limits first; if an axis is not activated yet has a non-zero vector value, throw an error
 	if (magnetParams->GetXAxisParams()->activate)
 	{
@@ -1532,9 +1978,9 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 
 		if (checkValue > magnetParams->GetXAxisParams()->currentLimit)
 		{
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " exceeds X-axis Current Limit!");
+			showErrorString(label + " exceeds X-axis Current Limit!");
 			QApplication::beep();
-			return false;
+			return EXCEEDS_X_RANGE;
 		}
 	}
 	else
@@ -1542,9 +1988,9 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 		if (fabs(x) > 0.0)
 		{
 			// can't achieve the vector as there is no X-axis activated
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " requires an active X-axis field component!");
+			showErrorString(label + " requires an active X-axis field component!");
 			QApplication::beep();
-			return false;
+			return INACTIVE_X_AXIS;
 		}
 	}
 
@@ -1554,9 +2000,9 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 
 		if (checkValue > magnetParams->GetYAxisParams()->currentLimit)
 		{
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " exceeds Y-axis Current Limit!");
+			showErrorString(label + " exceeds Y-axis Current Limit!");
 			QApplication::beep();
-			return false;
+			return EXCEEDS_Y_RANGE;
 		}
 	}
 	else
@@ -1564,9 +2010,9 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 		if (fabs(y) > 0.0)
 		{
 			// can't achieve the vector as there is no Y-axis activated
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " requires an active Y-axis field component!");
+			showErrorString(label + " requires an active Y-axis field component!");
 			QApplication::beep();
-			return false;
+			return INACTIVE_Y_AXIS;
 		}
 	}
 
@@ -1576,9 +2022,9 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 
 		if (checkValue > magnetParams->GetZAxisParams()->currentLimit)
 		{
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " exceeds Z-axis Current Limit!");
+			showErrorString(label + " exceeds Z-axis Current Limit!");
 			QApplication::beep();
-			return false;
+			return EXCEEDS_Z_RANGE;
 		}
 	}
 	else
@@ -1586,24 +2032,38 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 		if (fabs(z) > 0.0)
 		{
 			// can't achieve the vector as there is no Z-axis activated
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " requires an active Z-axis field component!");
+			showErrorString(label + " requires an active Z-axis field component!");
 			QApplication::beep();
-			return false;
+			return INACTIVE_Z_AXIS;
 		}
 	}
-	
+
 	{
 		double temp = sqrt(x * x + y * y + z * z);
 
 		if (temp > magnetParams->getMagnitudeLimit())
 		{
-			showErrorString("Vector #" + QString::number(presentVector + 1) + " exceeds Magnitude Limit of Magnet!");
+			showErrorString(label + " exceeds Magnitude Limit of Magnet!");
 			QApplication::beep();
-			return false;
+			return EXCEEDS_MAGNITUDE_LIMIT;
 		}
 	}
 
-	// next, find delta field for each axis
+	return NO_VECTOR_ERROR;
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::sendNextVector(double x, double y, double z)
+{
+	// Sends next vector down to axes, using the maxRampRate for each axis
+	// to determine the ramp rate required for each axes to arrive at the
+	// next vector simultaneously. The vector must be specified in Cartesian
+	// coordinates.
+	double deltaX, deltaY, deltaZ;	// kG
+	double xTime, yTime, zTime;		// sec
+	double xRampRate, yRampRate, zRampRate;	// A/sec
+
+	// find delta field for each axis
 	deltaX = fabsl(xField - x);
 	deltaY = fabsl(yField - y);
 	deltaZ = fabsl(zField - z);
@@ -1627,6 +2087,8 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 	// which is the longest time? it is the limiter
 	if (xTime >= yTime && xTime >= zTime)
 	{
+		remainingTime = (int)(round(xTime));
+
 		xRampRate = magnetParams->GetXAxisParams()->maxRampRate;
 
 		if (magnetParams->GetYAxisParams()->activate)
@@ -1649,6 +2111,8 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 	}
 	else if (yTime >= xTime && yTime >= zTime)
 	{
+		remainingTime = (int)(round(yTime));
+
 		yRampRate = magnetParams->GetYAxisParams()->maxRampRate;
 
 		if (magnetParams->GetXAxisParams()->activate)
@@ -1671,6 +2135,8 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 	}
 	else if (zTime >= xTime && zTime >= yTime)
 	{
+		remainingTime = (int)(round(zTime));
+
 		zRampRate = magnetParams->GetZAxisParams()->maxRampRate;
 
 		if (magnetParams->GetXAxisParams()->activate)
@@ -1691,6 +2157,11 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 		else
 			yRampRate = 0;
 	}
+
+	// target field is good, save active target values
+	xTarget = x;
+	yTarget = y;
+	zTarget = z;
 
 	// send down new ramp rates, new targets, and ramp
 	if (magnetParams->GetXAxisParams()->activate)
@@ -1731,9 +2202,50 @@ bool MultiAxisOperation::sendNextVector(double x, double y, double z)
 			}
 		}
 	}
+}
 
-	lastVector = presentVector;
-	return true;
+//---------------------------------------------------------------------------
+void MultiAxisOperation::actionPersistentMode(void)
+{
+	if (ui.actionPersistentMode->isChecked())
+	{
+		// first, check for HOLDING or PAUSED state
+		if (systemState == SYSTEM_HOLDING || systemState == SYSTEM_PAUSED)
+		{
+			// enter persistent mode, cool switch(es)
+			switchControl(false);	// turn off heater
+			systemState = SYSTEM_COOLING;
+			setStatusMsg("Cooling switches, please wait...");
+			elapsedCoolingTicks = 0;
+			switchCoolingTimer->start();
+
+			ui.menuBar->setEnabled(false);
+			ui.mainTabWidget->setEnabled(false);
+			ui.mainToolBar->setEnabled(false);
+		}
+		else
+		{
+			// error message, cannot enter persistent mode while not HOLDING or PAUSED
+			ui.actionPersistentMode->setChecked(false);
+			errorStatusIsActive = true;
+			statusMisc->setStyleSheet("color: red; font: bold");
+			statusMisc->setText("ERROR: Cannot enter persistent mode unless in HOLDING or PAUSED state");
+			QTimer::singleShot(5000, this, SLOT(errorStatusTimeout()));
+		}
+	}
+	else
+	{
+		// exit persistent mode, heat switch(es)
+		switchControl(true);	// turn on heater
+		systemState = SYSTEM_HEATING;
+		setStatusMsg("Heating switches, please wait...");
+		elapsedHeatingTicks = 0;
+		switchHeatingTimer->start();
+
+		ui.menuBar->setEnabled(false);
+		ui.mainTabWidget->setEnabled(false);
+		ui.mainToolBar->setEnabled(false);
+	}
 }
 
 //---------------------------------------------------------------------------

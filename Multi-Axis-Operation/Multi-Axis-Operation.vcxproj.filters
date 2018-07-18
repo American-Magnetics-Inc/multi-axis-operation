@@ -17,24 +17,27 @@
     <ClCompile Include="processmanager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
-    
-    
     <ClCompile Include="aboutdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
-    
     <ClCompile Include="multiaxisoperation-vectors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="multiaxisoperation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
+    <ClCompile Include="multiaxisoperation-align.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="multiaxisoperation-parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="multiaxisoperation-polar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resource Files">
@@ -73,15 +76,12 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    
     <ClInclude Include="qtablewidgetwithcopypaste.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="conversions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    
-    
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="magnetparams.ui">
@@ -134,5 +134,10 @@
     <Image Include="Resources\AMIlogo.png">
       <Filter>Resource Files</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="parser.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

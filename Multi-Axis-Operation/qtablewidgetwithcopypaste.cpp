@@ -191,7 +191,8 @@ void QTableWidgetWithCopyPaste::loadFromFile(QString filename, bool makeCheckabl
 
 		int cellRow = 0;
 
-		for (int i = skipCnt; i < numRows; ++i) {
+		for (int i = skipCnt; i < numRows; ++i) 
+		{
 			if (rows[i].length() > 0)
 			{
 				QStringList columns = rows[i].split(',');

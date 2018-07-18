@@ -16,7 +16,7 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
 	bool convertFieldUnits = false;
 
 	if (autostepTimer->isActive())
-		return;	// no load during autostepping
+		return;	// no load during auto-stepping
 
 	vectorsFileName = QFileDialog::getOpenFileName(this, "Choose Vector File", lastVectorsLoadPath, "Vector Definition Files (*.txt *.log *.csv)");
 
@@ -120,6 +120,7 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
 			setSphericalConvention(convention, true);
 
 		QApplication::restoreOverrideCursor();
+		vectorSelectionChanged();
 	}
 }
 
@@ -215,6 +216,199 @@ void MultiAxisOperation::actionSave_Vector_Table(void)
 
 		QApplication::restoreOverrideCursor();
 	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::vectorSelectionChanged(void)
+{
+	if (autostepTimer->isActive())
+	{
+		// no table mods during autostep!
+		ui.vectorAddRowAboveToolButton->setEnabled(false);
+		ui.vectorAddRowBelowToolButton->setEnabled(false);
+		ui.vectorRemoveRowToolButton->setEnabled(false);
+		ui.vectorTableClearToolButton->setEnabled(false);
+	}
+	else
+	{
+		// any selected vectors?
+		QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
+
+		if (list.count())
+		{
+			ui.vectorAddRowAboveToolButton->setEnabled(true);
+			ui.vectorAddRowBelowToolButton->setEnabled(true);
+			ui.vectorRemoveRowToolButton->setEnabled(true);
+		}
+		else
+		{
+			if (ui.vectorsTableWidget->rowCount())
+			{
+				ui.vectorAddRowAboveToolButton->setEnabled(false);
+				ui.vectorAddRowBelowToolButton->setEnabled(false);
+			}
+			else
+			{
+				ui.vectorAddRowAboveToolButton->setEnabled(true);
+				ui.vectorAddRowBelowToolButton->setEnabled(true);
+			}
+
+			ui.vectorRemoveRowToolButton->setEnabled(false);
+		}
+
+		if (ui.vectorsTableWidget->rowCount())
+			ui.vectorTableClearToolButton->setEnabled(true);
+		else
+			ui.vectorTableClearToolButton->setEnabled(false);
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::vectorTableAddRowAbove(void)
+{
+	int newRow = -1;
+
+	// find selected vector
+	QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
+
+	if (list.count())
+	{
+		int currentRow = list[0]->row();
+		ui.vectorsTableWidget->insertRow(currentRow);
+		newRow = currentRow;
+	}
+	else
+	{
+		if (ui.vectorsTableWidget->rowCount() == 0)
+		{
+			ui.vectorsTableWidget->insertRow(0);
+			newRow = 0;
+		}
+	}
+
+	if (newRow > -1)
+	{
+		initNewRow(newRow);
+		updatePresentVector(newRow, false);
+		vectorSelectionChanged();
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::vectorTableAddRowBelow(void)
+{
+	int newRow = -1;
+
+	// find selected vector
+	QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
+
+	if (list.count())
+	{
+		int currentRow = list[0]->row();
+		ui.vectorsTableWidget->insertRow(currentRow + 1);
+		newRow = currentRow + 1;
+	}
+	else
+	{
+		if (ui.vectorsTableWidget->rowCount() == 0)
+		{
+			ui.vectorsTableWidget->insertRow(0);
+			newRow = 0;
+		}
+	}
+
+	if (newRow > -1)
+	{
+		initNewRow(newRow);
+		updatePresentVector(newRow, false);
+		vectorSelectionChanged();
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::initNewRow(int newRow)
+{
+	int numColumns = ui.vectorsTableWidget->columnCount();
+
+	// initialize cells
+	for (int i = 0; i < numColumns; ++i)
+	{
+		QTableWidgetItem *cell = ui.vectorsTableWidget->item(newRow, i);
+
+		if (cell == NULL)
+			ui.vectorsTableWidget->setItem(newRow, i, cell = new QTableWidgetItem(""));
+		else
+			cell->setText("");
+
+		if (i == (numColumns - 1))
+			cell->setTextAlignment(Qt::AlignCenter);
+		else
+			cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::updatePresentVector(int row, bool removed)
+{
+	if (targetSource == VECTOR_TABLE)
+	{
+		if (removed)
+		{
+			if (presentVector == row)
+			{
+				setStatusMsg("");
+				presentVector = lastVector = -1;
+			}
+			else if (row < presentVector)
+			{
+				// selection shift up by one
+				presentVector--;
+				lastVector = presentVector;
+				setStatusMsg("Target Vector : Vector Table #" + QString::number(presentVector + 1));
+			}
+		}
+		else
+		{
+			if (row <= presentVector)
+			{
+				// selection shifted down by one
+				presentVector++;
+				lastVector = presentVector;
+				setStatusMsg("Target Vector : Vector Table #" + QString::number(presentVector + 1));
+			}
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::vectorTableRemoveRow(void)
+{
+	// find selected vector
+	QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
+
+	if (list.count())
+	{
+		int currentRow = list[0]->row();
+		ui.vectorsTableWidget->removeRow(currentRow);
+		updatePresentVector(currentRow, true);
+		vectorSelectionChanged();
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::vectorTableClear(void)
+{
+	int numRows = ui.vectorsTableWidget->rowCount();
+
+	if (numRows)
+	{
+		for (int i = numRows; i > 0; i--)
+			ui.vectorsTableWidget->removeRow(i - 1);
+	}
+
+	presentVector = lastVector = -1;
+	setStatusMsg("");
+	vectorSelectionChanged();
 }
 
 //---------------------------------------------------------------------------
@@ -412,6 +606,9 @@ void MultiAxisOperation::goToSelectedVector(void)
 {
 	if (connected)
 	{
+		// deactivate any alignment vectors
+		deactivateAlignmentVectors();
+
 		// find selected vector
 		QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
 
@@ -419,6 +616,7 @@ void MultiAxisOperation::goToSelectedVector(void)
 		{
 			presentVector = list[0]->row();
 			magnetState = RAMPING;
+			systemState = SYSTEM_RAMPING;
 			goToVector();
 		}
 	}
@@ -429,6 +627,9 @@ void MultiAxisOperation::goToNextVector(void)
 {
 	if (connected)
 	{
+		// deactivate any alignment vectors
+		deactivateAlignmentVectors();
+
 		// find selected vector
 		QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
 
@@ -445,6 +646,7 @@ void MultiAxisOperation::goToNextVector(void)
 				ui.vectorsTableWidget->selectRow(presentVector);
 
 				magnetState = RAMPING;
+				systemState = SYSTEM_RAMPING;
 				goToVector();
 			}
 		}
@@ -491,14 +693,14 @@ void MultiAxisOperation::goToVector(void)
 			// check input values for errors
 			if (coord1 < 0.0)	// magnitude cannot be negative
 			{
-				vectorError = true;
+				vectorError = NEGATIVE_MAGNITUDE;
 				showErrorString("Vector #" + QString::number(presentVector + 1) + " : Magnitude of vector cannot be a negative value");	// error annunciation
 				abortAutostep();
 				return;
 			}
 			if (coord3 < 0.0 || coord3 > 180.0)	// angle from Z-axis must be >= 0 and <= 180 degrees
 			{
-				vectorError = true;
+				vectorError = INCLINATION_OUT_OF_RANGE;
 				showErrorString("Vector #" + QString::number(presentVector + 1) + " : Angle from Z-axis must be from 0 to 180 degrees");	// error annunciation
 				abortAutostep();
 				return;
@@ -508,15 +710,19 @@ void MultiAxisOperation::goToVector(void)
 		}
 
 		// attempt to go to vector
-		if (!(vectorError = !sendNextVector(x, y, z)))
+		if ((vectorError = checkNextVector(x, y, z, "Vector #" + QString::number(presentVector + 1))) == NO_VECTOR_ERROR)
 		{
+			sendNextVector(x, y, z);
+			targetSource = VECTOR_TABLE;
+			lastVector = presentVector;
+
 			if (autostepTimer->isActive())
 			{
-				statusMisc->setText("Auto-Stepping : Vector Table #" + QString::number(presentVector + 1));
+				setStatusMsg("Auto-Stepping : Vector Table #" + QString::number(presentVector + 1));
 			}
 			else
 			{
-				statusMisc->setText("Active Vector : Vector Table #" + QString::number(presentVector + 1));
+				setStatusMsg("Target Vector : Vector Table #" + QString::number(presentVector + 1));
 			}
 		}
 		else
@@ -526,7 +732,7 @@ void MultiAxisOperation::goToVector(void)
 	}
 	else
 	{
-		vectorError = true;
+		vectorError = NON_NUMERICAL_ENTRY;
 		showErrorString("Vector #" + QString::number(presentVector + 1) + " has non-numerical entry");	// error annunciation
 		abortAutostep();
 	}
@@ -535,44 +741,55 @@ void MultiAxisOperation::goToVector(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::startAutostep(void)
 {
-	if (!connected)
-		return;
-
-	autostepStartIndex = ui.startIndexEdit->text().toInt();
-	autostepEndIndex = ui.endIndexEdit->text().toInt();
-
-	if (autostepStartIndex < 1 || autostepStartIndex > ui.vectorsTableWidget->rowCount())
+	if (connected)
 	{
-		showErrorString("Starting Index is out of range!");
-		return;
+		// deactivate any alignment vectors
+		deactivateAlignmentVectors();
+
+		autostepStartIndex = ui.startIndexEdit->text().toInt();
+		autostepEndIndex = ui.endIndexEdit->text().toInt();
+
+		if (autostepStartIndex < 1 || autostepStartIndex > ui.vectorsTableWidget->rowCount())
+		{
+			showErrorString("Starting Index is out of range!");
+			return;
+		}
+
+		if (autostepEndIndex <= autostepStartIndex || autostepEndIndex > ui.vectorsTableWidget->rowCount())
+		{
+			showErrorString("Ending Index is out of range!");
+			return;
+		}
+
+		ui.startIndexEdit->setEnabled(false);
+		ui.endIndexEdit->setEnabled(false);
+
+		elapsedTimerTicks = 0;
+		autostepTimer->start();
+
+		ui.autostepStartButton->setEnabled(false);
+		ui.autostartStopButton->setEnabled(true);
+		ui.manualVectorControlGroupBox->setEnabled(false);
+		ui.actionLoad_Vector_Table->setEnabled(false);
+
+		ui.manualPolarControlGroupBox->setEnabled(false);
+		ui.autoStepGroupBoxPolar->setEnabled(false);
+		ui.actionLoad_Polar_Table->setEnabled(false);
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(false);
+
+		// begin with first vector
+		presentVector = autostepStartIndex - 1;
+
+		// highlight row in table
+		ui.vectorsTableWidget->selectRow(presentVector);
+		magnetState = RAMPING;
+		systemState = SYSTEM_RAMPING;
+		vectorSelectionChanged(); // lockout row changes
+		haveAutosavedReport = false;
+
+		goToVector();
 	}
-
-	if (autostepEndIndex <= autostepStartIndex || autostepEndIndex > ui.vectorsTableWidget->rowCount())
-	{
-		showErrorString("Ending Index is out of range!");
-		return;
-	}
-
-	ui.startIndexEdit->setEnabled(false);
-	ui.endIndexEdit->setEnabled(false);
-
-	elapsedTimerTicks = 0;
-	autostepTimer->start();
-
-	ui.autostepStartButton->setEnabled(false);
-	ui.autostartStopButton->setEnabled(true);
-	ui.manualVectorControlGroupBox->setEnabled(false);
-	ui.actionLoad_Vector_Table->setEnabled(false);
-
-	// begin with first vector
-	presentVector = autostepStartIndex - 1;
-
-	// highlight row in table
-	ui.vectorsTableWidget->selectRow(presentVector);
-	magnetState = RAMPING;
-	haveAutosavedReport = false;
-
-	goToVector();
 }
 
 //---------------------------------------------------------------------------
@@ -586,13 +803,21 @@ void MultiAxisOperation::abortAutostep()
 			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 			Sleep(100);
 		}
-		statusMisc->setText("Auto-Stepping aborted due to an error with Vector #" + QString::number(presentVector + 1));
+		setStatusMsg("Auto-Stepping aborted due to an error with Vector #" + QString::number(presentVector + 1));
 		ui.startIndexEdit->setEnabled(true);
 		ui.endIndexEdit->setEnabled(true);
 		ui.autostepStartButton->setEnabled(true);
 		ui.autostartStopButton->setEnabled(false);
 		ui.manualVectorControlGroupBox->setEnabled(true);
 		ui.actionLoad_Vector_Table->setEnabled(true);
+
+		ui.manualPolarControlGroupBox->setEnabled(true);
+		ui.autoStepGroupBoxPolar->setEnabled(true);
+		ui.actionLoad_Polar_Table->setEnabled(true);
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(true);
+
+		vectorSelectionChanged();
 	}
 }
 
@@ -602,13 +827,21 @@ void MultiAxisOperation::stopAutostep(void)
 	if (autostepTimer->isActive())
 	{
 		autostepTimer->stop();
-		statusMisc->setText("Auto-Stepping aborted via Stop button");
+		setStatusMsg("Auto-Stepping aborted via Stop button");
 		ui.startIndexEdit->setEnabled(true);
 		ui.endIndexEdit->setEnabled(true);
 		ui.autostepStartButton->setEnabled(true);
 		ui.autostartStopButton->setEnabled(false);
 		ui.manualVectorControlGroupBox->setEnabled(true);
 		ui.actionLoad_Vector_Table->setEnabled(true);
+
+		ui.manualPolarControlGroupBox->setEnabled(true);
+		ui.autoStepGroupBoxPolar->setEnabled(true);
+		ui.actionLoad_Polar_Table->setEnabled(true);
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(true);
+
+		vectorSelectionChanged();
 	}
 }
 
@@ -637,6 +870,7 @@ void MultiAxisOperation::autostepTimerTick(void)
 					presentVector++;
 					ui.vectorsTableWidget->selectRow(presentVector);
 					magnetState = RAMPING;
+					systemState = SYSTEM_RAMPING;
 
 					// next vector!
 					goToVector();
@@ -644,14 +878,21 @@ void MultiAxisOperation::autostepTimerTick(void)
 				else
 				{
 					// successfully completed vector table auto-stepping
-					statusMisc->setText("Auto-Step Completed @ Vector #" + QString::number(presentVector + 1));
+					setStatusMsg("Auto-Step Completed @ Vector #" + QString::number(presentVector + 1));
 					autostepTimer->stop();
 					ui.startIndexEdit->setEnabled(true);
 					ui.endIndexEdit->setEnabled(true);
 					ui.autostepStartButton->setEnabled(true);
 					ui.autostartStopButton->setEnabled(false);
 					ui.manualVectorControlGroupBox->setEnabled(true);
+					vectorSelectionChanged();
 					doAutosaveReport();
+
+					ui.manualPolarControlGroupBox->setEnabled(true);
+					ui.autoStepGroupBoxPolar->setEnabled(true);
+					ui.actionLoad_Polar_Table->setEnabled(true);
+					if (switchInstalled)
+						ui.actionPersistentMode->setEnabled(true);
 				}
 			}
 			else
@@ -663,18 +904,25 @@ void MultiAxisOperation::autostepTimerTick(void)
 					tempStr.truncate(index - 1);
 
 				QString timeStr = " (" + QString::number(temp - elapsedTimerTicks) + " sec remaining)";
-				statusMisc->setText(tempStr + timeStr);
+				setStatusMsg(tempStr + timeStr);
 			}
 		}
 		else
 		{
 			autostepTimer->stop();
-			statusMisc->setText("Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentVector + 1));
+			setStatusMsg("Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentVector + 1));
 			ui.startIndexEdit->setEnabled(true);
 			ui.endIndexEdit->setEnabled(true);
 			ui.autostepStartButton->setEnabled(true);
 			ui.autostartStopButton->setEnabled(false);
 			ui.manualVectorControlGroupBox->setEnabled(true);
+			vectorSelectionChanged();
+
+			ui.manualPolarControlGroupBox->setEnabled(true);
+			ui.autoStepGroupBoxPolar->setEnabled(true);
+			ui.actionLoad_Polar_Table->setEnabled(true);
+			if (switchInstalled)
+				ui.actionPersistentMode->setEnabled(true);
 		}
 	}
 	else
@@ -687,7 +935,7 @@ void MultiAxisOperation::autostepTimerTick(void)
 		if (index >= 1)
 			tempStr.truncate(index - 1);
 
-		statusMisc->setText(tempStr);
+		setStatusMsg(tempStr);
 	}
 }
 
@@ -724,7 +972,7 @@ void MultiAxisOperation::doAutosaveReport(void)
 
 					if (reportFile.exists())
 					{
-						statusMisc->setText(statusMisc->text() + " : Saved as " + reportFile.fileName());
+						setStatusMsg(statusMisc->text() + " : Saved as " + reportFile.fileName());
 						haveAutosavedReport = true;
 					}
 				}

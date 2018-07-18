@@ -7,5 +7,21 @@
         <file>Resources/settings.png</file>
         <file>Resources/settings@2x.png</file>
         <file>Resources/AMIlogo.png</file>
+        <file>Resources/security_lock.png</file>
+        <file>Resources/security_lock@2x.png</file>
+        <file>Resources/security_unlock.png</file>
+        <file>Resources/security_unlock@2x.png</file>
+        <file>Resources/delete-row.png</file>
+        <file>Resources/delete-row@2x.png</file>
+        <file>Resources/erase-table.png</file>
+        <file>Resources/erase-table@2x.png</file>
+        <file>Resources/insert-above.png</file>
+        <file>Resources/insert-above@2x.png</file>
+        <file>Resources/insert-below.png</file>
+        <file>Resources/insert-below@2x.png</file>
+        <file>Resources/help.png</file>
+        <file>Resources/help@2x.png</file>
+        <file>Resources/info.png</file>
+        <file>Resources/info@2x.png</file>
     </qresource>
 </RCC>

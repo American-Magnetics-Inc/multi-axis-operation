@@ -15,7 +15,7 @@ public:
 
 	void saveToFile(QString filename);
 	void loadFromFile(QString filename, bool makeCheckable, int skipCnt);
-	void setMinimumNumCols(int numCols) {minimumNumCols = numCols;};
+	void setMinimumNumCols(int numCols) { minimumNumCols = numCols; }
 
 private:
 	int minimumNumCols;

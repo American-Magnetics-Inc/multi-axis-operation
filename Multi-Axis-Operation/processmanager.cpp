@@ -3,6 +3,8 @@
 
 const int QUERY_TIMEOUT = 3000;	// timeout in msec
 
+//#define LOCAL_DEBUG
+
 //---------------------------------------------------------------------------
 // Constructor
 //---------------------------------------------------------------------------
@@ -90,7 +92,7 @@ void ProcessManager::processStarted(void)
 {
 	QString cmd("*IDN?\n");
 
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 	qDebug() << "*IDN?";
 #endif	
 	process->write(cmd.toLocal8Bit());
@@ -142,7 +144,7 @@ void ProcessManager::readyReadStandardOutput(void)
 	if (index >= 0)
 		reply.truncate(index);
 
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 	qDebug() << reply;
 #endif
 }
@@ -256,7 +258,7 @@ double ProcessManager::getMagnetCurrent(bool *error)
 
 	{
 		QString cmd("CURR:MAG?\n");
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 		qDebug() << "CURR:MAG?";
 #endif
 		process->write(cmd.toLocal8Bit());
@@ -288,7 +290,7 @@ double ProcessManager::getField(bool *error)
 
 	{
 		QString cmd("FIELD:MAG?\n");
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 		qDebug() << "FIELD:MAG?";
 #endif
 		process->write(cmd.toLocal8Bit());
@@ -320,7 +322,7 @@ double ProcessManager::getQuenchCurrent(bool *error)
 
 	{
 		QString cmd("QU:CURR?\n");
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 		qDebug() << "QU:CURR?";
 #endif
 		process->write(cmd.toLocal8Bit());
@@ -351,7 +353,7 @@ FieldUnits ProcessManager::getUnits(void)
 	int temp;
 
 	{
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 		qDebug() << "FIELD:UNITS?";
 #endif		
 		process->write("FIELD:UNITS?\n");
@@ -378,7 +380,7 @@ State ProcessManager::getState(void)
 	int temp;
 
 	{
-#ifdef DEBUG
+#ifdef LOCAL_DEBUG
 		qDebug() << "STATE?";
 #endif
 		process->write("STATE?\n");
@@ -413,7 +415,7 @@ void ProcessManager::sendPause(void)
 }
 
 //---------------------------------------------------------------------------
-// Sends target in A/sec given a value in kG
+// Sends target in A/sec given a value in current field units
 void ProcessManager::setTargetCurr(AxesParams *params, double value)
 {
 	double target = 0;

@@ -93,6 +93,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_1B1B6D9DF3914FB895A383C5C49F3956"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_1BEF9A8508574668BDB3D02947043315"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -160,6 +166,12 @@
         "Entry"
         {
         "MsmKey" = "8:_264BFEF5699E49DEBE3389D7BB46A736"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_26E307ED7C394E19ADE450BD96EADCDE"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -243,6 +255,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_48BB001AFC564D4790FB937F636D4284"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_491DD4BA07BC42E29CB4C5C89E38BC24"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -304,6 +322,12 @@
         "Entry"
         {
         "MsmKey" = "8:_5B9F9B1D34C44D5EB6D32B341742E3F1"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_5DD791998F2A4618B246F6BF834735FB"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -429,7 +453,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_7CAE245E26C548939EDA4257E0312F9A"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_7CF1CAE7FB434A3086DCA39E7AE6CB74"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8099DD65D83944188F8FBBFACB833363"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -484,6 +520,12 @@
         "Entry"
         {
         "MsmKey" = "8:_A167FC646E5042ECA571DAD6D51F7BF5"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_A217B27895AE4985B29E4EC5DFDCA4D1"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -603,12 +645,6 @@
         }
         "Entry"
         {
-        "MsmKey" = "8:_BB09BA801FF543AEADE2EB35B01B0656"
-        "OwnerKey" = "8:_UNDEFINED"
-        "MsmSig" = "8:_UNDEFINED"
-        }
-        "Entry"
-        {
         "MsmKey" = "8:_C355733D7705417BAEB23910FA27A2DA"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -682,6 +718,18 @@
         "Entry"
         {
         "MsmKey" = "8:_D3E0AC077A35415C92E41DDC493C3421"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D49202269F2042CB8C4F458FD5B2CF44"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_D4F468B88A7A488DA2FCE5419A0EB17A"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -771,6 +819,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_EE07616E0CD94C73A241F788EBE57E90"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_EE28F87EC9E047259C76B120F0B43E6A"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -807,6 +861,18 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_F3866DDB63DB4826846F06E1DD98BF97"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F410630D7C494B3E95555E725C91D827"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_F4A431C9F9FC451D9AF2D2E8DC380495"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -814,6 +880,12 @@
         "Entry"
         {
         "MsmKey" = "8:_F5642ED722D34FC6A9FF8FC6E4DFA9D2"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_F5DEBC428C91449B86DB5E0480619319"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1453,6 +1525,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_26E307ED7C394E19ADE450BD96EADCDE"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\lock.png"
+            "TargetName" = "8:lock.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_274B419EB28546D0875F9F9311F2E66F"
             {
             "SourcePath" = "8:..\\help\\HTML\\jstopics\\main-window-layout.js"
@@ -1713,6 +1805,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_48BB001AFC564D4790FB937F636D4284"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\polar-table-format.html"
+            "TargetName" = "8:polar-table-format.html"
+            "Tag" = "8:"
+            "Folder" = "8:_47EA8C0221D34FFBA8C48CC0B2BD00FC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_491DD4BA07BC42E29CB4C5C89E38BC24"
             {
             "SourcePath" = "8:..\\help\\HTML\\css\\hmwebhelp_main_print.css"
@@ -1919,6 +2031,26 @@
             "TargetName" = "8:Qt5Network.dll"
             "Tag" = "8:"
             "Folder" = "8:_74DED266078E4E36B2711E7814A38DD7"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_5DD791998F2A4618B246F6BF834735FB"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\polar-load.png"
+            "TargetName" = "8:polar-load.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2333,10 +2465,50 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7CAE245E26C548939EDA4257E0312F9A"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\sample-align.png"
+            "TargetName" = "8:sample-align.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_7CF1CAE7FB434A3086DCA39E7AE6CB74"
             {
             "SourcePath" = "8:..\\help\\HTML\\images\\close_data.png"
             "TargetName" = "8:close_data.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8099DD65D83944188F8FBBFACB833363"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\polar-example.png"
+            "TargetName" = "8:polar-example.png"
             "Tag" = "8:"
             "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
             "Condition" = "8:"
@@ -2519,6 +2691,26 @@
             "TargetName" = "8:menu-bar-items.html"
             "Tag" = "8:"
             "Folder" = "8:_47EA8C0221D34FFBA8C48CC0B2BD00FC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_A217B27895AE4985B29E4EC5DFDCA4D1"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\sample-align.mp4"
+            "TargetName" = "8:sample-align.mp4"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -3173,6 +3365,46 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D49202269F2042CB8C4F458FD5B2CF44"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\sample-align_preview.jpg"
+            "TargetName" = "8:sample-align_preview.jpg"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D4F468B88A7A488DA2FCE5419A0EB17A"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\3-axis-in-plane.png"
+            "TargetName" = "8:3-axis-in-plane.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D67A531F186642E8A00197FCBE17A156"
             {
             "SourcePath" = "8:..\\bin\\qoffscreen.dll"
@@ -3433,6 +3665,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_EE07616E0CD94C73A241F788EBE57E90"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\table-editing.png"
+            "TargetName" = "8:table-editing.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_EE28F87EC9E047259C76B120F0B43E6A"
             {
             "SourcePath" = "8:..\\help\\HTML\\js\\hmcontent.js"
@@ -3553,6 +3805,46 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F3866DDB63DB4826846F06E1DD98BF97"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\polar-table.png"
+            "TargetName" = "8:polar-table.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F410630D7C494B3E95555E725C91D827"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\python-examples.html"
+            "TargetName" = "8:python-examples.html"
+            "Tag" = "8:"
+            "Folder" = "8:_47EA8C0221D34FFBA8C48CC0B2BD00FC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F4A431C9F9FC451D9AF2D2E8DC380495"
             {
             "SourcePath" = "8:..\\help\\HTML\\jstopics\\python_remote-scripting-suppor.js"
@@ -3577,6 +3869,26 @@
             {
             "SourcePath" = "8:..\\help\\HTML\\images\\spacer.gif"
             "TargetName" = "8:spacer.gif"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_F5DEBC428C91449B86DB5E0480619319"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\cicon_video_playbutton.png"
+            "TargetName" = "8:cicon_video_playbutton.png"
             "Tag" = "8:"
             "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
             "Condition" = "8:"
@@ -3928,15 +4240,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Multi-Axis Operation"
-        "ProductCode" = "8:{0491DB1F-1355-426F-AE70-919D93621CD0}"
-        "PackageCode" = "8:{3DE1C5EC-A398-4940-BD0C-E11B6728CBE9}"
+        "ProductCode" = "8:{FCB3C0B6-E3CF-491E-8C49-6ADF21736F30}"
+        "PackageCode" = "8:{FBC121B1-09E7-46CE-BF87-7EA21BF5C8E8}"
         "UpgradeCode" = "8:{628D8A88-27D5-471C-BD03-99676CC09EF7}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.60"
+        "ProductVersion" = "8:0.90"
         "Manufacturer" = "8:American Magnetics, Inc."
         "ARPHELPTELEPHONE" = "8:865 482-1056"
         "ARPHELPLINK" = "8:http://www.americanmagnetics.com/support-center/"
@@ -3944,7 +4256,7 @@
         "Subject" = "8:AMI Maxes(tm) Operation app"
         "ARPCONTACT" = "8:American Magnetics, Inc."
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:Multi-Axis Operation v0.60"
+        "ARPCOMMENTS" = "8:Multi-Axis Operation v0.90"
         "ARPURLINFOABOUT" = "8:http://www.americanmagnetics.com"
         "ARPPRODUCTICON" = "8:_F7B8AF449B154A99A93194495A39C513"
         "ARPIconIndex" = "3:0"
@@ -4052,7 +4364,7 @@
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_556EB6F42BE04C3AA3CDB4FC08FDA4B4"
             {
             "Name" = "8:Multi-Axis Operation"
-            "Arguments" = "8:"
+            "Arguments" = "8:-p"
             "Description" = "8:"
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
@@ -4066,7 +4378,7 @@
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_CA6F723B3CEC47A6B79CE7D4697CA48F"
             {
             "Name" = "8:Multi-Axis Operation"
-            "Arguments" = "8:"
+            "Arguments" = "8:-p"
             "Description" = "8:"
             "ShowCmd" = "3:1"
             "IconIndex" = "3:0"
@@ -4483,11 +4795,11 @@
         }
         "MergeModule"
         {
-            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_BB09BA801FF543AEADE2EB35B01B0656"
+            "{CEE29DC0-9FBA-4B99-8D47-5BC643D9B626}:_1B1B6D9DF3914FB895A383C5C49F3956"
             {
             "UseDynamicProperties" = "11:TRUE"
             "IsDependency" = "11:FALSE"
-            "SourcePath" = "8:C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\14.13.26020\\MergeModules\\Microsoft_VC141_CRT_x64.msm"
+            "SourcePath" = "8:C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Redist\\MSVC\\14.14.26405\\MergeModules\\Microsoft_VC141_CRT_x64.msm"
                 "Properties"
                 {
                 }

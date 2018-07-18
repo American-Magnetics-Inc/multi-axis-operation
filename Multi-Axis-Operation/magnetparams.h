@@ -67,6 +67,7 @@ public:
 	void setReadOnly(void);
 	void clearReadOnly(void);
 	void syncUI(void);
+	void save(void);
 
 public slots:
 	void actionActivate(bool checked);
@@ -84,6 +85,5 @@ private:
 	void xAxisSwitchUiConfig(bool checked, bool updateUI);
 	void yAxisSwitchUiConfig(bool checked, bool updateUI);
 	void zAxisSwitchUiConfig(bool checked, bool updateUI);
-	void save(void);
 	void restore(void);
 };
