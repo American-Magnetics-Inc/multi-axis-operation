@@ -75,6 +75,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_16F0F91D19C643D89A7BC40FD032794C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_1733198818DB40588EF964EBB25C725A"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -280,6 +286,12 @@
         "Entry"
         {
         "MsmKey" = "8:_50D2BE055E074971A8D232E362370D9E"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_569135018EAB41B3855EB88D455E97D5"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -1225,6 +1237,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_16F0F91D19C643D89A7BC40FD032794C"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\jstopics\\python-examples.js"
+            "TargetName" = "8:python-examples.js"
+            "Tag" = "8:"
+            "Folder" = "8:_8D5B479EAD984191B119700F705714A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_1733198818DB40588EF964EBB25C725A"
             {
             "SourcePath" = "8:..\\help\\HTML\\js\\toggleLayoutTable.js"
@@ -1891,6 +1923,26 @@
             "TargetName" = "8:leftright.png"
             "Tag" = "8:"
             "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_569135018EAB41B3855EB88D455E97D5"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\jstopics\\polar-table-format.js"
+            "TargetName" = "8:polar-table-format.js"
+            "Tag" = "8:"
+            "Folder" = "8:_8D5B479EAD984191B119700F705714A0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
