@@ -2,6 +2,10 @@
 #include "multiaxisoperation.h"
 #include "conversions.h" 
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+#include <unistd.h>
+#endif
+
 const double RAD_TO_DEG = 180.0 / M_PI;
 
 //---------------------------------------------------------------------------
@@ -46,6 +50,8 @@ void MultiAxisOperation::polarToCartesian(double magnitude, double angle, QVecto
 	conversion->setX(result.x());
 	conversion->setY(result.y());
 	conversion->setZ(result.z());
+
+    *conversion *= magnitude;	// multiply by magnitude
 }
 
 //---------------------------------------------------------------------------
@@ -67,13 +73,14 @@ void MultiAxisOperation::altPolarToCartesian(double magnitude, double angle, QVe
 	conversion->setX(vprime.x());
 	conversion->setY(vprime.y());
 	conversion->setZ(vprime.z());
+
+    *conversion *= magnitude;	// multiply by magnitude
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionLoad_Polar_Table(void)
 {
 	QSettings settings;
-	int skipCnt = 0;
 	lastPolarLoadPath = settings.value("LastPolarFilePath").toString();
 	bool convertFieldUnits = false;
 
@@ -91,7 +98,7 @@ void MultiAxisOperation::actionLoad_Polar_Table(void)
 		FILE *inFile;
 		inFile = fopen(polarFileName.toLocal8Bit(), "r");
 
-		if (inFile != NULL)
+        if (inFile != nullptr)
 		{
 			QTextStream in(inFile);
 
@@ -327,7 +334,7 @@ void MultiAxisOperation::initNewPolarRow(int newRow)
 	{
 		QTableWidgetItem *cell = ui.polarTableWidget->item(newRow, i);
 
-		if (cell == NULL)
+        if (cell == nullptr)
 			ui.polarTableWidget->setItem(newRow, i, cell = new QTableWidgetItem(""));
 		else
 			cell->setText("");
@@ -345,6 +352,7 @@ void MultiAxisOperation::updatePresentPolar(int row, bool removed)
 		{
 			if (presentPolar == row)
 			{
+				lastTargetMsg.clear();
 				setStatusMsg("");
 				presentPolar = lastPolar = -1;
 			}
@@ -353,7 +361,8 @@ void MultiAxisOperation::updatePresentPolar(int row, bool removed)
 				// selection shift up by one
 				presentPolar--;
 				lastPolar = presentPolar;
-				setStatusMsg("Target Vector : Polar Table #" + QString::number(presentPolar + 1));
+				lastTargetMsg = "Target Vector : Polar Table #" + QString::number(presentPolar + 1);
+				setStatusMsg(lastTargetMsg);
 			}
 		}
 		else
@@ -363,7 +372,8 @@ void MultiAxisOperation::updatePresentPolar(int row, bool removed)
 				// selection shifted down by one
 				presentPolar++;
 				lastPolar = presentPolar;
-				setStatusMsg("Target Vector : Polar Table #" + QString::number(presentPolar + 1));
+				lastTargetMsg = "Target Vector : Polar Table #" + QString::number(presentPolar + 1);
+				setStatusMsg(lastTargetMsg);
 			}
 		}
 	}
@@ -396,6 +406,7 @@ void MultiAxisOperation::polarTableClear(void)
 	}
 
 	presentPolar = lastPolar = -1;
+	lastTargetMsg.clear();
 	setStatusMsg("");
 	polarSelectionChanged();
 }
@@ -416,7 +427,7 @@ void MultiAxisOperation::goToSelectedPolarVector(void)
 			presentPolar = list[0]->row();
 			magnetState = RAMPING;
 			systemState = SYSTEM_RAMPING;
-			goToPolarVector();
+			goToPolarVector(presentPolar, true);
 		}
 	}
 }
@@ -446,21 +457,21 @@ void MultiAxisOperation::goToNextPolarVector(void)
 
 				magnetState = RAMPING;
 				systemState = SYSTEM_RAMPING;
-				goToPolarVector();
+				goToPolarVector(presentPolar, true);
 			}
 		}
 	}
 }
 
 //---------------------------------------------------------------------------
-void MultiAxisOperation::goToPolarVector(void)
+void MultiAxisOperation::goToPolarVector(int polarIndex, bool makeTarget)
 {
 	double coord1, coord2;
 	bool ok, error = false;
 	double temp;
 
 	// get vector values and check for numerical conversion
-	temp = ui.polarTableWidget->item(presentPolar, 0)->text().toDouble(&ok);
+	temp = ui.polarTableWidget->item(polarIndex, 0)->text().toDouble(&ok);
 	if (ok)
 	{
 		coord1 = temp;
@@ -469,15 +480,15 @@ void MultiAxisOperation::goToPolarVector(void)
 		{
 			error = true;
 			vectorError = NEGATIVE_MAGNITUDE;
-			showErrorString("Polar Vector #" + QString::number(presentPolar + 1) + " has negative magnitude");	// error annunciation
-			abortPolarAutostep();
+			showErrorString("Polar Vector #" + QString::number(polarIndex + 1) + " has negative magnitude");	// error annunciation
+			abortPolarAutostep("Polar Auto-Stepping aborted due to an error with Polar Vector #" + QString::number(polarIndex + 1));
 			return;
 		}
 	}
 	else
 		error = true;	// error
 
-	temp = ui.polarTableWidget->item(presentPolar, 1)->text().toDouble(&ok);
+	temp = ui.polarTableWidget->item(polarIndex, 1)->text().toDouble(&ok);
 	if (ok)
 		coord2 = temp;
 	else
@@ -489,36 +500,128 @@ void MultiAxisOperation::goToPolarVector(void)
 		QVector3D vector;
 
 		polarToCartesian(coord1, coord2, &vector);
-		vector *= coord1;	// multiply by magnitude
 
 		// attempt to go to vector
-		if ((vectorError = checkNextVector(vector.x(), vector.y(), vector.z(), "Polar Table #" + QString::number(presentPolar + 1))) == NO_VECTOR_ERROR)
+		if ((vectorError = checkNextVector(vector.x(), vector.y(), vector.z(), "Polar Table #" + QString::number(polarIndex + 1))) == NO_VECTOR_ERROR)
 		{
-			sendNextVector(vector.x(), vector.y(), vector.z());
-			targetSource = POLAR_TABLE;
-			lastPolar = presentPolar;
+			if (makeTarget)
+			{
+				sendNextVector(vector.x(), vector.y(), vector.z());
+				targetSource = POLAR_TABLE;
+				lastPolar = polarIndex;
 
-			if (autostepPolarTimer->isActive())
-			{
-				setStatusMsg("Auto-Stepping : Polar Table #" + QString::number(presentPolar + 1));
-			}
-			else
-			{
-				setStatusMsg("Target Vector : Polar Table #" + QString::number(presentPolar + 1));
+				if (autostepPolarTimer->isActive())
+				{
+					lastTargetMsg = "Auto-Stepping : Polar Table #" + QString::number(polarIndex + 1);
+					setStatusMsg(lastTargetMsg);
+				}
+				else
+				{
+					lastTargetMsg = "Target Vector : Polar Table #" + QString::number(polarIndex + 1);
+					setStatusMsg(lastTargetMsg);
+				}
 			}
 		}
 		else
 		{
-			abortPolarAutostep();
+			abortPolarAutostep("Polar Auto-Stepping aborted due to an error with Polar Vector #" + QString::number(polarIndex + 1));
 		}
 	}
 	else
 	{
 		vectorError = NON_NUMERICAL_ENTRY;
-		showErrorString("Polar Table #" + QString::number(presentPolar + 1) + " has non-numerical entry");	// error annunciation
-		abortPolarAutostep();
+		showErrorString("Polar Table #" + QString::number(polarIndex + 1) + " has non-numerical entry");	// error annunciation
+		abortPolarAutostep("Polar Auto-Stepping aborted due to an error with Polar Vector #" + QString::number(polarIndex + 1));
 	}
 }
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::polarRangeChanged(void)
+{
+	if (connected)
+	{
+		autostepStartIndexPolar = ui.startIndexEditPolar->text().toInt();
+		autostepEndIndexPolar = ui.endIndexEditPolar->text().toInt();
+
+		if (autostepStartIndexPolar < 1 || autostepStartIndexPolar > ui.polarTableWidget->rowCount())
+			return;
+		else if (autostepEndIndexPolar <= autostepStartIndexPolar || autostepEndIndexPolar > ui.polarTableWidget->rowCount())
+			return;
+		else
+			calculatePolarRemainingTime(autostepStartIndexPolar, autostepEndIndexPolar);
+
+		// display total autostep time
+		displayPolarRemainingTime();
+	}
+	else
+	{
+		ui.polarRemainingTimeValue->clear();
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::calculatePolarRemainingTime(int startIndex, int endIndex)
+{
+	polarRemainingTime = 0;
+	double lastX = xField, lastY = yField, lastZ = zField;	// start from present field values
+
+	if (startIndex < autostepStartIndexPolar || endIndex > autostepEndIndexPolar)	// out of range
+		return;
+
+	// calculate total remaining time
+	for (int i = startIndex - 1; i < endIndex; i++)
+	{
+		double coord1, coord2;
+		double rampX, rampY, rampZ;	// unused in this context
+
+		goToPolarVector(i, false);	// check vector for errors
+
+		if (!vectorError)
+		{
+			// get vector values
+			coord1 = ui.polarTableWidget->item(i, 0)->text().toDouble();
+			coord2 = ui.polarTableWidget->item(i, 1)->text().toDouble();
+
+			// get polar vector in magnet axes coordinates
+			QVector3D vector;
+
+			polarToCartesian(coord1, coord2, &vector);
+
+			// calculate ramping time
+			polarRemainingTime += calculateRampingTime(vector.x(), vector.y(), vector.z(), lastX, lastY, lastZ, rampX, rampY, rampZ);
+
+			// save as start for next step
+			lastX = vector.x();
+			lastY = vector.y();
+			lastZ = vector.z();
+
+			// add any hold time
+			bool ok;
+			double temp = 0;
+
+			temp = ui.polarTableWidget->item(i, 2)->text().toDouble(&ok);
+			if (ok)
+                polarRemainingTime += static_cast<int>(temp);
+		}
+		else
+			break;	// break on any polar vector error
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::displayPolarRemainingTime(void)
+{
+	int hours, minutes, seconds, remainder;
+
+	hours = polarRemainingTime / 3600;
+	remainder = polarRemainingTime % 3600;
+	minutes = remainder / 60;
+	seconds = remainder % 60;
+
+	QString timeStr = QString("%1:%2:%3").arg(hours, 2, 10, QChar('0')).arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
+	ui.polarRemainingTimeValue->setText(timeStr);
+}
+
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::startPolarAutostep(void)
@@ -545,6 +648,8 @@ void MultiAxisOperation::startPolarAutostep(void)
 
 		ui.startIndexEditPolar->setEnabled(false);
 		ui.endIndexEditPolar->setEnabled(false);
+		ui.polarRemainingTimeLabel->setEnabled(true);
+		ui.polarRemainingTimeValue->setEnabled(true);
 
 		elapsedTimerTicksPolar = 0;
 		autostepPolarTimer->start();
@@ -570,12 +675,12 @@ void MultiAxisOperation::startPolarAutostep(void)
 		systemState = SYSTEM_RAMPING;
 		polarSelectionChanged(); // lockout row changes
 
-		goToPolarVector();
+		goToPolarVector(presentPolar, true);
 	}
 }
 
 //---------------------------------------------------------------------------
-void MultiAxisOperation::abortPolarAutostep(void)
+void MultiAxisOperation::abortPolarAutostep(QString errorMessage)
 {
 	if (autostepPolarTimer->isActive())	// first checks for active autostep sequence
 	{
@@ -583,11 +688,18 @@ void MultiAxisOperation::abortPolarAutostep(void)
 		while (errorStatusIsActive)	// show any error condition first
 		{
 			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+            usleep(100000);
+#else
 			Sleep(100);
+#endif
 		}
-		setStatusMsg("Polar Auto-Stepping aborted due to an error with Polar Vector #" + QString::number(presentPolar + 1));
+		lastTargetMsg.clear();
+		setStatusMsg(errorMessage);
 		ui.startIndexEditPolar->setEnabled(true);
 		ui.endIndexEditPolar->setEnabled(true);
+		ui.polarRemainingTimeLabel->setEnabled(false);
+		ui.polarRemainingTimeValue->setEnabled(false);
 		ui.autostepStartButtonPolar->setEnabled(true);
 		ui.autostartStopButtonPolar->setEnabled(false);
 		ui.manualPolarControlGroupBox->setEnabled(true);
@@ -609,9 +721,12 @@ void MultiAxisOperation::stopPolarAutostep(void)
 	if (autostepPolarTimer->isActive())
 	{
 		autostepPolarTimer->stop();
+		lastTargetMsg.clear();
 		setStatusMsg("Polar Auto-Stepping aborted via Stop button");
 		ui.startIndexEditPolar->setEnabled(true);
 		ui.endIndexEditPolar->setEnabled(true);
+		ui.polarRemainingTimeLabel->setEnabled(false);
+		ui.polarRemainingTimeValue->setEnabled(false);
 		ui.autostepStartButtonPolar->setEnabled(true);
 		ui.autostartStopButtonPolar->setEnabled(false);
 		ui.manualPolarControlGroupBox->setEnabled(true);
@@ -642,7 +757,7 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 
 		if (ok)
 		{
-			if (elapsedTimerTicksPolar >= (int)temp)
+            if (elapsedTimerTicksPolar >= static_cast<int>(temp))
 			{
 				elapsedTimerTicksPolar = 0;
 
@@ -655,15 +770,18 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 					systemState = SYSTEM_RAMPING;
 
 					// next vector!
-					goToPolarVector();
+					goToPolarVector(presentPolar, true);
 				}
 				else
 				{
 					// successfully completed polar table auto-stepping
-					setStatusMsg("Polar Auto-Step Completed @ Polar Vector #" + QString::number(presentPolar + 1));
+					lastTargetMsg = "Polar Auto-Step Completed @ Polar Vector #" + QString::number(presentPolar + 1);
+					setStatusMsg(lastTargetMsg);
 					autostepPolarTimer->stop();
 					ui.startIndexEditPolar->setEnabled(true);
 					ui.endIndexEditPolar->setEnabled(true);
+					ui.polarRemainingTimeLabel->setEnabled(false);
+					ui.polarRemainingTimeValue->setEnabled(false);
 					ui.autostepStartButtonPolar->setEnabled(true);
 					ui.autostartStopButtonPolar->setEnabled(false);
 					ui.manualPolarControlGroupBox->setEnabled(true);
@@ -678,22 +796,28 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 			}
 			else
 			{
-				// update the HOLDING countdown
-				QString tempStr = statusMisc->text();
-				int index = tempStr.indexOf('(');
-				if (index >= 1)
-					tempStr.truncate(index - 1);
+				if (!errorStatusIsActive)
+				{
+					// update the HOLDING countdown
+					QString tempStr = statusMisc->text();
+					int index = tempStr.indexOf('(');
+					if (index >= 1)
+						tempStr.truncate(index - 1);
 
-				QString timeStr = " (" + QString::number(temp - elapsedTimerTicksPolar) + " sec remaining)";
-				setStatusMsg(tempStr + timeStr);
+					QString timeStr = " (" + QString::number(temp - elapsedTimerTicksPolar) + " sec remaining)";
+					setStatusMsg(tempStr + timeStr);
+				}
 			}
 		}
 		else
 		{
 			autostepPolarTimer->stop();
+			lastTargetMsg.clear();
 			setStatusMsg("Polar Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentPolar + 1));
 			ui.startIndexEditPolar->setEnabled(true);
 			ui.endIndexEditPolar->setEnabled(true);
+			ui.polarRemainingTimeLabel->setEnabled(false);
+			ui.polarRemainingTimeValue->setEnabled(false);
 			ui.autostepStartButtonPolar->setEnabled(true);
 			ui.autostartStopButtonPolar->setEnabled(false);
 			ui.manualPolarControlGroupBox->setEnabled(true);
@@ -706,17 +830,24 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 				ui.actionPersistentMode->setEnabled(true);
 		}
 	}
+	else if (magnetState == SWITCH_COOLING || magnetState == SWITCH_HEATING)
+	{
+		elapsedTimerTicksPolar = 0;
+	}
 	else
 	{
 		elapsedTimerTicksPolar = 0;
 
-		// remove any erroneous countdown text
-		QString tempStr = statusMisc->text();
-		int index = tempStr.indexOf('(');
-		if (index >= 1)
-			tempStr.truncate(index - 1);
+		if (!errorStatusIsActive)
+		{
+			// remove any erroneous countdown text
+			QString tempStr = statusMisc->text();
+			int index = tempStr.indexOf('(');
+			if (index >= 1)
+				tempStr.truncate(index - 1);
 
-		setStatusMsg(tempStr);
+			setStatusMsg(tempStr);
+		}
 	}
 }
 

@@ -9,13 +9,13 @@
 const double MIN_RAMP_RATE = 0.001;
 
 // load/save settings file version
-const int SAVE_FILE_VERSION = 3;
+const int SAVE_FILE_VERSION = 4;
 
 // stdin parsing support
-Parser *parser;
+static Parser *parser;
 
 // quench logged flag to prevent duplicate log messages
-bool quenchLogged = false;
+static bool quenchLogged = false;
 
 
 //---------------------------------------------------------------------------
@@ -32,13 +32,38 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	// min columns for vector table
 	ui.vectorsTableWidget->setMinimumNumCols(5);
 
+#if defined(Q_OS_LINUX)
+    this->setWindowIcon(QIcon(":multiaxis/Resources/app.ico"));
+    QGuiApplication::setFont(QFont("Ubuntu", 9));
+    this->setFont(QFont("Ubuntu", 9));
+    QFont::insertSubstitution("Segoe UI", "Ubuntu");
+    ui.vectorsTableWidget->setFont(QFont("Ubuntu", 9));
+#elif defined(Q_OS_MACOS)
+    // Mac base font scaling is different than Linux and Windows
+    // use ~ 96/72 = 1.333 factor for upscaling every font size
+    // we must do this everywhere a font size is specified
+    QGuiApplication::setFont(QFont(".SF NS Text", 13));
+    this->setFont(QFont(".SF NS Text", 13));
+    QFont::insertSubstitution("Segoe UI", ".SF NS Text");
+    //ui.menuBar->setFont(QFont(".SF NS Text", 14));
+    ui.presentFieldFrame->setFont(QFont(".SF NS Text", 14, QFont::Bold));
+    /*ui.actionExit->setFont(QFont(".SF NS Text", 13));
+    ui.actionTest_Mode->setFont(QFont(".SF NS Text", 13));
+    ui.actionDefine->setFont(QFont(".SF NS Text", 13));
+    ui.actionRamp->setFont(QFont(".SF NS Text", 13));
+    ui.actionPause->setFont(QFont(".SF NS Text", 13));
+    ui.mainToolBar->setFont(QFont(".SF NS Text", 13));*/
+
+    this->setStyleSheet("QGroupBox { font-size: 13px; }; QAction { font-size: 13px; }; QToolBar { font-size: 13px; };");
+#endif
+
 	// initialization
 	loadedCoordinates = SPHERICAL_COORDINATES;
 	systemState = DISCONNECTED;
-	magnetParams = NULL;
-	xProcess = NULL;
-	yProcess = NULL;
-	zProcess = NULL;
+    magnetParams = nullptr;
+    xProcess = nullptr;
+    yProcess = nullptr;
+    zProcess = nullptr;
 	xField = NAN;
 	yField = NAN;
 	zField = NAN;
@@ -50,6 +75,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	passCnt = 0;
 	simulation = false;
 	vectorError = NO_VECTOR_ERROR;
+	polarError = NO_VECTOR_ERROR;
 	targetSource = NO_SOURCE;
 	presentVector = -1;
 	lastVector = -1;
@@ -60,19 +86,32 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	yTarget = 0.0;
 	zTarget = 0.0;
 	remainingTime = 0;
+	autostepRemainingTime = 0;
+	polarRemainingTime = 0;
 
 	// setup status bar
 	statusConnectState = new QLabel("", this);
 	statusConnectState->setFrameStyle(QFrame::Panel | QFrame::Sunken);
 	statusConnectState->setToolTip("Connection status");
-	statusConnectState->setFont(QFont("Segoe UI", 9));
 	statusMisc = new QLabel("", this);
 	statusMisc->setFrameStyle(QFrame::Panel | QFrame::Sunken);
-	statusMisc->setFont(QFont("Segoe UI", 9));
 	statusState = new QLabel("", this);
 	statusState->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+    statusState->setToolTip("Operating state");
+
+#if defined(Q_OS_LINUX)
+    statusConnectState->setFont(QFont("Ubuntu", 9));
+    statusMisc->setFont(QFont("Ubuntu", 9));
+    statusState->setFont(QFont("Ubuntu", 9));
+#elif defined(Q_OS_MAC)
+    statusConnectState->setFont(QFont(".SF NS Text", 12));
+    statusMisc->setFont(QFont(".SF NS Text", 12));
+    statusState->setFont(QFont(".SF NS Text", 12));
+#else
+    statusConnectState->setFont(QFont("Segoe UI", 9));
+    statusMisc->setFont(QFont("Segoe UI", 9));
 	statusState->setFont(QFont("Segoe UI", 9));
-	statusState->setToolTip("Operating state");
+#endif
 
 	statusBar()->addPermanentWidget(statusConnectState, 1);
 	statusBar()->addPermanentWidget(statusMisc, 4);
@@ -87,9 +126,12 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	QString dpiStr = QString::number(QApplication::desktop()->screen()->logicalDpiX());
 	restoreGeometry(settings.value("MainWindow/Geometry/" + dpiStr).toByteArray());
 	restoreState(settings.value("MainWindow/WindowState/" + dpiStr).toByteArray());
-	fieldUnits = (FieldUnits)(settings.value("FieldUnits").toInt());
-	convention = (SphericalConvention)(settings.value("SphericalConvention").toInt());
+
+	// restore other interface settings
+    fieldUnits = static_cast<FieldUnits>(settings.value("FieldUnits").toInt());
+    convention = static_cast<SphericalConvention>(settings.value("SphericalConvention").toInt());
 	ui.actionAutosave_Report->setChecked(settings.value("AutosaveReport").toBool());
+	ui.actionStabilizingResistors->setChecked(settings.value("StabilizingResistors").toBool());
 	
 	// restore tab positions from last exit
 	int vectorTabIndex = settings.value("Tabs/VectorTabIndex").toInt();
@@ -187,10 +229,15 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 
 	// other actions
 	connect(ui.vectorsTableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(vectorSelectionChanged()));
+	connect(ui.startIndexEdit, SIGNAL(editingFinished()), this, SLOT(autostepRangeChanged()));
+	connect(ui.endIndexEdit, SIGNAL(editingFinished()), this, SLOT(autostepRangeChanged()));
 	connect(ui.polarTableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(polarSelectionChanged()));
+	connect(ui.startIndexEditPolar, SIGNAL(editingFinished()), this, SLOT(polarRangeChanged()));
+	connect(ui.endIndexEditPolar, SIGNAL(editingFinished()), this, SLOT(polarRangeChanged()));
 
 	// create magnetParams dialog
 	magnetParams = new MagnetParams();
+	setStabilizingResistorAvailability();
 
 	// set field units to saved preference
 	setFieldUnits(fieldUnits, true);
@@ -210,8 +257,14 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	// parse command line options
 	QCommandLineParser cmdLineParse;
 
+	cmdLineParse.setApplicationDescription("Multi-Axis Operation application for operating AMI MAxes systems");
+	cmdLineParse.addHelpOption();
+	cmdLineParse.addVersionOption();
+
 	// Connect to simulated system (--simulate)
-	QCommandLineOption portOption("simulate");
+	QCommandLineOption portOption("simulate",
+		QCoreApplication::translate("main", "Query simulated instruments."),
+		QCoreApplication::translate("main", "ip-port"));
 	cmdLineParse.addOption(portOption);
 
 	// A boolean option with multiple names (-p, --parser)
@@ -223,14 +276,24 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	cmdLineParse.process(*(QCoreApplication::instance()));
 
 	if (cmdLineParse.isSet(portOption))
+	{
 		simulation = true;	// use simulated system
+
+		addressStr = cmdLineParse.value(portOption);
+
+		// if no port specified, use localhost
+		if (addressStr.isEmpty())
+		{
+			addressStr = "localhost";
+		}
+	}
 
 	useParser = cmdLineParse.isSet(parsingOption);
 
 	if (useParser)	// start stdin/stdout parser for scripting control
 	{
 		QThread* parserThread = new QThread;
-		parser = new Parser(NULL);
+        parser = new Parser(nullptr);
 
 		parser->setDataSource(this);
 		parser->moveToThread(parserThread);
@@ -265,6 +328,23 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 }
 
 //---------------------------------------------------------------------------
+void MultiAxisOperation::setStabilizingResistorAvailability(void)
+{
+	// set stabilizing resistor option availability
+	if ((magnetParams->GetXAxisParams()->activate && !magnetParams->GetXAxisParams()->switchInstalled) ||
+		(magnetParams->GetYAxisParams()->activate && !magnetParams->GetYAxisParams()->switchInstalled) ||
+		(magnetParams->GetZAxisParams()->activate && !magnetParams->GetZAxisParams()->switchInstalled))
+	{
+		ui.actionStabilizingResistors->setEnabled(true);
+	}
+	else
+	{
+		ui.actionStabilizingResistors->setChecked(false);
+		ui.actionStabilizingResistors->setEnabled(false);
+	}
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::updateWindowTitle()
 {
 	// set window title
@@ -283,22 +363,22 @@ MultiAxisOperation::~MultiAxisOperation()
 	if (parser)
 	{
 		parser->stop();
-		parser = NULL;
+        parser = nullptr;
 	}
 
 	closeConnection();
 
 	// delete timers
 	delete dataTimer;
-	dataTimer = NULL;
+    dataTimer = nullptr;
 	delete switchHeatingTimer;
-	switchHeatingTimer = NULL;
+    switchHeatingTimer = nullptr;
 	delete switchCoolingTimer;
-	switchCoolingTimer = NULL;
+    switchCoolingTimer = nullptr;
 	delete autostepTimer;
-	autostepTimer = NULL;
+    autostepTimer = nullptr;
 	delete errorStatusTimer;
-	errorStatusTimer = NULL;
+    errorStatusTimer = nullptr;
 
 	if (magnetParams)
 		delete magnetParams;
@@ -311,13 +391,14 @@ MultiAxisOperation::~MultiAxisOperation()
 
 	settings.setValue("MainWindow/Geometry/" + dpiStr, saveGeometry());
 	settings.setValue("MainWindow/WindowState/" + dpiStr, saveState());
-	settings.setValue("FieldUnits", (int)fieldUnits);
-	settings.setValue("SphericalConvention", (int)convention);
+    settings.setValue("FieldUnits", static_cast<int>(fieldUnits));
+    settings.setValue("SphericalConvention", static_cast<int>(convention));
 	settings.setValue("AutosaveReport", ui.actionAutosave_Report->isChecked());
 	settings.setValue("CurrentTab", ui.mainTabWidget->currentIndex());
 	settings.setValue("Tabs/VectorTabIndex", ui.mainTabWidget->indexOf(ui.vectorTableTab));
 	settings.setValue("Tabs/AlignTabIndex", ui.mainTabWidget->indexOf(ui.alignmentTab));
 	settings.setValue("Tabs/PolarTabIndex", ui.mainTabWidget->indexOf(ui.rotationTab));
+	settings.setValue("StabilizingResistors", ui.actionStabilizingResistors->isChecked());
 
 	// save alignment tab state
 	alignmentTabSaveState();
@@ -333,19 +414,19 @@ void MultiAxisOperation::closeConnection()
 	if (xProcess)
 	{
 		xProcess->deleteLater();
-		xProcess = NULL;
+        xProcess = nullptr;
 	}
 
 	if (yProcess)
 	{
 		yProcess->deleteLater();
-		yProcess = NULL;
+        yProcess = nullptr;
 	}
 
 	if (zProcess)
 	{
 		zProcess->deleteLater();
-		zProcess = NULL;
+        zProcess = nullptr;
 	}
 
 	statusConnectState->setStyleSheet("color: red; font: bold;");
@@ -358,6 +439,7 @@ void MultiAxisOperation::closeConnection()
 	ui.autostepStartButton->setEnabled(false);
 	ui.manualPolarControlGroupBox->setEnabled(false);
 	ui.autostepStartButtonPolar->setEnabled(false);
+	setStabilizingResistorAvailability();
 
 	statusState->clear();
 	ui.actionConnect->setChecked(false);
@@ -400,6 +482,7 @@ void MultiAxisOperation::actionConnect(void)
 		QApplication::setOverrideCursor(Qt::WaitCursor);
 		statusConnectState->setStyleSheet("color: green; font: bold;");
 		statusConnectState->setText("CONNECTING...");
+		lastTargetMsg.clear();
 		setStatusMsg("Launching processes, please wait...");
 		
 		progressDialog.setFont(QFont("Segoe UI", 9));
@@ -417,7 +500,12 @@ void MultiAxisOperation::actionConnect(void)
 				xProcess = new ProcessManager(this);
 
 			if (!xProcess->isActive())
-				xProcess->connectProcess(magnetParams->GetXAxisParams()->ipAddress, X_AXIS, simulation);
+			{
+				if (simulation)
+					xProcess->connectProcess(addressStr, X_AXIS, simulation);
+				else
+					xProcess->connectProcess(magnetParams->GetXAxisParams()->ipAddress, X_AXIS, simulation);
+			}
 		}
 
 		// check for cancellation
@@ -433,11 +521,16 @@ void MultiAxisOperation::actionConnect(void)
 		// if Y-axis active, create a QProcess controller
 		if (magnetParams->GetYAxisParams()->activate)
 		{
-			if (yProcess == NULL)
+            if (yProcess == nullptr)
 				yProcess = new ProcessManager(this);
 
 			if (!yProcess->isActive())
-				yProcess->connectProcess(magnetParams->GetYAxisParams()->ipAddress, Y_AXIS, simulation);
+			{
+				if (simulation)
+					yProcess->connectProcess(addressStr, Y_AXIS, simulation);
+				else
+					yProcess->connectProcess(magnetParams->GetYAxisParams()->ipAddress, Y_AXIS, simulation);
+			}
 		}
 
 		// check for cancellation
@@ -453,11 +546,16 @@ void MultiAxisOperation::actionConnect(void)
 		// if Z-axis active, create a QProcess controller
 		if (magnetParams->GetZAxisParams()->activate)
 		{
-			if (zProcess == NULL)
+            if (zProcess == nullptr)
 				zProcess = new ProcessManager(this);
 
 			if (!zProcess->isActive())
-				zProcess->connectProcess(magnetParams->GetZAxisParams()->ipAddress, Z_AXIS, simulation);
+			{
+				if (simulation)
+					zProcess->connectProcess(addressStr, Z_AXIS, simulation);
+				else
+					zProcess->connectProcess(magnetParams->GetZAxisParams()->ipAddress, Z_AXIS, simulation);
+			}
 		}
 
 		// check for cancellation
@@ -475,7 +573,7 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (xProcess->isActive())
 			{
-				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked());
+				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked());
 				x_activated = true;
 
 				// switch heating/cooling required?
@@ -503,7 +601,7 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (yProcess->isActive())
 			{
-				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked());
+				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked());
 				y_activated = true;
 
 				// switch heating/cooling required?
@@ -535,7 +633,7 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (zProcess->isActive())
 			{
-				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked());
+				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked());
 				z_activated = true;
 
 				// switch heating/cooling required?
@@ -603,6 +701,9 @@ void MultiAxisOperation::actionConnect(void)
 			// can't load settings while connected
 			ui.actionLoad_Settings->setEnabled(false);
 
+			// no change in stabilizing resistors while connected
+			ui.actionStabilizingResistors->setEnabled(false);
+
 			// allow vector selection
 			ui.manualVectorControlGroupBox->setEnabled(true);
 			ui.autostepStartButton->setEnabled(true);
@@ -629,6 +730,7 @@ EXIT:
 
 		// stop any active auto-stepping
 		stopAutostep();
+		stopPolarAutostep();
 
 		closeConnection();
 		statusMisc->clear();
@@ -651,7 +753,7 @@ void MultiAxisOperation::actionLoad_Settings(void)
 
 		FILE *pFile = fopen(saveFileName.toLocal8Bit().constData(), "r");
 
-		if (pFile == NULL)
+        if (pFile == nullptr)
 		{
 			// load error
 			QMessageBox msgBox;
@@ -700,15 +802,15 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 		lastReportPath = stream.readLine();
 
 		// preferences and ui settings
-		ui.actionShow_Cartesian_Coordinates->setChecked((bool)(stream.readLine().toInt()));
+        ui.actionShow_Cartesian_Coordinates->setChecked(static_cast<bool>(stream.readLine().toInt()));
 		actionShow_Cartesian_Coordinates();
-		ui.actionShow_Spherical_Coordinates->setChecked((bool)(stream.readLine().toInt()));
+        ui.actionShow_Spherical_Coordinates->setChecked(static_cast<bool>(stream.readLine().toInt()));
 		actionShow_Spherical_Coordinates();
-		fieldUnits = (FieldUnits)(stream.readLine().toInt());
+        fieldUnits = static_cast<FieldUnits>(stream.readLine().toInt());
 		setFieldUnits(fieldUnits, true);
-		convention = (SphericalConvention)(stream.readLine().toInt());
+        convention = static_cast<SphericalConvention>(stream.readLine().toInt());
 		setSphericalConvention(convention, true);
-		ui.actionAutosave_Report->setChecked((bool)(stream.readLine().toInt()));
+        ui.actionAutosave_Report->setChecked(static_cast<bool>(stream.readLine().toInt()));
 		ui.startIndexEdit->setText(stream.readLine());
 		ui.endIndexEdit->setText(stream.readLine());
 
@@ -768,7 +870,7 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 
 				item = ui.vectorsTableWidget->horizontalHeaderItem(i);
 
-				if (item == NULL)
+                if (item == nullptr)
 					ui.vectorsTableWidget->setHorizontalHeaderItem(i, item = new QTableWidgetItem(tempStr));
 				else
 					ui.vectorsTableWidget->horizontalHeaderItem(i)->setText(tempStr);
@@ -798,7 +900,7 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 				// read saved text
 				QString tempStr = stream.readLine();
 
-				if (item == NULL)
+                if (item == nullptr)
 					ui.vectorsTableWidget->setItem(i, j, item = new QTableWidgetItem(tempStr));
 				else
 					item->setText(tempStr);
@@ -813,7 +915,7 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 		if (version >= 2)
 		{
 			// recover coordinate system selection
-			loadedCoordinates = (CoordinatesSelection)(stream.readLine().toInt());
+            loadedCoordinates = static_cast<CoordinatesSelection>(stream.readLine().toInt());
 
 			if (loadedCoordinates == CARTESIAN_COORDINATES)
 				setTableHeader();
@@ -843,7 +945,7 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 
 				item = ui.polarTableWidget->horizontalHeaderItem(i);
 
-				if (item == NULL)
+                if (item == nullptr)
 					ui.polarTableWidget->setHorizontalHeaderItem(i, item = new QTableWidgetItem(tempStr));
 				else
 					ui.polarTableWidget->horizontalHeaderItem(i)->setText(tempStr);
@@ -863,7 +965,7 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 					// read saved text
 					QString tempStr = stream.readLine();
 
-					if (item == NULL)
+                    if (item == nullptr)
 						ui.polarTableWidget->setItem(i, j, item = new QTableWidgetItem(tempStr));
 					else
 						item->setText(tempStr);
@@ -872,22 +974,38 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 				}
 			}
 		}
+
+		if (version >= 4)
+		{
+			setStabilizingResistorAvailability();
+            ui.actionStabilizingResistors->setChecked(static_cast<bool>(stream.readLine().toInt()));
+		}
+		else
+		{
+			// value didn't exist in pre-version 4 file saves, so set to unchecked
+			setStabilizingResistorAvailability();
+			ui.actionStabilizingResistors->setChecked(false);
+		}
 	}
 
+#if defined(Q_OS_MACOS)
+        ui.vectorsTableWidget->repaint();
+        ui.polarTableWidget->repaint();
+#endif
 	return true;
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::loadParams(QTextStream *stream, AxesParams *params)
 {
-	params->activate = ((bool)(stream->readLine().toInt()));
+    params->activate = (static_cast<bool>(stream->readLine().toInt()));
 	params->ipAddress = stream->readLine();
 	params->currentLimit = stream->readLine().toDouble();
 	params->voltageLimit = stream->readLine().toDouble();
 	params->maxRampRate = stream->readLine().toDouble();
 	params->coilConst = stream->readLine().toDouble();
 	params->inductance = stream->readLine().toDouble();
-	params->switchInstalled = ((bool)(stream->readLine().toInt()));
+    params->switchInstalled = (static_cast<bool>(stream->readLine().toInt()));
 	params->switchHeaterCurrent = stream->readLine().toDouble();
 	params->switchCoolingTime = stream->readLine().toInt();
 	params->switchHeatingTime = stream->readLine().toInt();
@@ -909,7 +1027,7 @@ void MultiAxisOperation::actionSave_Settings(void)
 
 		FILE *pFile = fopen(saveFileName.toLocal8Bit().constData(), "w");
 		
-		if (pFile == NULL)
+        if (pFile == nullptr)
 		{
 			// save error
 			QMessageBox msgBox;
@@ -988,7 +1106,7 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 
 		item = ui.vectorsTableWidget->horizontalHeaderItem(i);
 
-		if (item == NULL)
+        if (item == nullptr)
 			stream << "\n";
 		else
 			stream << item->text() << "\n";
@@ -1003,7 +1121,7 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 
 			item = ui.vectorsTableWidget->item(i, j);
 
-			if (item == NULL)
+            if (item == nullptr)
 				stream << "\n";
 			else
 				stream << item->text() << "\n";
@@ -1027,7 +1145,7 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 
 		item = ui.polarTableWidget->horizontalHeaderItem(i);
 
-		if (item == NULL)
+        if (item == nullptr)
 			stream << "\n";
 		else
 			stream << item->text() << "\n";
@@ -1042,12 +1160,15 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 
 			item = ui.polarTableWidget->item(i, j);
 
-			if (item == NULL)
+            if (item == nullptr)
 				stream << "\n";
 			else
 				stream << item->text() << "\n";
 		}
 	}
+
+	// save stabilizing resistors selection
+	stream << ui.actionStabilizingResistors->isChecked() << "\n";
 
 	stream.flush();
 
@@ -1073,7 +1194,7 @@ void MultiAxisOperation::saveParams(QTextStream *stream, AxesParams *params)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionDefine(void)
 {
-	if (magnetParams == NULL)
+    if (magnetParams == nullptr)
 		magnetParams = new MagnetParams();
 
 	if (ui.actionConnect->isChecked())
@@ -1084,6 +1205,7 @@ void MultiAxisOperation::actionDefine(void)
 	magnetParams->exec();
 
 	updateWindowTitle();
+	setStabilizingResistorAvailability();
 }
 
 //---------------------------------------------------------------------------
@@ -1212,20 +1334,34 @@ void MultiAxisOperation::actionRamp(void)
 			}
 		}
 	}
+
+	if (autostepTimer->isActive())	// first checks for active autostep sequence
+	{
+		calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
+	}
+
+	if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
+	{
+		calculatePolarRemainingTime(presentPolar + 1, autostepEndIndexPolar);
+	}
+
+	if (!lastTargetMsg.isEmpty())
+		setStatusMsg(lastTargetMsg);
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionZero(void)
 {
 	sendNextVector(0, 0, 0);
-	setStatusMsg("Target Vector : Zero Field Vector");
+	lastTargetMsg = "Target Vector : Zero Field Vector";
+	setStatusMsg(lastTargetMsg);
 	targetSource = NO_SOURCE;
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionChange_Units(void)
 {
-	FieldUnits newUnits = (FieldUnits)!ui.actionKilogauss->isChecked();
+    FieldUnits newUnits = static_cast<FieldUnits>(!ui.actionKilogauss->isChecked());
 	setFieldUnits(newUnits, false);
 	convertFieldValues(newUnits, true);
 	convertAlignmentFieldValues(newUnits);
@@ -1235,7 +1371,7 @@ void MultiAxisOperation::actionChange_Units(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionChange_Convention(void)
 {
-	SphericalConvention newSetting = (SphericalConvention)!ui.actionUse_Mathematical_Convention->isChecked();
+    SphericalConvention newSetting = static_cast<SphericalConvention>(!ui.actionUse_Mathematical_Convention->isChecked());
 	setSphericalConvention(newSetting, false);
 }
 
@@ -1646,7 +1782,9 @@ void MultiAxisOperation::dataTimerTick(void)
 	ui.magnetThetaValue->setText(QString::number(avoidSignedZeroOutput(thetaAngle, 2), 'f', 2));
 	ui.magnetPhiValue->setText(QString::number(avoidSignedZeroOutput(phiAngle, 2), 'f', 2));
 
+	//---------------------------------------------------------------------------
 	// update state
+	//---------------------------------------------------------------------------
 	if ((x_activated && xState == QUENCH) ||
 		(y_activated && yState == QUENCH) ||
 		(z_activated && zState == QUENCH))
@@ -1662,12 +1800,14 @@ void MultiAxisOperation::dataTimerTick(void)
 		{
 			autoSave = true;	// do the autosave on quench condition
 			stopAutostep();
+			lastTargetMsg.clear();
 			setStatusMsg("Auto-Stepping aborted due to quench detection");
 		}
 
 		if (autostepPolarTimer->isActive())
 		{
 			stopPolarAutostep();
+			lastTargetMsg.clear();
 			setStatusMsg("Polar Auto-Stepping aborted due to quench detection");
 		}
 
@@ -1704,7 +1844,7 @@ void MultiAxisOperation::dataTimerTick(void)
 					{
 						QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 5);
 
-						if (cell == NULL)
+                        if (cell == nullptr)
 							ui.vectorsTableWidget->setItem(presentVector, 5, cell = new QTableWidgetItem(cellStr));
 						else
 							cell->setText(cellStr);
@@ -1722,7 +1862,7 @@ void MultiAxisOperation::dataTimerTick(void)
 					{
 						QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 6);
 
-						if (cell == NULL)
+                        if (cell == nullptr)
 							ui.vectorsTableWidget->setItem(presentVector, 6, cell = new QTableWidgetItem(cellStr));
 						else
 							cell->setText(cellStr);
@@ -1740,7 +1880,7 @@ void MultiAxisOperation::dataTimerTick(void)
 					{
 						QTableWidgetItem *cell = ui.vectorsTableWidget->item(presentVector, 7);
 
-						if (cell == NULL)
+                        if (cell == nullptr)
 							ui.vectorsTableWidget->setItem(presentVector, 7, cell = new QTableWidgetItem(cellStr));
 						else
 							cell->setText(cellStr);
@@ -1777,6 +1917,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		systemState = SYSTEM_HEATING;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("HEATING SWITCH");
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(false);
 	}
 	else if (switchCoolingTimer->isActive())
 	{
@@ -1784,6 +1926,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		systemState = SYSTEM_COOLING;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("COOLING SWITCH");
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(true);
 	}
 	else if ((x_activated && xState == RAMPING) ||
 			 (y_activated && yState == RAMPING) ||
@@ -1792,12 +1936,50 @@ void MultiAxisOperation::dataTimerTick(void)
 		if (remainingTime)
 			remainingTime--;	// decrement by one second
 
+		if (autostepTimer->isActive())	// first checks for active autostep sequence
+		{
+			if (autostepRemainingTime)
+			{
+				autostepRemainingTime--;	// decrement by one second
+				displayAutostepRemainingTime();
+			}
+		}
+
+		if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
+		{
+			if (polarRemainingTime)
+			{
+				polarRemainingTime--;	// decrement by one second
+				displayPolarRemainingTime();
+			}
+		}
+
 		magnetState = RAMPING;
 		systemState = SYSTEM_RAMPING;
 		statusState->setStyleSheet("color: black; font: bold;");
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(false);
 
-		if (remainingTime)
-			statusState->setText("RAMPING (" + QString::number(remainingTime) + ")");
+		if (remainingTime)	// display formatted remaining ramping time hh:mm:ss
+		{
+			int hours, minutes, seconds, remainder;
+
+			hours = remainingTime / 3600;
+			remainder = remainingTime % 3600;
+			minutes = remainder / 60;
+			seconds = remainder % 60;
+
+			QString timeStr;
+			
+			if (hours > 0)
+				timeStr = QString("%1:%2:%3").arg(hours).arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
+			else if (minutes > 0)
+				timeStr = QString("%1:%2").arg(minutes).arg(seconds, 2, 10, QChar('0'));
+			else
+				timeStr = QString("%1").arg(seconds);
+
+			statusState->setText("RAMPING (" + timeStr + ")");
+		}
 		else
 			statusState->setText("RAMPING");
 
@@ -1815,11 +1997,27 @@ void MultiAxisOperation::dataTimerTick(void)
 		}
 		else if (passCnt >= 2 || magnetState == HOLDING)
 		{
+			// update total remaining time on first transition to HOLDING
+			if (magnetState != HOLDING)
+			{
+				if (autostepTimer->isActive())	// first checks for active autostep sequence
+				{
+					calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
+				}
+
+				if (autostepPolarTimer->isActive())	// first checks for active autostep sequence
+				{
+					calculatePolarRemainingTime(presentPolar + 1, autostepEndIndexPolar);
+				}
+			}
+
 			magnetState = HOLDING;
 			systemState = SYSTEM_HOLDING;
 			statusState->setStyleSheet("color: green; font: bold;");
 			statusState->setText("HOLDING");
 			quenchLogged = false;
+			if (switchInstalled)
+				ui.actionPersistentMode->setEnabled(true);
 
 			// mark vector as pass only in Vector Table
 			if (targetSource == VECTOR_TABLE)
@@ -1851,6 +2049,24 @@ void MultiAxisOperation::dataTimerTick(void)
 
 			passCnt = 0;	// reset
 		}
+
+		if (autostepTimer->isActive())	// first checks for active autostep sequence
+		{
+			if (autostepRemainingTime)
+			{
+				autostepRemainingTime--;	// decrement by one second
+				displayAutostepRemainingTime();
+			}
+		}
+
+		if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
+		{
+			if (polarRemainingTime)
+			{
+				polarRemainingTime--;	// decrement by one second
+				displayPolarRemainingTime();
+			}
+		}
 	}
 	else if ((x_activated && xState == PAUSED) ||
 			 (y_activated && yState == PAUSED) ||
@@ -1861,6 +2077,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("PAUSED");
 		quenchLogged = false;
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(true);
 	}
 	else if ((x_activated && xState == ZEROING) ||
 			 (y_activated && yState == ZEROING) ||
@@ -1871,6 +2089,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("ZEROING");
 		quenchLogged = false;
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(false);
 	}
 	else if ((!x_activated || (x_activated && xState == AT_ZERO)) &&
 			 (!y_activated || (y_activated && yState == AT_ZERO)) &&
@@ -1881,6 +2101,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("AT ZERO");
 		quenchLogged = false;
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(false);
 	} 
 }
 
@@ -2053,110 +2275,14 @@ VectorError MultiAxisOperation::checkNextVector(double x, double y, double z, QS
 }
 
 //---------------------------------------------------------------------------
+// Sends next vector down to axes
+//---------------------------------------------------------------------------
 void MultiAxisOperation::sendNextVector(double x, double y, double z)
 {
-	// Sends next vector down to axes, using the maxRampRate for each axis
-	// to determine the ramp rate required for each axes to arrive at the
-	// next vector simultaneously. The vector must be specified in Cartesian
-	// coordinates.
-	double deltaX, deltaY, deltaZ;	// kG
-	double xTime, yTime, zTime;		// sec
 	double xRampRate, yRampRate, zRampRate;	// A/sec
 
-	// find delta field for each axis
-	deltaX = fabsl(xField - x);
-	deltaY = fabsl(yField - y);
-	deltaZ = fabsl(zField - z);
-
-	// find time required for each delta given maxRampRate for each axis
-	if (magnetParams->GetXAxisParams()->activate)
-		xTime = deltaX / (magnetParams->GetXAxisParams()->maxRampRate * magnetParams->GetXAxisParams()->coilConst);
-	else
-		xTime = 0;
-
-	if (magnetParams->GetYAxisParams()->activate)
-		yTime = deltaY / (magnetParams->GetYAxisParams()->maxRampRate * magnetParams->GetYAxisParams()->coilConst);
-	else
-		yTime = 0;
-
-	if (magnetParams->GetZAxisParams()->activate)
-		zTime = deltaZ / (magnetParams->GetZAxisParams()->maxRampRate * magnetParams->GetZAxisParams()->coilConst);
-	else
-		zTime = 0;
-
-	// which is the longest time? it is the limiter
-	if (xTime >= yTime && xTime >= zTime)
-	{
-		remainingTime = (int)(round(xTime));
-
-		xRampRate = magnetParams->GetXAxisParams()->maxRampRate;
-
-		if (magnetParams->GetYAxisParams()->activate)
-		{
-			yRampRate = deltaY / magnetParams->GetYAxisParams()->coilConst / xTime;
-			if (yRampRate < MIN_RAMP_RATE)
-				yRampRate = MIN_RAMP_RATE;
-		}
-		else
-			yRampRate = 0;
-
-		if (magnetParams->GetZAxisParams()->activate)
-		{
-			zRampRate = deltaZ / magnetParams->GetZAxisParams()->coilConst / xTime;
-			if (zRampRate < MIN_RAMP_RATE)
-				zRampRate = MIN_RAMP_RATE;
-		}
-		else
-			zRampRate = 0;
-	}
-	else if (yTime >= xTime && yTime >= zTime)
-	{
-		remainingTime = (int)(round(yTime));
-
-		yRampRate = magnetParams->GetYAxisParams()->maxRampRate;
-
-		if (magnetParams->GetXAxisParams()->activate)
-		{
-			xRampRate = deltaX / magnetParams->GetXAxisParams()->coilConst / yTime;
-			if (xRampRate < MIN_RAMP_RATE)
-				xRampRate = MIN_RAMP_RATE;
-		}
-		else
-			xRampRate = 0;
-
-		if (magnetParams->GetZAxisParams()->activate)
-		{
-			zRampRate = deltaZ / magnetParams->GetZAxisParams()->coilConst / yTime;
-			if (zRampRate < MIN_RAMP_RATE)
-				zRampRate = MIN_RAMP_RATE;
-		}
-		else
-			zRampRate = 0;
-	}
-	else if (zTime >= xTime && zTime >= yTime)
-	{
-		remainingTime = (int)(round(zTime));
-
-		zRampRate = magnetParams->GetZAxisParams()->maxRampRate;
-
-		if (magnetParams->GetXAxisParams()->activate)
-		{
-			xRampRate = deltaX / magnetParams->GetXAxisParams()->coilConst / zTime;
-			if (xRampRate < MIN_RAMP_RATE)
-				xRampRate = MIN_RAMP_RATE;
-		}
-		else
-			xRampRate = 0;
-
-		if (magnetParams->GetYAxisParams()->activate)
-		{
-			yRampRate = deltaY / magnetParams->GetYAxisParams()->coilConst / zTime;
-			if (yRampRate < MIN_RAMP_RATE)
-				yRampRate = MIN_RAMP_RATE;
-		}
-		else
-			yRampRate = 0;
-	}
+	// calculate ramping rates and time
+	remainingTime = calculateRampingTime(x, y, z, xField, yField, zField, xRampRate, yRampRate, zRampRate);
 
 	// target field is good, save active target values
 	xTarget = x;
@@ -2202,6 +2328,115 @@ void MultiAxisOperation::sendNextVector(double x, double y, double z)
 			}
 		}
 	}
+}
+
+//---------------------------------------------------------------------------
+// Uses the maxRampRate for each axis to determine the ramp rate required 
+// for each axes to arrive at the next vector simultaneously. The vector
+// (x, y, z) must be specified in Cartesian coordinates.
+//---------------------------------------------------------------------------
+int MultiAxisOperation::calculateRampingTime(double x, double y, double z, double _xField, double _yField, double _zField, double &xRampRate, double &yRampRate, double &zRampRate)
+{
+	double deltaX, deltaY, deltaZ;	// kG
+	double xTime, yTime, zTime;		// sec
+	int rampTime = 0;
+
+	// find delta field for each axis
+	deltaX = fabsl(_xField - x);
+	deltaY = fabsl(_yField - y);
+	deltaZ = fabsl(_zField - z);
+
+	// find time required for each delta given maxRampRate for each axis
+	if (magnetParams->GetXAxisParams()->activate)
+		xTime = deltaX / (magnetParams->GetXAxisParams()->maxRampRate * magnetParams->GetXAxisParams()->coilConst);
+	else
+		xTime = 0;
+
+	if (magnetParams->GetYAxisParams()->activate)
+		yTime = deltaY / (magnetParams->GetYAxisParams()->maxRampRate * magnetParams->GetYAxisParams()->coilConst);
+	else
+		yTime = 0;
+
+	if (magnetParams->GetZAxisParams()->activate)
+		zTime = deltaZ / (magnetParams->GetZAxisParams()->maxRampRate * magnetParams->GetZAxisParams()->coilConst);
+	else
+		zTime = 0;
+
+	// which is the longest time? it is the limiter
+	if (xTime >= yTime && xTime >= zTime)
+	{
+        rampTime = static_cast<int>(round(xTime));
+
+		xRampRate = magnetParams->GetXAxisParams()->maxRampRate;
+
+		if (magnetParams->GetYAxisParams()->activate)
+		{
+			yRampRate = deltaY / magnetParams->GetYAxisParams()->coilConst / xTime;
+			if (yRampRate < MIN_RAMP_RATE)
+				yRampRate = MIN_RAMP_RATE;
+		}
+		else
+			yRampRate = 0;
+
+		if (magnetParams->GetZAxisParams()->activate)
+		{
+			zRampRate = deltaZ / magnetParams->GetZAxisParams()->coilConst / xTime;
+			if (zRampRate < MIN_RAMP_RATE)
+				zRampRate = MIN_RAMP_RATE;
+		}
+		else
+			zRampRate = 0;
+	}
+	else if (yTime >= xTime && yTime >= zTime)
+	{
+        rampTime = static_cast<int>(round(yTime));
+
+		yRampRate = magnetParams->GetYAxisParams()->maxRampRate;
+
+		if (magnetParams->GetXAxisParams()->activate)
+		{
+			xRampRate = deltaX / magnetParams->GetXAxisParams()->coilConst / yTime;
+			if (xRampRate < MIN_RAMP_RATE)
+				xRampRate = MIN_RAMP_RATE;
+		}
+		else
+			xRampRate = 0;
+
+		if (magnetParams->GetZAxisParams()->activate)
+		{
+			zRampRate = deltaZ / magnetParams->GetZAxisParams()->coilConst / yTime;
+			if (zRampRate < MIN_RAMP_RATE)
+				zRampRate = MIN_RAMP_RATE;
+		}
+		else
+			zRampRate = 0;
+	}
+	else if (zTime >= xTime && zTime >= yTime)
+	{
+        rampTime = static_cast<int>(round(zTime));
+
+		zRampRate = magnetParams->GetZAxisParams()->maxRampRate;
+
+		if (magnetParams->GetXAxisParams()->activate)
+		{
+			xRampRate = deltaX / magnetParams->GetXAxisParams()->coilConst / zTime;
+			if (xRampRate < MIN_RAMP_RATE)
+				xRampRate = MIN_RAMP_RATE;
+		}
+		else
+			xRampRate = 0;
+
+		if (magnetParams->GetYAxisParams()->activate)
+		{
+			yRampRate = deltaY / magnetParams->GetYAxisParams()->coilConst / zTime;
+			if (yRampRate < MIN_RAMP_RATE)
+				yRampRate = MIN_RAMP_RATE;
+		}
+		else
+			yRampRate = 0;
+	}
+	
+	return rampTime;
 }
 
 //---------------------------------------------------------------------------

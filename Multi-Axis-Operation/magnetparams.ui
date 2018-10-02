@@ -59,11 +59,6 @@
      </item>
      <item row="0" column="1">
       <widget class="QLabel" name="magnetIDLabel">
-       <property name="font">
-        <font>
-         <pointsize>9</pointsize>
-        </font>
-       </property>
        <property name="text">
         <string>Magnet ID :</string>
        </property>
@@ -74,11 +69,6 @@
      </item>
      <item row="0" column="2">
       <widget class="QLineEdit" name="magnetIDEdit">
-       <property name="font">
-        <font>
-         <pointsize>9</pointsize>
-        </font>
-       </property>
        <property name="placeholderText">
         <string>Enter Magnet ID # here</string>
        </property>
@@ -99,11 +89,6 @@
      </item>
      <item row="1" column="0" colspan="2">
       <widget class="QLabel" name="magnitudeLimitLabel">
-       <property name="font">
-        <font>
-         <pointsize>9</pointsize>
-        </font>
-       </property>
        <property name="text">
         <string>Magnitude Limit (kG) :</string>
        </property>
@@ -114,11 +99,6 @@
      </item>
      <item row="1" column="2">
       <widget class="QLineEdit" name="magnitudeLimitEdit">
-       <property name="font">
-        <font>
-         <pointsize>9</pointsize>
-        </font>
-       </property>
        <property name="placeholderText">
         <string>Enter Magnitude Limit here</string>
        </property>
@@ -128,11 +108,6 @@
    </item>
    <item row="1" column="0">
     <widget class="QGroupBox" name="xAxisGroupBox">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-      </font>
-     </property>
      <property name="title">
       <string> X Axis Parameters</string>
      </property>
@@ -145,11 +120,6 @@
      <layout class="QVBoxLayout" name="xAxisParamsLayout">
       <item>
        <widget class="QLabel" name="xAxisIPLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>IP Address of Model 430 :</string>
         </property>
@@ -160,11 +130,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="xAxisIPValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter IP address</string>
         </property>
@@ -172,11 +137,6 @@
       </item>
       <item>
        <widget class="QLabel" name="xAxisCurrentLimitLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Current Limit (A) :</string>
         </property>
@@ -187,11 +147,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="xAxisCurrentLimitValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter current limit in amps</string>
         </property>
@@ -199,11 +154,6 @@
       </item>
       <item>
        <widget class="QLabel" name="xAxisVoltageLimitLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Voltage Limit (V) :</string>
         </property>
@@ -214,11 +164,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="xAxisVoltageLimitValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter voltage limit in volts</string>
         </property>
@@ -226,11 +171,6 @@
       </item>
       <item>
        <widget class="QLabel" name="xAxisMaxRampRateLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Max Ramp Rate (A/sec) :</string>
         </property>
@@ -241,11 +181,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="xAxisMaxRampRateValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter max rate in amps/sec</string>
         </property>
@@ -253,11 +188,6 @@
       </item>
       <item>
        <widget class="QLabel" name="xAxisCoilConstLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Coil Constant (kG/A) :</string>
         </property>
@@ -268,11 +198,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="xAxisCoilConstValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter constant in kG/amps</string>
         </property>
@@ -280,11 +205,6 @@
       </item>
       <item>
        <widget class="QLabel" name="xAxisInductanceLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Inductance (H) :</string>
         </property>
@@ -295,11 +215,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="xAxisInductanceValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter inductance in henries</string>
         </property>
@@ -307,11 +222,6 @@
       </item>
       <item>
        <widget class="QCheckBox" name="xAxisSwitchInstalledButton">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Switch Installed?</string>
         </property>
@@ -321,11 +231,6 @@
        <widget class="QLabel" name="xAxisSwitchCurrentLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Heater Current (mA) :</string>
@@ -340,11 +245,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter switch current in mA</string>
         </property>
@@ -354,11 +254,6 @@
        <widget class="QLabel" name="xAxisSwitchCoolTimeLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Cooling Time (sec) :</string>
@@ -373,11 +268,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter cooling time in seconds</string>
         </property>
@@ -387,11 +277,6 @@
        <widget class="QLabel" name="xAxisSwitchHeatTimeLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Heating Time (sec) :</string>
@@ -406,11 +291,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter heating time in seconds</string>
         </property>
@@ -421,11 +301,6 @@
    </item>
    <item row="1" column="2">
     <widget class="QGroupBox" name="zAxisGroupBox">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-      </font>
-     </property>
      <property name="title">
       <string>Z Axis Parameters</string>
      </property>
@@ -441,11 +316,6 @@
      <layout class="QVBoxLayout" name="zAxisParamsLayout">
       <item>
        <widget class="QLabel" name="zAxisIPLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>IP Address of Model 430 :</string>
         </property>
@@ -456,11 +326,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="zAxisIPValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter IP address</string>
         </property>
@@ -468,11 +333,6 @@
       </item>
       <item>
        <widget class="QLabel" name="zAxisCurrentLimitLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Current Limit (A) :</string>
         </property>
@@ -483,11 +343,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="zAxisCurrentLimitValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter current limit in amps</string>
         </property>
@@ -495,11 +350,6 @@
       </item>
       <item>
        <widget class="QLabel" name="zAxisVoltageLimitLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Voltage Limit (V) :</string>
         </property>
@@ -510,11 +360,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="zAxisVoltageLimitValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter voltage limit in volts</string>
         </property>
@@ -522,11 +367,6 @@
       </item>
       <item>
        <widget class="QLabel" name="zAxisMaxRampRateLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Max Ramp Rate (A/sec) :</string>
         </property>
@@ -537,11 +377,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="zAxisMaxRampRateValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter max rate in amps/sec</string>
         </property>
@@ -549,11 +384,6 @@
       </item>
       <item>
        <widget class="QLabel" name="zAxisCoilConstLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Coil Constant (kG/A) :</string>
         </property>
@@ -564,11 +394,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="zAxisCoilConstValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter constant in kG/amps</string>
         </property>
@@ -576,11 +401,6 @@
       </item>
       <item>
        <widget class="QLabel" name="zAxisInductanceLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Inductance (H) :</string>
         </property>
@@ -591,11 +411,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="zAxisInductanceValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter inductance in henries</string>
         </property>
@@ -603,11 +418,6 @@
       </item>
       <item>
        <widget class="QCheckBox" name="zAxisSwitchInstalledButton">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Switch Installed?</string>
         </property>
@@ -617,11 +427,6 @@
        <widget class="QLabel" name="zAxisSwitchCurrentLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Heater Current (mA) :</string>
@@ -636,11 +441,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter switch current in mA</string>
         </property>
@@ -650,11 +450,6 @@
        <widget class="QLabel" name="zAxisSwitchCoolTimeLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Cooling Time (sec) :</string>
@@ -669,11 +464,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter cooling time in seconds</string>
         </property>
@@ -683,11 +473,6 @@
        <widget class="QLabel" name="zAxisSwitchHeatTimeLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Heating Time (sec) :</string>
@@ -702,11 +487,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter heating time in seconds</string>
         </property>
@@ -717,11 +497,6 @@
    </item>
    <item row="1" column="1">
     <widget class="QGroupBox" name="yAxisGroupBox">
-     <property name="font">
-      <font>
-       <pointsize>9</pointsize>
-      </font>
-     </property>
      <property name="title">
       <string> Y Axis Parameters</string>
      </property>
@@ -734,11 +509,6 @@
      <layout class="QVBoxLayout" name="yAxisParamsLayout">
       <item>
        <widget class="QLabel" name="yAxisIPLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>IP Address of Model 430 :</string>
         </property>
@@ -749,11 +519,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="yAxisIPValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter IP address</string>
         </property>
@@ -761,11 +526,6 @@
       </item>
       <item>
        <widget class="QLabel" name="yAxisCurrentLimitLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Current Limit (A) :</string>
         </property>
@@ -776,11 +536,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="yAxisCurrentLimitValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter current limit in amps</string>
         </property>
@@ -788,11 +543,6 @@
       </item>
       <item>
        <widget class="QLabel" name="yAxisVoltageLimitLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Voltage Limit (V) :</string>
         </property>
@@ -803,11 +553,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="yAxisVoltageLimitValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter voltage limit in volts</string>
         </property>
@@ -815,11 +560,6 @@
       </item>
       <item>
        <widget class="QLabel" name="yAxisMaxRampRateLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Max Ramp Rate (A/sec) :</string>
         </property>
@@ -830,11 +570,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="yAxisMaxRampRateValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter max rate in amps/sec</string>
         </property>
@@ -842,11 +577,6 @@
       </item>
       <item>
        <widget class="QLabel" name="yAxisCoilConstLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Coil Constant (kG/A) :</string>
         </property>
@@ -857,11 +587,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="yAxisCoilConstValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter constant in kG/amps</string>
         </property>
@@ -869,11 +594,6 @@
       </item>
       <item>
        <widget class="QLabel" name="yAxisInductanceLabel">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Inductance (H) :</string>
         </property>
@@ -884,11 +604,6 @@
       </item>
       <item>
        <widget class="QLineEdit" name="yAxisInductanceValue">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter inductance in henries</string>
         </property>
@@ -896,11 +611,6 @@
       </item>
       <item>
        <widget class="QCheckBox" name="yAxisSwitchInstalledButton">
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="text">
          <string>Switch Installed?</string>
         </property>
@@ -910,11 +620,6 @@
        <widget class="QLabel" name="yAxisSwitchCurrentLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Heater Current (mA) :</string>
@@ -929,11 +634,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter switch current in mA</string>
         </property>
@@ -943,11 +643,6 @@
        <widget class="QLabel" name="yAxisSwitchCoolTimeLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Cooling Time (sec) :</string>
@@ -962,11 +657,6 @@
         <property name="enabled">
          <bool>false</bool>
         </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
-        </property>
         <property name="placeholderText">
          <string>Enter cooling time in seconds</string>
         </property>
@@ -976,11 +666,6 @@
        <widget class="QLabel" name="yAxisSwitchHeatTimeLabel">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="text">
          <string>Switch Heating Time (sec) :</string>
@@ -994,11 +679,6 @@
        <widget class="QLineEdit" name="yAxisSwitchHeatTimeValue">
         <property name="enabled">
          <bool>false</bool>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>9</pointsize>
-         </font>
         </property>
         <property name="placeholderText">
          <string>Enter heating time in seconds</string>

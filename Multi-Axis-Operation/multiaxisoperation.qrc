@@ -23,5 +23,15 @@
         <file>Resources/help@2x.png</file>
         <file>Resources/info.png</file>
         <file>Resources/info@2x.png</file>
+        <file>Resources/cooled-switch.png</file>
+        <file>Resources/cooled-switch@2x.png</file>
+        <file>Resources/heated-switch.png</file>
+        <file>Resources/heated-switch@2x.png</file>
+        <file>Resources/button_green_play.png</file>
+        <file>Resources/button_green_play@2x.png</file>
+        <file>Resources/action_pause.png</file>
+        <file>Resources/action_pause@2x.png</file>
+        <file>Resources/Multi-Axis-Operation.png</file>
+        <file>Resources/app.ico</file>
     </qresource>
 </RCC>

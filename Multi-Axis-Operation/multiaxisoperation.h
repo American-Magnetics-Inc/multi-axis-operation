@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QtWidgets/QMainWindow>
+#include <QVector3D>
+#include <QQuaternion>
 #include "ui_multiaxisoperation.h"
 #include "magnetparams.h"
 #include "processmanager.h"
@@ -67,6 +69,7 @@ class MultiAxisOperation : public QMainWindow
 
 public:
 	MultiAxisOperation(QWidget *parent = Q_NULLPTR);
+
 	~MultiAxisOperation();
 	void updateWindowTitle();
 	void polarToCartesian(double magnitude, double angle, QVector3D *conversion);
@@ -119,7 +122,6 @@ private slots:
 	void setFieldUnits(FieldUnits units, bool updateMenuState);
 	void convertFieldValues(FieldUnits newUnits, bool convertMagnetParams);
 	void setSphericalConvention(SphericalConvention selection, bool updateMenuState);
-
 	void actionLoad_Vector_Table(void);
 	void setTableHeader(void);
 	void actionSave_Vector_Table(void);
@@ -134,8 +136,9 @@ private slots:
 	void saveReport(QString reportFileName);
 	void goToSelectedVector(void);
 	void goToNextVector(void);
-	void goToVector(void);
-	void abortAutostep();
+	void goToVector(int vectorIndex, bool makeTarget);
+	void autostepRangeChanged(void);
+	void abortAutostep(QString errorString);
 	void startAutostep(void);
 	void stopAutostep(void);
 	void autostepTimerTick(void);
@@ -145,8 +148,9 @@ private slots:
 	void switchCoolingTimerTick(void);
 	VectorError checkNextVector(double x, double y, double z, QString label);
 	void sendNextVector(double x, double y, double z);
-	void switchControl(bool heatSwitch);
+	int calculateRampingTime(double x, double y, double z, double _xField, double _yField, double _zField, double &xRampRate, double &yRampRate, double &zRampRate);
 
+	void switchControl(bool heatSwitch);
 	void alignmentTabInitState(void);
 	void alignmentTabSaveState(void);
 	void alignmentTabLoadFromStream(QTextStream *stream);
@@ -186,9 +190,10 @@ private slots:
 	void polarTableClear(void);
 	void goToSelectedPolarVector(void);
 	void goToNextPolarVector(void);
-	void goToPolarVector(void);
+	void goToPolarVector(int polarIndex, bool makeTarget);
+	void polarRangeChanged(void);
 	void startPolarAutostep(void);
-	void abortPolarAutostep(void);
+	void abortPolarAutostep(QString errorMessage);
 	void stopPolarAutostep(void);
 	void autostepPolarTimerTick(void);
 
@@ -220,6 +225,8 @@ private:
 	bool simulation;	// use simulated system
 	bool useParser;		// if true, enable stdin/stdout parser
 	int remainingTime;	// time remaining for arrival at target
+	QString addressStr;	// location (ip addr) for simulated instrument(s)
+	QString lastTargetMsg;	// last target status string to restore upon resume
 
 	// error handling
 	VectorError vectorError;	// last selected vector had error?
@@ -300,6 +307,8 @@ private:
 	int elapsedTimerTicks;
 	int autostepStartIndex;
 	int autostepEndIndex;
+	int autostepRemainingTime;
+	VectorError autostepError;
 
 	// align tab support variables
 	// shadow values and previous dial states
@@ -333,9 +342,18 @@ private:
 	int elapsedTimerTicksPolar;
 	int autostepStartIndexPolar;
 	int autostepEndIndexPolar;
+	int polarRemainingTime;
+	VectorError polarError;
 
 	// private methods
+	void setStabilizingResistorAvailability(void);
 	bool loadFromFile(FILE *pFile);	// returns true if success
 	bool saveToFile(FILE *pFile);	// returns true if success
 	void setStatusMsg(QString msg);
+
+	void calculateAutostepRemainingTime(int startIndex, int endIndex);
+	void displayAutostepRemainingTime(void);
+
+	void calculatePolarRemainingTime(int startIndex, int endIndex);
+	void displayPolarRemainingTime(void);
 };

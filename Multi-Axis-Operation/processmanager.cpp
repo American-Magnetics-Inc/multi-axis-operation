@@ -27,12 +27,16 @@ ProcessManager::~ProcessManager()
 void ProcessManager::connectProcess(QString anIPAddress, Axis anAxis, bool simulated)
 {
 	QStringList args, axisStr, networkStr;
+#if defined(Q_OS_WIN)
 	QString exepath = "C:/Program Files/American Magnetics, Inc/Magnet-DAQ/Magnet-DAQ.exe";
+#elif defined(Q_OS_MAC)
+    QString exepath = "/Applications/Magnet-DAQ.app/Contents/MacOS/Magnet-DAQ";
+#else
+    QString exepath = "/usr/lib/magnet-daq/Magnet-DAQ";
+#endif
 
-	if (simulated)
-		ipAddress = "localhost"; // localhost
-	else
-		ipAddress = anIPAddress;
+	// ip address to which to connect
+	ipAddress = anIPAddress;
 
 	axis = anAxis;
 	process->setProgram(exepath);
@@ -63,14 +67,24 @@ void ProcessManager::connectProcess(QString anIPAddress, Axis anAxis, bool simul
 
 		// launch process with axis label, hidden with parser function at ipAddress
 		args << axisStr << "-h" << "-p" << "-a " + ipAddress << networkStr;
+
+#if defined(Q_OS_WIN)
 		process->setNativeArguments(args.join(' '));
 
 		qDebug() << process->program() << process->nativeArguments();
+#endif
 
 		connect(process, SIGNAL(started()), this, SLOT(processStarted()));
 		connect(process, SIGNAL(stateChanged(QProcess::ProcessState)), this, SLOT(processStateChanged(QProcess::ProcessState)));
 		connect(process, SIGNAL(readyReadStandardOutput()), this, SLOT(readyReadStandardOutput()));
+
+#if defined(Q_OS_WIN)
 		process->start();
+#else
+        process->setProcessChannelMode(QProcess::SeparateChannels);
+        exepath += " " + args.join(' ');
+        process->start(exepath, QIODevice::ReadWrite);
+#endif
 	}
 	else
 	{
@@ -150,7 +164,7 @@ void ProcessManager::readyReadStandardOutput(void)
 }
 
 //---------------------------------------------------------------------------
-void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testMode)
+void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors)
 {
 	QString cmd;
 
@@ -193,8 +207,11 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 		}
 		else
 		{
-			// since no switch, set Stability Resistor not present
-			cmd = "CONF:STAB:RES 0\n";
+			// since no switch, set Stability Resistor according to preference
+			if (useStabilizingResistors)
+				cmd = "CONF:STAB:RES 1\n";
+			else
+				cmd = "CONF:STAB:RES 0\n";
 			process->write(cmd.toLocal8Bit());
 
 			// set AUTO stability mode

@@ -4,37 +4,24 @@
 
 TEMPLATE = app
 TARGET = Multi-Axis-Operation
-DESTDIR = ../x64/Debug
-QT += core network gui widgets concurrent
-CONFIG += debug
-DEFINES += WIN64 QT_CONCURRENT_LIB QT_NETWORK_LIB QT_WIDGETS_LIB
+QT += core network gui widgets concurrent 3dcore gui-private
+DEFINES += QT_CONCURRENT_LIB QT_NETWORK_LIB QT_WIDGETS_LIB QT_3DCORE_LIB QT_3DANIMATION_LIB QT_3DEXTRAS_LIB QT_3DINPUT_LIB QT_3DLOGIC_LIB QT_3DRENDER_LIB
 INCLUDEPATH += ./GeneratedFiles/$(ConfigurationName) \
     ./GeneratedFiles \
+    ./header \
     .
 PRECOMPILED_HEADER = stdafx.h
 DEPENDPATH += .
-MOC_DIR += ./GeneratedFiles/$(ConfigurationName)
-OBJECTS_DIR += debug
 UI_DIR += ./GeneratedFiles
 RCC_DIR += ./GeneratedFiles
+include(Multi-Axis-Operation.pri)
 win32:RC_FILE = Multi-Axis-Operation.rc
-HEADERS += ./conversions.h \
-    ./qtablewidgetwithcopypaste.h \
-    ./stdafx.h \
-    ./aboutdialog.h \
-    ./magnetparams.h \
-    ./processmanager.h \
-    ./multiaxisoperation.h
-SOURCES += ./main.cpp \
-    ./aboutdialog.cpp \
-    ./magnetparams.cpp \
-    ./multiaxisoperation.cpp \
-    ./processmanager.cpp \
-    ./qtablewidgetwithcopypaste.cpp \
-    ./conversions.cpp \
-    ./stdafx.cpp \
-    ./multiaxisoperation-vectors.cpp
-FORMS += ./multiaxisoperation.ui \
-    ./magnetparams.ui \
-    ./aboutdialog.ui
 RESOURCES += multiaxisoperation.qrc
+#QMAKE_CXXFLAGS += "-DDEBUG"
+macx-clang {
+ICON = Multi-Axis-Operation.icns
+#QMAKE_CXXFLAGS += "-DDEBUG"
+# suppress CLANG warnings on Mac
+QMAKE_CXXFLAGS += "-Wno-inconsistent-missing-override"
+QMAKE_CXXFLAGS += "-Wno-unused-parameter" # this doesn't seem to work due to -Wall option later in cmd line
+}

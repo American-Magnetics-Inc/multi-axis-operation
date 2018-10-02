@@ -573,25 +573,57 @@ color: rgb(255, 255, 255);</string>
            <string> Auto-Stepping </string>
           </property>
           <layout class="QGridLayout" name="autostepLayout">
-           <item row="0" column="0">
-            <widget class="QLabel" name="startIndexLabel">
-             <property name="text">
-              <string>Start Index :</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="startIndexEdit"/>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="endIndexLabel">
-             <property name="text">
-              <string>End Index :</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
             <widget class="QLineEdit" name="endIndexEdit"/>
+           </item>
+           <item row="6" column="0" colspan="2">
+            <widget class="QLabel" name="autostepRemainingTimeLabel">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Total Remaining Time</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0" colspan="2">
+            <widget class="QLabel" name="autostepRemainingTimeValue">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="8" column="1">
+            <spacer name="verticalSpacer_2">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::MinimumExpanding</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>10</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QPushButton" name="autostepStartButton">
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
            </item>
            <item row="2" column="1">
             <spacer name="verticalSpacer">
@@ -609,13 +641,6 @@ color: rgb(255, 255, 255);</string>
              </property>
             </spacer>
            </item>
-           <item row="3" column="0" colspan="2">
-            <widget class="QPushButton" name="autostepStartButton">
-             <property name="text">
-              <string>Start</string>
-             </property>
-            </widget>
-           </item>
            <item row="4" column="0" colspan="2">
             <widget class="QPushButton" name="autostartStopButton">
              <property name="enabled">
@@ -626,13 +651,30 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="startIndexEdit"/>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="startIndexLabel">
+             <property name="text">
+              <string>Start Index :</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="endIndexLabel">
+             <property name="text">
+              <string>End Index :</string>
+             </property>
+            </widget>
+           </item>
            <item row="5" column="1">
-            <spacer name="verticalSpacer_2">
+            <spacer name="verticalSpacer_5">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::MinimumExpanding</enum>
+              <enum>QSizePolicy::Preferred</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -1513,15 +1555,15 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="endIndexLabelPolar">
-             <property name="text">
-              <string>End Index :</string>
-             </property>
-            </widget>
-           </item>
            <item row="1" column="1">
             <widget class="QLineEdit" name="endIndexEditPolar"/>
+           </item>
+           <item row="4" column="0" colspan="2">
+            <widget class="QPushButton" name="autostepStartButtonPolar">
+             <property name="text">
+              <string>Start</string>
+             </property>
+            </widget>
            </item>
            <item row="2" column="1">
             <spacer name="verticalSpacer_3">
@@ -1539,15 +1581,31 @@ color: rgb(255, 255, 255);</string>
              </property>
             </spacer>
            </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="startIndexEditPolar"/>
+           <item row="9" column="1">
+            <spacer name="verticalSpacer_4">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::MinimumExpanding</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>10</height>
+              </size>
+             </property>
+            </spacer>
            </item>
-           <item row="4" column="0" colspan="2">
-            <widget class="QPushButton" name="autostepStartButtonPolar">
+           <item row="1" column="0">
+            <widget class="QLabel" name="endIndexLabelPolar">
              <property name="text">
-              <string>Start</string>
+              <string>End Index :</string>
              </property>
             </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="startIndexEditPolar"/>
            </item>
            <item row="5" column="0" colspan="2">
             <widget class="QPushButton" name="autostartStopButtonPolar">
@@ -1559,13 +1617,39 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
+           <item row="8" column="0" colspan="2">
+            <widget class="QLabel" name="polarRemainingTimeValue">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="7" column="0" colspan="2">
+            <widget class="QLabel" name="polarRemainingTimeLabel">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Total Remaining Time</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
            <item row="6" column="1">
-            <spacer name="verticalSpacer_4">
+            <spacer name="verticalSpacer_6">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::MinimumExpanding</enum>
+              <enum>QSizePolicy::Preferred</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -1923,6 +2007,8 @@ selection-color: rgb(0, 0, 0);</string>
     <addaction name="actionZero"/>
     <addaction name="separator"/>
     <addaction name="actionTest_Mode"/>
+    <addaction name="separator"/>
+    <addaction name="actionStabilizingResistors"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -1968,6 +2054,11 @@ selection-color: rgb(0, 0, 0);</string>
    <addaction name="actionConnect"/>
    <addaction name="separator"/>
    <addaction name="actionDefine"/>
+   <addaction name="separator"/>
+   <addaction name="actionRamp"/>
+   <addaction name="actionPause"/>
+   <addaction name="separator"/>
+   <addaction name="actionPersistentMode"/>
    <addaction name="separator"/>
    <addaction name="actionHelp"/>
    <addaction name="actionAbout_2"/>
@@ -2158,6 +2249,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionPause">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/action_pause.png</normaloff>:/multiaxis/Resources/action_pause.png</iconset>
+   </property>
    <property name="text">
     <string>Pause</string>
    </property>
@@ -2169,6 +2264,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionRamp">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/button_green_play.png</normaloff>:/multiaxis/Resources/button_green_play.png</iconset>
+   </property>
    <property name="text">
     <string>Ramp</string>
    </property>
@@ -2281,6 +2380,11 @@ selection-color: rgb(0, 0, 0);</string>
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/heated-switch.png</normaloff>
+     <normalon>:/multiaxis/Resources/cooled-switch.png</normalon>:/multiaxis/Resources/heated-switch.png</iconset>
+   </property>
    <property name="text">
     <string>Persistent Mode</string>
    </property>
@@ -2307,6 +2411,14 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
    <property name="toolTip">
     <string>About Multi-Axis Operation...</string>
+   </property>
+  </action>
+  <action name="actionStabilizingResistors">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Stabilizing Resistors Installed</string>
    </property>
   </action>
  </widget>

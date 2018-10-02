@@ -59,7 +59,7 @@ public:
 	void convertFieldValues(FieldUnits newUnits);
 	QString getMagnetID(void) { return magnetID; }
 	void setMagnetID(QString id) { magnetID = id; }
-	double getMagnitudeLimit(void) { return magnitudeLimit; }
+	double getMagnitudeLimit(void) { return (magnitudeLimit * 1.00001); }	// slight adjustment for round-off error
 	void setMagnitudeLimit(double value) { magnitudeLimit = value; }
 	AxesParams *GetXAxisParams(void) { return &x; }
 	AxesParams *GetYAxisParams(void) { return &y; }

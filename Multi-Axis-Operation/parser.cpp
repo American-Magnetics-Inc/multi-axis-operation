@@ -3,6 +3,14 @@
 #include <iostream>
 #include "conversions.h"
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/select.h>
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
 #define DELIMITER	":"		// colon
 #define SEPARATOR ": \t"	// colon, space, or tab
 #define SPACE " \t"			// space or tab
@@ -81,9 +89,12 @@ char *struprt(char *str)
 		return NULL;
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
-	char *next = str;
-	while (*str != '\0')
-		*str = toupper((unsigned char)*str);
+    char *next = str;
+    while (*next != '\0')
+	{
+        *next = toupper((unsigned char)*next);
+        next++;
+	}
 #else
 	str = _strupr(str);	// convert to all uppercase
 #endif
@@ -243,12 +254,49 @@ void Parser::process(void)
 		char input[1024];
 		char output[1024];
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+        fd_set read_fds;
+        int sfd=STDIN_FILENO, result;
+#endif
+
 		while (!stopProcessing)
 		{
 			input[0] = '\0';
 			output[0] = '\0';
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+			//we want to receive data from stdin so add these file
+			//descriptors to the file descriptor set. These also have to be reset
+			//within the loop since select modifies the sets.
+			// MM@AMI: I have no idea why this is required to get stdin to work
+			FD_ZERO(&read_fds);
+            FD_SET(sfd, &read_fds);
+
+            result = select(sfd + 1, &read_fds, nullptr, nullptr, nullptr);
+
+			if (result == -1 && errno != EINTR)
+			{
+                qDebug("Multi-Axis Operation parser aborted; error in select()");
+				std::cerr << "Error in select: " << strerror(errno) << "\n";
+				break;
+			}
+			else if (result == -1 && errno == EINTR)
+			{
+				//we've received an interrupt - handle this
+                qDebug("Multi-Axis Operation parser aborted; received unknown interrupt");
+				break;
+			}
+			else
+			{
+				if (FD_ISSET(STDIN_FILENO, &read_fds))
+				{
+					std::cin.getline(input, sizeof(input));
+				}
+			}
+#else
 			std::cin.getline(input, sizeof(input));
+			struprt(input);	// convert to all uppercase because filenames are not case sensitive on Windows
+#endif
 
 			// save original string
 			inputStr = QString(input);
@@ -374,7 +422,11 @@ void Parser::addToErrorQueue(SystemError error)
 		errorStack.push(errMsg);
 		emit error_msg(errMsg);
 
+#if defined(Q_OS_WIN)
 		Beep(1000, 600);
+#else
+        QApplication::beep();
+#endif
 	}
 }
 
@@ -541,6 +593,10 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 				addToErrorQueue(ERR_UNRECOGNIZED_QUERY);
 				break;
 		}	// end switch on first word
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		std::cout.flush();	// needed on Linux
+#endif
 	}
 			
 	/************************************************************
@@ -1718,7 +1774,6 @@ void Parser::parse_configure_T(char* word, char *outputBuffer)
 							QVector3D vector;
 
 							source->polarToCartesian(mag, angle, &vector);
-							vector *= mag;	// multiply by magnitude
 
 							VectorError error = source->check_vector(vector.x(), vector.y(), vector.z());
 

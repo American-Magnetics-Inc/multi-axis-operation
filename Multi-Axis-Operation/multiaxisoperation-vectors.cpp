@@ -1,8 +1,16 @@
 #include "stdafx.h"
 #include "multiaxisoperation.h"
 #include "conversions.h"
-#include <QtXlsxWriter/xlsxdocument.h>
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+#include <unistd.h>
+// on Linux and macOS we include the Qxlsx source in the ./header and ./source folders
+#include "header/xlsxdocument.h"
+#else
+// right now keep using the library form of QtXlsxWriter on Windows due to issues with
+// linking Qxlsx to private API, and using pre-compiled headers in VS2017
+#include <QtXlsxWriter/xlsxdocument.h>
+#endif
 
 //---------------------------------------------------------------------------
 // Contains methods related to the Vector Table tab view.
@@ -29,7 +37,7 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
 		FILE *inFile;
 		inFile = fopen(vectorsFileName.toLocal8Bit(), "r");
 
-		if (inFile != NULL)
+        if (inFile != nullptr)
 		{
 			QTextStream in(inFile);
 
@@ -184,7 +192,7 @@ void MultiAxisOperation::actionSave_Vector_Table(void)
 		outFile = fopen(saveVectorsFileName.toLocal8Bit(), "w");
 
 		// save coordinate system and convention designation
-		if (outFile != NULL)
+        if (outFile != nullptr)
 		{
 			QTextStream out(outFile);
 			QString tempStr;
@@ -335,7 +343,7 @@ void MultiAxisOperation::initNewRow(int newRow)
 	{
 		QTableWidgetItem *cell = ui.vectorsTableWidget->item(newRow, i);
 
-		if (cell == NULL)
+        if (cell == nullptr)
 			ui.vectorsTableWidget->setItem(newRow, i, cell = new QTableWidgetItem(""));
 		else
 			cell->setText("");
@@ -356,6 +364,7 @@ void MultiAxisOperation::updatePresentVector(int row, bool removed)
 		{
 			if (presentVector == row)
 			{
+				lastTargetMsg.clear();
 				setStatusMsg("");
 				presentVector = lastVector = -1;
 			}
@@ -364,7 +373,8 @@ void MultiAxisOperation::updatePresentVector(int row, bool removed)
 				// selection shift up by one
 				presentVector--;
 				lastVector = presentVector;
-				setStatusMsg("Target Vector : Vector Table #" + QString::number(presentVector + 1));
+				lastTargetMsg = "Target Vector : Vector Table #" + QString::number(presentVector + 1);
+				setStatusMsg(lastTargetMsg);
 			}
 		}
 		else
@@ -374,7 +384,8 @@ void MultiAxisOperation::updatePresentVector(int row, bool removed)
 				// selection shifted down by one
 				presentVector++;
 				lastVector = presentVector;
-				setStatusMsg("Target Vector : Vector Table #" + QString::number(presentVector + 1));
+				lastTargetMsg = "Target Vector : Vector Table #" + QString::number(presentVector + 1);
+				setStatusMsg(lastTargetMsg);
 			}
 		}
 	}
@@ -407,6 +418,7 @@ void MultiAxisOperation::vectorTableClear(void)
 	}
 
 	presentVector = lastVector = -1;
+	lastTargetMsg.clear();
 	setStatusMsg("");
 	vectorSelectionChanged();
 }
@@ -587,7 +599,7 @@ void MultiAxisOperation::saveReport(QString reportFileName)
 			{
 				QTableWidgetItem *item;
 
-				if (item = ui.vectorsTableWidget->item(i, j))
+                if ((item = ui.vectorsTableWidget->item(i, j)))
 				{
 					if (item->text() == "Pass" || item->text() == "Fail" || item->text().isEmpty())
 						xlsx.write(i + 1 + 4, j + 1, ui.vectorsTableWidget->item(i, j)->text(), alignCenterFormat);
@@ -617,7 +629,7 @@ void MultiAxisOperation::goToSelectedVector(void)
 			presentVector = list[0]->row();
 			magnetState = RAMPING;
 			systemState = SYSTEM_RAMPING;
-			goToVector();
+			goToVector(presentVector, true);
 		}
 	}
 }
@@ -647,14 +659,16 @@ void MultiAxisOperation::goToNextVector(void)
 
 				magnetState = RAMPING;
 				systemState = SYSTEM_RAMPING;
-				goToVector();
+				goToVector(presentVector, true);
 			}
 		}
 	}
 }
 
 //---------------------------------------------------------------------------
-void MultiAxisOperation::goToVector(void)
+// Argument vectorIndex is referenced from a start of 0
+//---------------------------------------------------------------------------
+void MultiAxisOperation::goToVector(int vectorIndex, bool makeTarget)
 {
 	double coord1, coord2, coord3;
 	double x, y, z;
@@ -662,19 +676,19 @@ void MultiAxisOperation::goToVector(void)
 	double temp;
 
 	// get vector values and check for numerical conversion
-	temp = ui.vectorsTableWidget->item(presentVector, 0)->text().toDouble(&ok);
+	temp = ui.vectorsTableWidget->item(vectorIndex, 0)->text().toDouble(&ok);
 	if (ok)
 		coord1 = temp;
 	else
 		error = true;	// error
 
-	temp = ui.vectorsTableWidget->item(presentVector, 1)->text().toDouble(&ok);
+	temp = ui.vectorsTableWidget->item(vectorIndex, 1)->text().toDouble(&ok);
 	if (ok)
 		coord2 = temp;
 	else
 		error = true;	// error
 
-	temp = ui.vectorsTableWidget->item(presentVector, 2)->text().toDouble(&ok);
+	temp = ui.vectorsTableWidget->item(vectorIndex, 2)->text().toDouble(&ok);
 	if (ok)
 		coord3 = temp;
 	else
@@ -694,15 +708,15 @@ void MultiAxisOperation::goToVector(void)
 			if (coord1 < 0.0)	// magnitude cannot be negative
 			{
 				vectorError = NEGATIVE_MAGNITUDE;
-				showErrorString("Vector #" + QString::number(presentVector + 1) + " : Magnitude of vector cannot be a negative value");	// error annunciation
-				abortAutostep();
+				showErrorString("Vector #" + QString::number(vectorIndex + 1) + " : Magnitude of vector cannot be a negative value");	// error annunciation
+				abortAutostep("Auto-Stepping aborted due to an error with Vector #" + QString::number(vectorIndex + 1));
 				return;
 			}
 			if (coord3 < 0.0 || coord3 > 180.0)	// angle from Z-axis must be >= 0 and <= 180 degrees
 			{
 				vectorError = INCLINATION_OUT_OF_RANGE;
-				showErrorString("Vector #" + QString::number(presentVector + 1) + " : Angle from Z-axis must be from 0 to 180 degrees");	// error annunciation
-				abortAutostep();
+				showErrorString("Vector #" + QString::number(vectorIndex + 1) + " : Angle from Z-axis must be from 0 to 180 degrees");	// error annunciation
+				abortAutostep("Auto-Stepping aborted due to an error with Vector #" + QString::number(vectorIndex + 1));
 				return;
 			}
 
@@ -710,32 +724,132 @@ void MultiAxisOperation::goToVector(void)
 		}
 
 		// attempt to go to vector
-		if ((vectorError = checkNextVector(x, y, z, "Vector #" + QString::number(presentVector + 1))) == NO_VECTOR_ERROR)
+		if ((vectorError = checkNextVector(x, y, z, "Vector #" + QString::number(vectorIndex + 1))) == NO_VECTOR_ERROR)
 		{
-			sendNextVector(x, y, z);
-			targetSource = VECTOR_TABLE;
-			lastVector = presentVector;
+			if (makeTarget)
+			{
+				sendNextVector(x, y, z);
+				targetSource = VECTOR_TABLE;
+				lastVector = vectorIndex;
 
-			if (autostepTimer->isActive())
-			{
-				setStatusMsg("Auto-Stepping : Vector Table #" + QString::number(presentVector + 1));
-			}
-			else
-			{
-				setStatusMsg("Target Vector : Vector Table #" + QString::number(presentVector + 1));
+				if (autostepTimer->isActive())
+				{
+					lastTargetMsg = "Auto-Stepping : Vector Table #" + QString::number(vectorIndex + 1);
+					setStatusMsg(lastTargetMsg);
+				}
+				else
+				{
+					lastTargetMsg = "Target Vector : Vector Table #" + QString::number(vectorIndex + 1);
+					setStatusMsg(lastTargetMsg);
+				}
 			}
 		}
 		else
 		{
-			abortAutostep();
+			abortAutostep("Auto-Stepping aborted due to an error with Vector #" + QString::number(vectorIndex + 1));
 		}
 	}
 	else
 	{
 		vectorError = NON_NUMERICAL_ENTRY;
-		showErrorString("Vector #" + QString::number(presentVector + 1) + " has non-numerical entry");	// error annunciation
-		abortAutostep();
+		showErrorString("Vector #" + QString::number(vectorIndex + 1) + " has non-numerical entry");	// error annunciation
+		abortAutostep("Auto-Stepping aborted due to an error with Vector #" + QString::number(vectorIndex + 1));
 	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::autostepRangeChanged(void)
+{
+	if (connected)
+	{
+		autostepStartIndex = ui.startIndexEdit->text().toInt();
+		autostepEndIndex = ui.endIndexEdit->text().toInt();
+
+		if (autostepStartIndex < 1 || autostepStartIndex > ui.vectorsTableWidget->rowCount())
+			return;
+		else if (autostepEndIndex <= autostepStartIndex || autostepEndIndex > ui.vectorsTableWidget->rowCount())
+			return;
+		else
+			calculateAutostepRemainingTime(autostepStartIndex, autostepEndIndex);
+
+		// display total autostep time
+		displayAutostepRemainingTime();
+	}
+	else
+	{
+		ui.autostepRemainingTimeValue->clear();
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::calculateAutostepRemainingTime(int startIndex, int endIndex)
+{
+	autostepRemainingTime = 0;
+	double lastX = xField, lastY = yField, lastZ = zField;	// start from present field values
+
+	if (startIndex < autostepStartIndex || endIndex > autostepEndIndex)	// out of range
+		return;
+
+	// calculate total remaining time
+	for (int i = startIndex - 1; i < endIndex; i++)
+	{
+		double coord1, coord2, coord3;
+		double x, y, z;
+		double rampX, rampY, rampZ;	// unused in this context
+
+		goToVector(i, false);	// check vector for errors
+
+		if (!vectorError)
+		{
+			// get vector values
+			coord1 = ui.vectorsTableWidget->item(i, 0)->text().toDouble();
+			coord2 = ui.vectorsTableWidget->item(i, 1)->text().toDouble();
+			coord3 = ui.vectorsTableWidget->item(i, 2)->text().toDouble();
+
+			if (loadedCoordinates == CARTESIAN_COORDINATES)
+			{
+				x = coord1;
+				y = coord2;
+				z = coord3;
+			}
+			else if (loadedCoordinates == SPHERICAL_COORDINATES)
+			{
+				sphericalToCartesian(coord1, coord2, coord3, &x, &y, &z);
+			}
+
+			// calculate ramping time
+			autostepRemainingTime += calculateRampingTime(x, y, z, lastX, lastY, lastZ, rampX, rampY, rampZ);
+
+			// save as start for next step
+			lastX = x;
+			lastY = y;
+			lastZ = z;
+
+			// add any hold time
+			bool ok;
+			double temp = 0;
+
+			temp = ui.vectorsTableWidget->item(i, 3)->text().toDouble(&ok);
+			if (ok)
+                autostepRemainingTime += static_cast<int>(temp);
+		}
+		else
+			break;	// break on any vector error
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::displayAutostepRemainingTime(void)
+{
+	int hours, minutes, seconds, remainder;
+
+	hours = autostepRemainingTime / 3600;
+	remainder = autostepRemainingTime % 3600;
+	minutes = remainder / 60;
+	seconds = remainder % 60;
+
+	QString timeStr = QString("%1:%2:%3").arg(hours, 2, 10, QChar('0')).arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
+	ui.autostepRemainingTimeValue->setText(timeStr);
 }
 
 //---------------------------------------------------------------------------
@@ -748,6 +862,7 @@ void MultiAxisOperation::startAutostep(void)
 
 		autostepStartIndex = ui.startIndexEdit->text().toInt();
 		autostepEndIndex = ui.endIndexEdit->text().toInt();
+		autostepRangeChanged();
 
 		if (autostepStartIndex < 1 || autostepStartIndex > ui.vectorsTableWidget->rowCount())
 		{
@@ -763,6 +878,8 @@ void MultiAxisOperation::startAutostep(void)
 
 		ui.startIndexEdit->setEnabled(false);
 		ui.endIndexEdit->setEnabled(false);
+		ui.autostepRemainingTimeLabel->setEnabled(true);
+		ui.autostepRemainingTimeValue->setEnabled(true);
 
 		elapsedTimerTicks = 0;
 		autostepTimer->start();
@@ -788,12 +905,12 @@ void MultiAxisOperation::startAutostep(void)
 		vectorSelectionChanged(); // lockout row changes
 		haveAutosavedReport = false;
 
-		goToVector();
+		goToVector(presentVector, true);
 	}
 }
 
 //---------------------------------------------------------------------------
-void MultiAxisOperation::abortAutostep()
+void MultiAxisOperation::abortAutostep(QString errorString)
 {
 	if (autostepTimer->isActive())	// first checks for active autostep sequence
 	{
@@ -801,11 +918,18 @@ void MultiAxisOperation::abortAutostep()
 		while (errorStatusIsActive)	// show any error condition first
 		{
 			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+            usleep(100000);
+#else
 			Sleep(100);
+#endif
 		}
-		setStatusMsg("Auto-Stepping aborted due to an error with Vector #" + QString::number(presentVector + 1));
+		lastTargetMsg.clear();
+		setStatusMsg(errorString);
 		ui.startIndexEdit->setEnabled(true);
 		ui.endIndexEdit->setEnabled(true);
+		ui.autostepRemainingTimeLabel->setEnabled(false);
+		ui.autostepRemainingTimeValue->setEnabled(false);
 		ui.autostepStartButton->setEnabled(true);
 		ui.autostartStopButton->setEnabled(false);
 		ui.manualVectorControlGroupBox->setEnabled(true);
@@ -818,6 +942,7 @@ void MultiAxisOperation::abortAutostep()
 			ui.actionPersistentMode->setEnabled(true);
 
 		vectorSelectionChanged();
+		autostepRangeChanged();
 	}
 }
 
@@ -827,9 +952,12 @@ void MultiAxisOperation::stopAutostep(void)
 	if (autostepTimer->isActive())
 	{
 		autostepTimer->stop();
+		lastTargetMsg.clear();
 		setStatusMsg("Auto-Stepping aborted via Stop button");
 		ui.startIndexEdit->setEnabled(true);
 		ui.endIndexEdit->setEnabled(true);
+		ui.autostepRemainingTimeLabel->setEnabled(false);
+		ui.autostepRemainingTimeValue->setEnabled(false);
 		ui.autostepStartButton->setEnabled(true);
 		ui.autostartStopButton->setEnabled(false);
 		ui.manualVectorControlGroupBox->setEnabled(true);
@@ -842,6 +970,7 @@ void MultiAxisOperation::stopAutostep(void)
 			ui.actionPersistentMode->setEnabled(true);
 
 		vectorSelectionChanged();
+		autostepRangeChanged();
 	}
 }
 
@@ -860,7 +989,7 @@ void MultiAxisOperation::autostepTimerTick(void)
 
 		if (ok)
 		{
-			if (elapsedTimerTicks >= (int)temp)
+            if (elapsedTimerTicks >= static_cast<int>(temp))
 			{
 				elapsedTimerTicks = 0;
 				
@@ -873,15 +1002,18 @@ void MultiAxisOperation::autostepTimerTick(void)
 					systemState = SYSTEM_RAMPING;
 
 					// next vector!
-					goToVector();
+					goToVector(presentVector, true);
 				}
 				else
 				{
 					// successfully completed vector table auto-stepping
-					setStatusMsg("Auto-Step Completed @ Vector #" + QString::number(presentVector + 1));
+					lastTargetMsg = "Auto-Step Completed @ Vector #" + QString::number(presentVector + 1);
+					setStatusMsg(lastTargetMsg);
 					autostepTimer->stop();
 					ui.startIndexEdit->setEnabled(true);
 					ui.endIndexEdit->setEnabled(true);
+					ui.autostepRemainingTimeLabel->setEnabled(false);
+					ui.autostepRemainingTimeValue->setEnabled(false);
 					ui.autostepStartButton->setEnabled(true);
 					ui.autostartStopButton->setEnabled(false);
 					ui.manualVectorControlGroupBox->setEnabled(true);
@@ -897,22 +1029,28 @@ void MultiAxisOperation::autostepTimerTick(void)
 			}
 			else
 			{
-				// update the HOLDING countdown
-				QString tempStr = statusMisc->text();
-				int index = tempStr.indexOf('(');
-				if (index >= 1)
-					tempStr.truncate(index - 1);
+				if (!errorStatusIsActive)
+				{
+					// update the HOLDING countdown
+					QString tempStr = statusMisc->text();
+					int index = tempStr.indexOf('(');
+					if (index >= 1)
+						tempStr.truncate(index - 1);
 
-				QString timeStr = " (" + QString::number(temp - elapsedTimerTicks) + " sec remaining)";
-				setStatusMsg(tempStr + timeStr);
+					QString timeStr = " (" + QString::number(temp - elapsedTimerTicks) + " sec remaining)";
+					setStatusMsg(tempStr + timeStr);
+				}
 			}
 		}
 		else
 		{
 			autostepTimer->stop();
+			lastTargetMsg.clear();
 			setStatusMsg("Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentVector + 1));
 			ui.startIndexEdit->setEnabled(true);
 			ui.endIndexEdit->setEnabled(true);
+			ui.autostepRemainingTimeLabel->setEnabled(false);
+			ui.autostepRemainingTimeValue->setEnabled(false);
 			ui.autostepStartButton->setEnabled(true);
 			ui.autostartStopButton->setEnabled(false);
 			ui.manualVectorControlGroupBox->setEnabled(true);
@@ -925,17 +1063,24 @@ void MultiAxisOperation::autostepTimerTick(void)
 				ui.actionPersistentMode->setEnabled(true);
 		}
 	}
+	else if (magnetState == SWITCH_COOLING || magnetState == SWITCH_HEATING)
+	{
+		elapsedTimerTicks = 0;
+	}
 	else
 	{
 		elapsedTimerTicks = 0;
 
-		// remove any erroneous countdown text
-		QString tempStr = statusMisc->text();
-		int index = tempStr.indexOf('(');
-		if (index >= 1)
-			tempStr.truncate(index - 1);
+		if (!errorStatusIsActive)
+		{
+			// remove any erroneous countdown text
+			QString tempStr = statusMisc->text();
+			int index = tempStr.indexOf('(');
+			if (index >= 1)
+				tempStr.truncate(index - 1);
 
-		setStatusMsg(tempStr);
+			setStatusMsg(tempStr);
+		}
 	}
 }
 

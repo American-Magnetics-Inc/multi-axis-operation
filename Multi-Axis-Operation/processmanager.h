@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QObject>
+#include <QProcess>
 #include "magnetparams.h"
 
 class ProcessManager : public QObject
@@ -11,7 +12,7 @@ public:
 	ProcessManager(QObject *parent);
 	~ProcessManager();
 	bool isActive(void) { return ((process->isOpen() && started) ? true : false); }
-	void sendParams(AxesParams *params, FieldUnits units, bool testMode);
+	void sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors);
 	double getMagnetCurrent(bool *error);
 	double getField(bool *error);
 	double getQuenchCurrent(bool *error);

@@ -216,18 +216,24 @@ void MultiAxisOperation::makeAlignVector1Active(bool checked)
 	{
 		ui.makeAlignActiveButton2->setChecked(false);
 		ui.alignGroupBox2->setPalette(groupBoxPalette);
+#if defined(Q_OS_MACOS)
+        ui.alignGroupBox1->repaint();
+#endif
 	}
 
 	if (ui.makeAlignActiveButton1->isChecked())
 	{
 		// cancel any active auto-step
 		if (autostepTimer->isActive())
-			abortAutostep();
+			abortAutostep("");
 		if (autostepPolarTimer->isActive())
-			abortPolarAutostep();
+			abortPolarAutostep("");
 
 		sendAlignVector1();
 		ui.alignGroupBox1->setPalette(QPalette(Qt::white, QRgb(0xD6DBE9)));
+#if defined(Q_OS_MACOS)
+        ui.alignGroupBox1->repaint();
+#endif
 	}
 	else
 	{
@@ -376,7 +382,8 @@ void MultiAxisOperation::sendAlignVector1(void)
 		{
 			sendNextVector(x, y, z);
 			targetSource = ALIGN_TAB;
-			setStatusMsg("Target Vector : Alignment Vector #1");
+			lastTargetMsg = "Target Vector : Alignment Vector #1";
+			setStatusMsg(lastTargetMsg);
 		}
 	}
 }
@@ -411,18 +418,24 @@ void MultiAxisOperation::makeAlignVector2Active(bool checked)
 	{
 		ui.makeAlignActiveButton1->setChecked(false);
 		ui.alignGroupBox1->setPalette(groupBoxPalette);
+#if defined(Q_OS_MACOS)
+        ui.alignGroupBox1->repaint();
+#endif
 	}
 
 	if (ui.makeAlignActiveButton2->isChecked())
 	{
 		// cancel any active auto-step
 		if (autostepTimer->isActive())
-			abortAutostep();
+			abortAutostep("");
 		if (autostepPolarTimer->isActive())
-			abortPolarAutostep();
+			abortPolarAutostep("");
 
 		sendAlignVector2();
 		ui.alignGroupBox2->setPalette(QPalette(Qt::white, QRgb(0xD6DBE9)));
+#if defined(Q_OS_MACOS)
+        ui.alignGroupBox1->repaint();
+#endif
 	}
 	else
 	{
@@ -571,7 +584,8 @@ void MultiAxisOperation::sendAlignVector2(void)
 		{
 			sendNextVector(x, y, z);
 			targetSource = ALIGN_TAB;
-			setStatusMsg("Target Vector : Alignment Vector #2");
+			lastTargetMsg = "Target Vector : Alignment Vector #2";
+			setStatusMsg(lastTargetMsg);
 		}
 	}
 }

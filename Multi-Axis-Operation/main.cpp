@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 {
 	QCoreApplication::setOrganizationName("American Magnetics Inc.");
 	QCoreApplication::setApplicationName("MultiAxisOperation");
-	QCoreApplication::setApplicationVersion("0.90");
+	QCoreApplication::setApplicationVersion("0.91");
 	QCoreApplication::setOrganizationDomain("AmericanMagnetics.com");
 	QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);

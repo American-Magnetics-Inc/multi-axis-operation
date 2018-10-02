@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include <QObject>
+#include <QStack>
 #include "multiaxisoperation.h"
 
 //---------------------------------------------------------------------------

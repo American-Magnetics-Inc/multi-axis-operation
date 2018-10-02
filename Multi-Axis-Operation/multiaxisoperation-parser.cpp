@@ -436,7 +436,6 @@ VectorError MultiAxisOperation::check_polar_table(int tableRow)
 		QVector3D vector;
 
 		polarToCartesian(coord1, coord2, &vector);
-		vector *= coord1;	// multiply by magnitude
 
 		// check vector
 		return check_vector(vector.x(), vector.y(), vector.z());
