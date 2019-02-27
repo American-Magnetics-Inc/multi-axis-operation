@@ -132,7 +132,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
     convention = static_cast<SphericalConvention>(settings.value("SphericalConvention").toInt());
 	ui.actionAutosave_Report->setChecked(settings.value("AutosaveReport").toBool());
 	ui.actionStabilizingResistors->setChecked(settings.value("StabilizingResistors").toBool());
-	
+
 	// restore tab positions from last exit
 	int vectorTabIndex = settings.value("Tabs/VectorTabIndex").toInt();
 	int alignTabIndex = settings.value("Tabs/AlignTabIndex").toInt();
@@ -188,7 +188,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 
 	// create error status timer
 	errorStatusTimer = new QTimer(this);
-	
+
 	// setup toolbar action groups
 	unitsGroup = new QActionGroup(this);
 	unitsGroup->addAction(ui.actionKilogauss);
@@ -306,6 +306,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 		// connect cross-thread actions
 		connect(parser, SIGNAL(system_connect()), this, SLOT(system_connect()));
 		connect(parser, SIGNAL(system_disconnect()), this, SLOT(system_disconnect()));
+		connect(parser, SIGNAL(exit_app()), this, SLOT(exit_app()));
 		connect(parser, SIGNAL(ramp()), this, SLOT(actionRamp()));
 		connect(parser, SIGNAL(pause()), this, SLOT(actionPause()));
 		connect(parser, SIGNAL(zero()), this, SLOT(actionZero()));
@@ -475,6 +476,7 @@ void MultiAxisOperation::actionConnect(void)
 	longestHeatingTime = 0;
 	longestCoolingTime = 0;
 	switchInstalled = false;
+	processError = false;
 
 	if (ui.actionConnect->isChecked())
 	{
@@ -484,7 +486,7 @@ void MultiAxisOperation::actionConnect(void)
 		statusConnectState->setText("CONNECTING...");
 		lastTargetMsg.clear();
 		setStatusMsg("Launching processes, please wait...");
-		
+
 		progressDialog.setFont(QFont("Segoe UI", 9));
 		progressDialog.setLabelText(QString("Launching processes, please wait...                   "));
 		progressDialog.setWindowTitle("Multi-Axis Connect");
@@ -497,7 +499,10 @@ void MultiAxisOperation::actionConnect(void)
 		if (magnetParams->GetXAxisParams()->activate)
 		{
 			if (xProcess == NULL)
+			{
 				xProcess = new ProcessManager(this);
+				connect(xProcess, SIGNAL(magnetDAQError()), this, SLOT(magnetDAQVersionError()));
+			}
 
 			if (!xProcess->isActive())
 			{
@@ -510,19 +515,23 @@ void MultiAxisOperation::actionConnect(void)
 
 		// check for cancellation
 		progressDialog.setValue(25);
-		if (progressDialog.wasCanceled())
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+		if (progressDialog.wasCanceled() || processError)
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// if Y-axis active, create a QProcess controller
 		if (magnetParams->GetYAxisParams()->activate)
 		{
             if (yProcess == nullptr)
+			{
 				yProcess = new ProcessManager(this);
+				connect(yProcess, SIGNAL(magnetDAQError()), this, SLOT(magnetDAQVersionError()));
+			}
 
 			if (!yProcess->isActive())
 			{
@@ -535,19 +544,23 @@ void MultiAxisOperation::actionConnect(void)
 
 		// check for cancellation
 		progressDialog.setValue(50);
-		if (progressDialog.wasCanceled())
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+		if (progressDialog.wasCanceled() || processError)
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// if Z-axis active, create a QProcess controller
 		if (magnetParams->GetZAxisParams()->activate)
 		{
             if (zProcess == nullptr)
+			{
 				zProcess = new ProcessManager(this);
+				connect(zProcess, SIGNAL(magnetDAQError()), this, SLOT(magnetDAQVersionError()));
+			}
 
 			if (!zProcess->isActive())
 			{
@@ -560,13 +573,14 @@ void MultiAxisOperation::actionConnect(void)
 
 		// check for cancellation
 		progressDialog.setValue(75);
-		if (progressDialog.wasCanceled())
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+		if (progressDialog.wasCanceled() || processError)
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// if X-axis active, send setup parameters
 		if (magnetParams->GetXAxisParams()->activate)
@@ -588,13 +602,14 @@ void MultiAxisOperation::actionConnect(void)
 
 		// check for cancellation
 		progressDialog.setValue(80);
-		if (progressDialog.wasCanceled())
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+		if (progressDialog.wasCanceled() || processError)
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// if Y-axis active, send setup parameters
 		if (magnetParams->GetYAxisParams()->activate)
@@ -620,13 +635,14 @@ void MultiAxisOperation::actionConnect(void)
 
 		// check for cancellation
 		progressDialog.setValue(90);
-		if (progressDialog.wasCanceled())
+        QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+
+		if (progressDialog.wasCanceled() || processError)
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
 			goto EXIT;
 		}
-		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// if Z-axis active, send setup parameters
 		if (magnetParams->GetZAxisParams()->activate)
@@ -654,7 +670,7 @@ void MultiAxisOperation::actionConnect(void)
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// start data collection and update interface to indicate successfully connected status
-		if (x_activated && y_activated && z_activated)
+		if (x_activated && y_activated && z_activated && !processError)
 		{
 			connected = true;
 
@@ -686,7 +702,7 @@ void MultiAxisOperation::actionConnect(void)
 
 			statusConnectState->setStyleSheet("color: green; font: bold;");
 			statusConnectState->setText("CONNECTED");
-			
+
 			statusState->setStyleSheet("color: black; font: bold;");
 			statusState->setText("PAUSED");
 			systemState = SYSTEM_PAUSED;
@@ -775,7 +791,7 @@ void MultiAxisOperation::actionLoad_Settings(void)
 			// sync the UI with the newly loaded values
 			magnetParams->syncUI();
 			magnetParams->save();
-			
+
 			updateWindowTitle();
 			vectorSelectionChanged();
 			polarSelectionChanged();
@@ -1026,7 +1042,7 @@ void MultiAxisOperation::actionSave_Settings(void)
 		settings.setValue("LastSavePath", lastSavePath);
 
 		FILE *pFile = fopen(saveFileName.toLocal8Bit().constData(), "w");
-		
+
         if (pFile == nullptr)
 		{
 			// save error
@@ -1538,13 +1554,13 @@ void MultiAxisOperation::convertFieldValues(FieldUnits newUnits, bool convertMag
 			{
 				QTableWidgetItem *cell = ui.vectorsTableWidget->item(i, j);
 				QString cellStr = cell->text();
-				
+
 				if (!cellStr.isEmpty())
 				{
 					// try to convert to number
 					bool ok;
 					double value = cellStr.toDouble(&ok);
-					
+
 					if (ok)
 					{
 						if (newUnits == TESLA)	// convert from KG
@@ -1600,12 +1616,12 @@ void MultiAxisOperation::setSphericalConvention(SphericalConvention selection, b
 
 	if (convention == MATHEMATICAL)
 	{
-		ui.magnetThetaLabel->setText(thetaStr);
-		ui.magnetPhiLabel->setText(phiStr);
-		ui.alignThetaLabel1->setText(thetaStr);
-		ui.alignThetaLabel2->setText(thetaStr);
-		ui.alignPhiLabel1->setText(phiStr);
-		ui.alignPhiLabel2->setText(phiStr);
+		ui.magnetThetaLabel->setText("Azimuth, " + thetaStr);
+		ui.magnetPhiLabel->setText("Inclination, " + phiStr);
+		ui.alignThetaLabel1->setText("Azimuth, " + thetaStr);
+		ui.alignThetaLabel2->setText("Azimuth, " + thetaStr);
+		ui.alignPhiLabel1->setText("Inclination, " + phiStr);
+		ui.alignPhiLabel2->setText("Inclination, " + phiStr);
 		if (loadedCoordinates == SPHERICAL_COORDINATES) // don't relabel tables in Cartesian coordinates
 		{
 			ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(thetaStr);
@@ -1614,12 +1630,12 @@ void MultiAxisOperation::setSphericalConvention(SphericalConvention selection, b
 	}
 	else if (convention == ISO)
 	{
-		ui.magnetThetaLabel->setText(phiStr);
-		ui.magnetPhiLabel->setText(thetaStr);
-		ui.alignThetaLabel1->setText(phiStr);
-		ui.alignThetaLabel2->setText(phiStr);
-		ui.alignPhiLabel1->setText(thetaStr);
-		ui.alignPhiLabel2->setText(thetaStr);
+		ui.magnetThetaLabel->setText("Azimuth, " + phiStr);
+		ui.magnetPhiLabel->setText("Inclination, " + thetaStr);
+		ui.alignThetaLabel1->setText("Azimuth, " + phiStr);
+		ui.alignThetaLabel2->setText("Azimuth, " + phiStr);
+		ui.alignPhiLabel1->setText("Inclination, " + thetaStr);
+		ui.alignPhiLabel2->setText("Inclination, " + thetaStr);
 		if (loadedCoordinates == SPHERICAL_COORDINATES) // don't relabel tables in Cartesian coordinates
 		{
 			ui.vectorsTableWidget->horizontalHeaderItem(1)->setText(phiStr);
@@ -1794,7 +1810,7 @@ void MultiAxisOperation::dataTimerTick(void)
 		systemState = SYSTEM_QUENCH;
 		statusState->setStyleSheet("color: red; font: bold;");
 		statusState->setText("QUENCH!");
-		
+
 		// stop any autostep cycle
 		if (autostepTimer->isActive())
 		{
@@ -1906,7 +1922,7 @@ void MultiAxisOperation::dataTimerTick(void)
 
 			if (z_activated && zState == QUENCH)
 				msg += ": Z=" + QString::number(zProcess->getQuenchCurrent(&ok), 'g', 3) + " A";
-			
+
 			qDebug() << msg;
 			quenchLogged = true;
 		}
@@ -1970,7 +1986,7 @@ void MultiAxisOperation::dataTimerTick(void)
 			seconds = remainder % 60;
 
 			QString timeStr;
-			
+
 			if (hours > 0)
 				timeStr = QString("%1:%2:%3").arg(hours).arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
 			else if (minutes > 0)
@@ -2103,7 +2119,7 @@ void MultiAxisOperation::dataTimerTick(void)
 		quenchLogged = false;
 		if (switchInstalled)
 			ui.actionPersistentMode->setEnabled(false);
-	} 
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -2331,7 +2347,7 @@ void MultiAxisOperation::sendNextVector(double x, double y, double z)
 }
 
 //---------------------------------------------------------------------------
-// Uses the maxRampRate for each axis to determine the ramp rate required 
+// Uses the maxRampRate for each axis to determine the ramp rate required
 // for each axes to arrive at the next vector simultaneously. The vector
 // (x, y, z) must be specified in Cartesian coordinates.
 //---------------------------------------------------------------------------
@@ -2435,7 +2451,7 @@ int MultiAxisOperation::calculateRampingTime(double x, double y, double z, doubl
 		else
 			yRampRate = 0;
 	}
-	
+
 	return rampTime;
 }
 
@@ -2528,6 +2544,24 @@ void MultiAxisOperation::switchControl(bool heatSwitch)
 			}
 		}
 	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::magnetDAQVersionError(void)
+{
+    if (!processError)
+    {
+        processError = true;
+
+        QMessageBox msgBox;
+
+        msgBox.setWindowTitle("Magnet-DAQ Version Error");
+        msgBox.setText("Magnet-DAQ installed version must be 1.05 or later!\n\nPlease download and install version 1.05 or later.");
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.setDefaultButton(QMessageBox::Ok);
+        msgBox.setIcon(QMessageBox::Critical);
+        int ret = msgBox.exec();
+    }
 }
 
 //---------------------------------------------------------------------------

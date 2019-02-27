@@ -82,6 +82,7 @@ signals:
 	void set_polar(double mag, double angle, int time);
 	void goto_polar(int tableRow);
 	void set_persistence(bool persistent);
+	void exit_app(void);
 
 private:
 	// add your variables here

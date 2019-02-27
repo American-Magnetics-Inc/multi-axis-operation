@@ -20,7 +20,10 @@ ProcessManager::ProcessManager(QObject *parent)
 //---------------------------------------------------------------------------
 ProcessManager::~ProcessManager()
 {
-	process->close();
+	QString cmd = "EXIT\n";
+	process->write(cmd.toLocal8Bit());
+
+	process->waitForFinished();
 }
 
 //---------------------------------------------------------------------------
@@ -47,21 +50,21 @@ void ProcessManager::connectProcess(QString anIPAddress, Axis anAxis, bool simul
 		{
 			axisStr << "-x";
 
-			if (simulated)
+			if (simulated)	// for AMI use only
 				networkStr << "--port 7183" << "--telnet 7192";
 		}
 		else if (axis == Y_AXIS)
 		{
 			axisStr << "-y";
 
-			if (simulated)
+			if (simulated)	// for AMI use only
 				networkStr << "--port 7182" << "--telnet 7191";
 		}
 		else if (axis == Z_AXIS)
 		{
 			axisStr << "-z";
 
-			if (simulated)
+			if (simulated)	// for AMI use only
 				networkStr << "--port 7181" << "--telnet 7190";
 		}
 
@@ -108,7 +111,7 @@ void ProcessManager::processStarted(void)
 
 #ifdef LOCAL_DEBUG
 	qDebug() << "*IDN?";
-#endif	
+#endif
 	process->write(cmd.toLocal8Bit());
 	process->waitForReadyRead(10000);
 
@@ -129,13 +132,14 @@ void ProcessManager::processStarted(void)
 		if (!ok)
 			version = 0.0;
 
-		// should be MagnetDAQ versions 0.99.3, 0.99.4, 0.99.5, or version 1.0 or later
-		if (!(strList.at(0) == "MagnetDAQ" && ((strList.at(1) == "0.99.3" || strList.at(1) == "0.99.4" || strList.at(1) == "0.99.5") || version >= 1.0)))
+		// should be MagnetDAQ version 1.05 or later
+		if (!(strList.at(0) == "MagnetDAQ" && version >= 1.05))
 		{
 			started = false;
 			process->close();
 
-			qDebug() << "Error: Installed Magnet-DAQ version must be 0.99.3 or later";
+			qDebug() << "Error: Installed Magnet-DAQ version must be 1.05 or later";
+			emit magnetDAQError();
 		}
 	}
 	else
@@ -172,10 +176,14 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 	cmd = "CONF:FIELD:UNITS " + QString::number((int)(units)) + "\n";
 	process->write(cmd.toLocal8Bit());
 
+	// force ramping timebase to seconds instead of minutes
+	cmd = "CONF:RAMP:RATE:UNITS 0\n";
+	process->write(cmd.toLocal8Bit());
+
 	// send current limit
 	cmd = "CONF:CURR:LIM " + QString::number(params->currentLimit, 'f', 4) + "\n";
 	process->write(cmd.toLocal8Bit());
-	
+
 	// send voltage limit
 	cmd = "CONF:VOLT:LIM " + QString::number(params->voltageLimit, 'f', 4) + "\n";
 	process->write(cmd.toLocal8Bit());
@@ -372,7 +380,7 @@ FieldUnits ProcessManager::getUnits(void)
 	{
 #ifdef LOCAL_DEBUG
 		qDebug() << "FIELD:UNITS?";
-#endif		
+#endif
 		process->write("FIELD:UNITS?\n");
 		process->waitForReadyRead(QUERY_TIMEOUT);
 
@@ -449,7 +457,12 @@ void ProcessManager::setTargetCurr(AxesParams *params, double value)
 // Sends ramp rate in A/sec
 void ProcessManager::setRampRateCurr(AxesParams *params, double rate)
 {
-	QString cmd("CONF:RAMP:RATE:CURR 1," + QString::number(rate, 'f', 6) + "," + QString::number(params->currentLimit, 'f', 4) + "\n");
+	// force ramping timebase to seconds instead of minutes
+	QString cmd("CONF:RAMP:RATE:UNITS 0\n");
+	process->write(cmd.toLocal8Bit());
+
+	// send down single segment ramp rate
+	cmd = "CONF:RAMP:RATE:CURR 1," + QString::number(rate, 'f', 6) + "," + QString::number(params->currentLimit, 'f', 4) + "\n";
 	process->write(cmd.toLocal8Bit());
 }
 

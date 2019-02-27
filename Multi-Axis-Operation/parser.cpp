@@ -18,8 +18,8 @@
 #define EOL "\r\n"			// end of line
 
 /************************************************************
-	This file is designed to support using this app as a 
-	slave QProcess to another application. It exposes a 
+	This file is designed to support using this app as a
+	slave QProcess to another application. It exposes a
 	set of remote interface commands and queries. This allows
 	a master application to use this app for higher-level,
 	experiment-specific sequences.
@@ -31,7 +31,7 @@
 	argument "-p" on app launch.
 
 	Please note that the QProcess functionality is not available
-	for UWP (Universal Windows) apps as the sandboxing does not 
+	for UWP (Universal Windows) apps as the sandboxing does not
 	allow this type of interprocess communication.
 ************************************************************/
 
@@ -42,6 +42,7 @@ const char _SYST[] = "SYST";
 const char _SYSTEM[] = "SYSTEM";
 const char _ERR[] = "ERR";
 const char _ERROR[] = "ERROR";
+const char _EXIT[] = "EXIT";
 const char _COUN[] = "COUN";
 const char _COUNT[] = "COUNT";
 const char _CONN[] = "CONN";
@@ -177,7 +178,7 @@ bool isValue(const char* buf)
 			buf++;
 		}
 		else
-		{		
+		{
 			// unacceptable character or symbol
 			return false;
 		}
@@ -205,7 +206,7 @@ bool isValue(const char* buf)
 			buf++;			// next character
 		}
 		else
-		{		
+		{
 			// unacceptable character or symbol
 			return false;
 		}
@@ -447,7 +448,7 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 	}
 
 	/************************************************************
-	The command is a query.
+	The input is a query.
 	************************************************************/
 	if (pos != NULL)
 	{		// found a ?
@@ -515,7 +516,7 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 
 			// S* queries
 			case  'S':
-				if (!strcmp(word, _STATE))				
+				if (!strcmp(word, _STATE))
 				{
 					sprintf(outputBuffer, "%d\n", source->get_state());
 					std::cout.write(outputBuffer, strlen(outputBuffer));
@@ -598,9 +599,9 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 		std::cout.flush();	// needed on Linux
 #endif
 	}
-			
+
 	/************************************************************
-	The command is not a query (no return data).
+	The input is a command (no return data).
 	************************************************************/
 	else
 	{
@@ -621,6 +622,18 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 				if (!strcmp(word, _CLS))
 				{
 					errorStack.clear();
+				}
+				else
+				{
+					addToErrorQueue(ERR_UNRECOGNIZED_COMMAND);	// no match, error
+				}
+				break;
+
+			// tests EXIT
+			case 'E':
+				if (strcmp(word, _EXIT) == 0)
+				{
+					emit exit_app();
 				}
 				else
 				{
@@ -766,7 +779,7 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 					{
 						while (isspace(*value))
 							value++;
-						
+
 						if (*value == '1' || *value == '0')
 						{
 							if (source->isConnected())
@@ -825,7 +838,7 @@ void Parser::parseInput(char *commbuf, char* outputBuffer)
 					// get next token
 					word = strtok(NULL, SEPARATOR);
 					word = struprt(word);	// convert token to uppercase
-					
+
 					// Check for the NULL condition here to make sure there are not additional args
 					if (word == NULL)
 					{
@@ -1379,7 +1392,7 @@ void Parser::parse_configure_T(char* word, char *outputBuffer)
 		{
 			addToErrorQueue(ERR_UNRECOGNIZED_COMMAND); // no match, error
 		}
-		
+
 		else if (state == SYSTEM_HEATING || state == SYSTEM_COOLING)
 		{
 			addToErrorQueue(ERR_SWITCH_TRANSITION);
@@ -1575,13 +1588,13 @@ void Parser::parse_configure_T(char* word, char *outputBuffer)
 						addToErrorQueue(ERR_INVALID_ARGUMENT); // invalid argument, error
 				}
 			}
-			
+
 			else // check string for values for CONFigure:TARGet:VECtor
 			{
 				// check for value
 				word = args;
 				word = strtok(word, COMMA);	// get next token
-					
+
 				if (isValue(word))
 				{
 					double mag = strtod(word, NULL);
@@ -1711,7 +1724,7 @@ void Parser::parse_configure_T(char* word, char *outputBuffer)
 					if (source->isConnected())
 					{
 						int tableRow = (int)strtod(word, NULL) - 1;	// table has programmatic index 0, while on-screen starts at 1
-						
+
 						// check for valid table index
 						bool indexInRange = source->polar_table_row_in_range(tableRow);
 

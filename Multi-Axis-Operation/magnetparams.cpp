@@ -130,14 +130,14 @@ void MagnetParams::setReadOnly(void)
 {
 	QList<QLineEdit*> l_lineEdits = this->findChildren<QLineEdit*>();
 
-	foreach(QLineEdit* l_lineEdit, l_lineEdits) 
+	foreach(QLineEdit* l_lineEdit, l_lineEdits)
 	{
 		l_lineEdit->setReadOnly(true);
 	}
 
 	ui.xAxisGroupBox->setCheckable(false);
 	ui.xAxisGroupBox->setEnabled(x.activate);
-	
+
 	ui.yAxisGroupBox->setCheckable(false);
 	ui.yAxisGroupBox->setEnabled(y.activate);
 
@@ -157,7 +157,7 @@ void MagnetParams::clearReadOnly(void)
 {
 	QList<QLineEdit*> l_lineEdits = this->findChildren<QLineEdit*>();
 
-	foreach(QLineEdit* l_lineEdit, l_lineEdits) 
+	foreach(QLineEdit* l_lineEdit, l_lineEdits)
 	{
 		l_lineEdit->setReadOnly(false);
 	}
@@ -638,7 +638,7 @@ void MagnetParams::save(void)
 			settings.setValue("MagnetParams/X/SwitchCoolTime", ui.xAxisSwitchCoolTimeValue->text());
 		}
 	}
-	
+
 	// Y-axis settings
 	settings.setValue("MagnetParams/Y/Enabled", ui.yAxisGroupBox->isChecked());
 
@@ -1013,7 +1013,7 @@ void MagnetParams::syncUI(void)
 		ui.yAxisCoilConstValue->clear();
 		ui.yAxisInductanceValue->clear();
 	}
-	
+
 	// sync Z axis UI
 	if (z.activate)
 	{

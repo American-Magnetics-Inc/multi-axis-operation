@@ -25,6 +25,9 @@ public:
 	void heatSwitch(void);
 	void coolSwitch(void);
 
+signals:
+	void magnetDAQError(void);
+
 public slots:
 	void connectProcess(QString anIPAddress, Axis anAxis, bool simulated);
 	void processStarted(void);

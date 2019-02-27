@@ -8,19 +8,19 @@ This repository is the source code and binary distribution point for the Multi-A
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/f58b74c881a56e21545c9243147d7d7904595ef1/help/images/screenshot1.png)
 
-**The current application version is 0.91.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
+**The current application version is 0.93.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
 The Multi-Axis Operation application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. Magnet-DAQ is also open-source subject to GPL v3 or later.
 
 The Multi-Axis Operation application contains a comprehensive Help file which should be adequate to understand how to use the application to control a multi-axis system. The application attempts to meet the needs of end-user experiments by including Sample Alignment, (polar) Rotation in the Sample Plane, and a scripting interface via stdin/stdout that is Python-compatible. A Python example is included in the Help file.
 
-An example of calling the Multi-Axis Operation application from within LabVIEW is provided in the latest [AMI Drivers for LabVIEW](https://bitbucket.org/americanmagneticsinc/ami-drivers).
+An example of calling the Multi-Axis Operation application from within LabVIEW (Windows) is provided in the latest [AMI Drivers for LabVIEW](https://bitbucket.org/americanmagneticsinc/ami-drivers). Using the functionality of Multi-Axis Operation within LabVIEW greatly simplifies controlling a multi-axis magnet system for higher-level experiments.
 
 ## What's new? ##
 
-Version 0.91 is now distributed with Linux and macOS ready-to-use binaries, along with the x64 Windows support. New features include some additional toolbar shortcuts and a total estimated time for an auto-stepping session.
+Version 0.93 is now distributed with Linux and macOS ready-to-use binaries, along with the x64 Windows support. New features include some additional toolbar shortcuts and a total estimated time for an auto-stepping session.
 
-NOTE: This application requires Magnet-DAQ as a prerequisite. The paths are presently hard-coded into the application. The Linux verison of Magnet-DAQ must be installed in **/usr/lib/magnet-daq**. The macOS version of Magnet-DAQ must be at **/Applications/Magnet-DAQ.app**.
+**NOTE:** This application requires Magnet-DAQ as a prerequisite. The paths are presently hard-coded into the application. The Linux version of Magnet-DAQ must be installed in **/usr/lib/magnet-daq**. The macOS version of Magnet-DAQ must be at **/Applications/Magnet-DAQ.app**.
 
 ## How do I install? ##
 
@@ -45,7 +45,7 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 
 
 * __Dependencies__
-	* Requires [Qt 5.11.0 or later open-source distribution](https://www.qt.io/download-open-source/)
+	* Requires [Qt 5.12.1 or later open-source distribution](https://www.qt.io/download-open-source/)
 	
 	* Uses the [QtXlsxWriter library](https://github.com/dbzhang800/QtXlsxWriter) built as a DLL for the Windows version.
 	
@@ -57,7 +57,7 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 * __Deployment and compilation hints__
 	* *For Windows*: The MultiAxis-Setup folder contains a setup project for producing a Windows installer. This requires the [Visual Studio Installer](https://marketplace.visualstudio.com/items?itemName=VisualStudioProductTeam.MicrosoftVisualStudio2017InstallerProjects) extension. A bin folder is referenced by the installer where you should place the Qt binaries for packaging by the installer.
 	
-	* *For Linux:* See the README file in the binary download (see above) for the instructions for deploying on Ubuntu. Other versions of Linux may require a different procedure. High-DPI display support functions flawlessly in KDE Plasma (not suprising since KDE is Qt-based). The application exhibits various unaddressed issues with high-DPI display in other desktop managers such as Unity and Gnome, as does the general desktop environment for those desktop managers at present.
+	* *For Linux:* See the README file in the binary download (see above) for the instructions for deploying on Ubuntu. Other versions of Linux may require a different procedure. High-DPI display support functions flawlessly in KDE Plasma (not surprising since KDE is Qt-based). The application exhibits various unaddressed issues with high-DPI display in other desktop managers such as Unity and Gnome, as does the general desktop environment for those desktop managers at present.
 	
 	* *For Mac*: Simply unzip the binary distribution and copy the .app folder to the desired location. In order to include the Qt runtime libraries in any app bundle you compile yourself, you should use the [Mac Deployment Tool](http://doc.qt.io/qt-5/osx-deployment.html#macdeploy). Dark mode in Mojave is not currently supported in the binary distribution.
 	

@@ -24,6 +24,16 @@ void MultiAxisOperation::system_disconnect(void)
 }
 
 //---------------------------------------------------------------------------
+void MultiAxisOperation::exit_app(void)
+{
+	// first disconnect
+	system_disconnect();
+
+	// then close app
+	close();
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::load_settings(FILE *file, bool *success)
 {
 	loadFromFile(file);
@@ -50,10 +60,13 @@ void MultiAxisOperation::save_settings(FILE *file, bool *success)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::set_units(int value)
 {
-	setFieldUnits((FieldUnits)value, true);
-	convertFieldValues((FieldUnits)value, true);
-	convertAlignmentFieldValues((FieldUnits)value);
-	convertPolarFieldValues((FieldUnits)value);
+	if ((FieldUnits)value != fieldUnits)	// only convert if units have changed!
+	{
+		setFieldUnits((FieldUnits)value, true);
+		convertFieldValues((FieldUnits)value, true);
+		convertAlignmentFieldValues((FieldUnits)value);
+		convertPolarFieldValues((FieldUnits)value);
+	}
 }
 
 //---------------------------------------------------------------------------

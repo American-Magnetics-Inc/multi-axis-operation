@@ -6,6 +6,7 @@
 #include "ui_multiaxisoperation.h"
 #include "magnetparams.h"
 #include "processmanager.h"
+#include <atomic>
 
 //---------------------------------------------------------------------------
 // Type declarations
@@ -38,7 +39,7 @@ typedef enum
 typedef enum
 {
 	NO_VECTOR_ERROR = 0,		// no error
-	
+
 	NON_NUMERICAL_ENTRY,		// non-numerical parameter
 	EXCEEDS_MAGNITUDE_LIMIT,	// vector magnitude exceeds magnet limit
 	NEGATIVE_MAGNITUDE,			// magnitude cannot be negative
@@ -122,6 +123,8 @@ private slots:
 	void setFieldUnits(FieldUnits units, bool updateMenuState);
 	void convertFieldValues(FieldUnits newUnits, bool convertMagnetParams);
 	void setSphericalConvention(SphericalConvention selection, bool updateMenuState);
+	void magnetDAQVersionError(void);
+
 	void actionLoad_Vector_Table(void);
 	void setTableHeader(void);
 	void actionSave_Vector_Table(void);
@@ -200,6 +203,7 @@ private slots:
 	// parser actions
 	void system_connect(void);
 	void system_disconnect(void);
+	void exit_app(void);
 	void load_settings(FILE *file, bool *success);
 	void save_settings(FILE * file, bool * success);
 	void set_align1(double mag, double azimuth, double inclination);
@@ -227,6 +231,7 @@ private:
 	int remainingTime;	// time remaining for arrival at target
 	QString addressStr;	// location (ip addr) for simulated instrument(s)
 	QString lastTargetMsg;	// last target status string to restore upon resume
+	std::atomic<bool> processError;
 
 	// error handling
 	VectorError vectorError;	// last selected vector had error?
@@ -273,7 +278,7 @@ private:
 	// magnet parameters dialog
 	MagnetParams *magnetParams;
 	FieldUnits fieldUnits;
-	
+
 	// process managers
 	ProcessManager *xProcess;
 	ProcessManager *yProcess;

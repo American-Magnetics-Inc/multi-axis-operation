@@ -253,7 +253,7 @@ color: rgb(255, 255, 255);</string>
             </font>
            </property>
            <property name="text">
-            <string>Field Magnitude ρ (kG)</string>
+            <string>Field Magnitude, ρ (kG)</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -842,6 +842,12 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item row="1" column="0" rowspan="3">
          <widget class="QTableWidgetWithCopyPaste" name="vectorsTableWidget">
+          <property name="font">
+           <font>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="sizeAdjustPolicy">
            <enum>QAbstractScrollArea::AdjustToContents</enum>
           </property>
@@ -1061,7 +1067,7 @@ color: rgb(255, 255, 255);</string>
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Magnitude ρ (kG)</string>
+              <string>Magnitude, ρ (kG)</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -1378,7 +1384,7 @@ color: rgb(255, 255, 255);</string>
               </sizepolicy>
              </property>
              <property name="text">
-              <string>Magnitude ρ (kG)</string>
+              <string>Magnitude, ρ (kG)</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -1830,6 +1836,13 @@ color: rgb(255, 255, 255);</string>
         </item>
         <item row="1" column="0" rowspan="3">
          <widget class="QTableWidgetWithCopyPaste" name="polarTableWidget">
+          <property name="font">
+           <font>
+            <pointsize>9</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
           <property name="sizeAdjustPolicy">
            <enum>QAbstractScrollArea::AdjustToContents</enum>
           </property>
