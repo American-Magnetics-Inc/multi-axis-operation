@@ -8,7 +8,7 @@ This repository is the source code and binary distribution point for the Multi-A
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/f58b74c881a56e21545c9243147d7d7904595ef1/help/images/screenshot1.png)
 
-**The current application version is 0.93.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
+**The current application version is 0.93.1.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
 The Multi-Axis Operation application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. Magnet-DAQ is also open-source subject to GPL v3 or later.
 
@@ -28,7 +28,7 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 
 * [Installer for 64-bit Microsoft Windows 7 or later](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/MultiAxis-Setup.msi) - Simply download and run the installer.
 
-* [Executable for 64-bit Linux (Ubuntu 14.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.zip) - See the README file in the download for the instructions for deploying on Ubuntu.
+* [Executable for 64-bit Linux (Ubuntu 14.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.tar.gz) - See the README file in the download for the instructions for deploying on Ubuntu.
 
 * [Application for 64-bit Apple macOS (Sierra or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.app.zip) - Unzip the download and copy the Magnet-DAQ.app folder to your desired location.
 
@@ -45,7 +45,7 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 
 
 * __Dependencies__
-	* Requires [Qt 5.12.1 or later open-source distribution](https://www.qt.io/download-open-source/)
+	* Requires [Qt 5.13.1 or later open-source distribution](https://www.qt.io/download-open-source/)
 	
 	* Uses the [QtXlsxWriter library](https://github.com/dbzhang800/QtXlsxWriter) built as a DLL for the Windows version.
 	
