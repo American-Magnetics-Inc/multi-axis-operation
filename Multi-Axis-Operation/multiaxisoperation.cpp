@@ -2223,7 +2223,7 @@ VectorError MultiAxisOperation::checkNextVector(double x, double y, double z, QS
 	}
 	else
 	{
-		if (fabs(x) > 0.0)
+		if (fabs(x) > 1e-12)
 		{
 			// can't achieve the vector as there is no X-axis activated
 			showErrorString(label + " requires an active X-axis field component!");
@@ -2245,7 +2245,7 @@ VectorError MultiAxisOperation::checkNextVector(double x, double y, double z, QS
 	}
 	else
 	{
-		if (fabs(y) > 0.0)
+		if (fabs(y) > 1e-12)
 		{
 			// can't achieve the vector as there is no Y-axis activated
 			showErrorString(label + " requires an active Y-axis field component!");
@@ -2267,7 +2267,7 @@ VectorError MultiAxisOperation::checkNextVector(double x, double y, double z, QS
 	}
 	else
 	{
-		if (fabs(z) > 0.0)
+		if (fabs(z) > 1e-12)
 		{
 			// can't achieve the vector as there is no Z-axis activated
 			showErrorString(label + " requires an active Z-axis field component!");
@@ -2379,9 +2379,9 @@ int MultiAxisOperation::calculateRampingTime(double x, double y, double z, doubl
 		zTime = 0;
 
 	// which is the longest time? it is the limiter
-	if (xTime >= yTime && xTime >= zTime)
+	if ((xTime >= yTime && xTime >= zTime) && xTime != 0.0)
 	{
-        rampTime = static_cast<int>(round(xTime));
+		rampTime = static_cast<int>(round(xTime));
 
 		xRampRate = magnetParams->GetXAxisParams()->maxRampRate;
 
@@ -2403,9 +2403,9 @@ int MultiAxisOperation::calculateRampingTime(double x, double y, double z, doubl
 		else
 			zRampRate = 0;
 	}
-	else if (yTime >= xTime && yTime >= zTime)
+	else if ((yTime >= xTime && yTime >= zTime) && yTime != 0.0)
 	{
-        rampTime = static_cast<int>(round(yTime));
+		rampTime = static_cast<int>(round(yTime));
 
 		yRampRate = magnetParams->GetYAxisParams()->maxRampRate;
 
@@ -2427,9 +2427,9 @@ int MultiAxisOperation::calculateRampingTime(double x, double y, double z, doubl
 		else
 			zRampRate = 0;
 	}
-	else if (zTime >= xTime && zTime >= yTime)
+	else if ((zTime >= xTime && zTime >= yTime) && zTime != 0.0)
 	{
-        rampTime = static_cast<int>(round(zTime));
+		rampTime = static_cast<int>(round(zTime));
 
 		zRampRate = magnetParams->GetZAxisParams()->maxRampRate;
 
@@ -2450,6 +2450,23 @@ int MultiAxisOperation::calculateRampingTime(double x, double y, double z, doubl
 		}
 		else
 			yRampRate = 0;
+	}
+	else
+	{
+		if (magnetParams->GetXAxisParams()->activate)
+			xRampRate = MIN_RAMP_RATE;
+		else
+			xRampRate = 0;
+
+		if (magnetParams->GetYAxisParams()->activate)
+			yRampRate = MIN_RAMP_RATE;
+		else
+			yRampRate = 0;
+
+		if (magnetParams->GetZAxisParams()->activate)
+			zRampRate = MIN_RAMP_RATE;
+		else
+			zRampRate = 0;
 	}
 
 	return rampTime;

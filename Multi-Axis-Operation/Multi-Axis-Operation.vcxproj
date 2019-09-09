@@ -160,6 +160,7 @@
     <ClCompile Include="multiaxisoperation-vectors.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="version.h" />
     <QtMoc Include="aboutdialog.h" />
     <ClInclude Include="conversions.h" />
     <QtMoc Include="magnetparams.h" />

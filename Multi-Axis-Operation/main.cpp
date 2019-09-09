@@ -4,6 +4,7 @@
 #include <QtDebug>
 #include <QFile>
 #include <QTextStream>
+#include "version.h"
 
 #ifndef DEBUG	// if not debugging, direct output to MultiAxisOperation.log in ~/AppData/Local/Temp for the user
 
@@ -88,9 +89,13 @@ __declspec(noinline) int MyEntryPoint(void)
 
 int main(int argc, char *argv[])
 {
+#ifdef Q_OS_WIN
+	SetProcessDPIAware(); // call before the main event loop
+#endif // Q_OS_WIN
+
 	QCoreApplication::setOrganizationName("American Magnetics Inc.");
 	QCoreApplication::setApplicationName("MultiAxisOperation");
-	QCoreApplication::setApplicationVersion("0.93");
+	QCoreApplication::setApplicationVersion(VER_PRODUCTVERSION_STR);
 	QCoreApplication::setOrganizationDomain("AmericanMagnetics.com");
 	QCoreApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
