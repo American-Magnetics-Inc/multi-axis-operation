@@ -6,7 +6,7 @@
 
 This repository is the source code and binary distribution point for the Multi-Axis Operation application for control of AMI Maxes(tm) magnet systems -- including 3D vectors or polar vectors, in a sample alignment plane, with automatic execution of a table of values. Execution of a external custom app or script is also now supported at each target vector.
 
-![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/f58b74c881a56e21545c9243147d7d7904595ef1/help/images/screenshot1.png)
+![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png)
 
 **The current application version is 1.00.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
@@ -81,8 +81,10 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 ## Screenshots ##
 
-![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/f58b74c881a56e21545c9243147d7d7904595ef1/help/images/screenshot2.png)
+![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot2.png)
 
-![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/f58b74c881a56e21545c9243147d7d7904595ef1/help/images/screenshot3.png)
+
+
+![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot3.png)
 
 
