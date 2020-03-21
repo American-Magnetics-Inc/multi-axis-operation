@@ -691,6 +691,43 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>magnetIDEdit</tabstop>
+  <tabstop>magnitudeLimitEdit</tabstop>
+  <tabstop>xAxisGroupBox</tabstop>
+  <tabstop>xAxisIPValue</tabstop>
+  <tabstop>xAxisCurrentLimitValue</tabstop>
+  <tabstop>xAxisVoltageLimitValue</tabstop>
+  <tabstop>xAxisMaxRampRateValue</tabstop>
+  <tabstop>xAxisCoilConstValue</tabstop>
+  <tabstop>xAxisInductanceValue</tabstop>
+  <tabstop>xAxisSwitchInstalledButton</tabstop>
+  <tabstop>xAxisSwitchCurrentValue</tabstop>
+  <tabstop>xAxisSwitchCoolTimeValue</tabstop>
+  <tabstop>xAxisSwitchHeatTimeValue</tabstop>
+  <tabstop>yAxisGroupBox</tabstop>
+  <tabstop>yAxisIPValue</tabstop>
+  <tabstop>yAxisCurrentLimitValue</tabstop>
+  <tabstop>yAxisVoltageLimitValue</tabstop>
+  <tabstop>yAxisMaxRampRateValue</tabstop>
+  <tabstop>yAxisCoilConstValue</tabstop>
+  <tabstop>yAxisInductanceValue</tabstop>
+  <tabstop>yAxisSwitchInstalledButton</tabstop>
+  <tabstop>yAxisSwitchCurrentValue</tabstop>
+  <tabstop>yAxisSwitchCoolTimeValue</tabstop>
+  <tabstop>yAxisSwitchHeatTimeValue</tabstop>
+  <tabstop>zAxisGroupBox</tabstop>
+  <tabstop>zAxisIPValue</tabstop>
+  <tabstop>zAxisCurrentLimitValue</tabstop>
+  <tabstop>zAxisVoltageLimitValue</tabstop>
+  <tabstop>zAxisMaxRampRateValue</tabstop>
+  <tabstop>zAxisCoilConstValue</tabstop>
+  <tabstop>zAxisInductanceValue</tabstop>
+  <tabstop>zAxisSwitchInstalledButton</tabstop>
+  <tabstop>zAxisSwitchCurrentValue</tabstop>
+  <tabstop>zAxisSwitchCoolTimeValue</tabstop>
+  <tabstop>zAxisSwitchHeatTimeValue</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

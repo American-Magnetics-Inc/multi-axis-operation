@@ -27,16 +27,9 @@ ProcessManager::~ProcessManager()
 }
 
 //---------------------------------------------------------------------------
-void ProcessManager::connectProcess(QString anIPAddress, Axis anAxis, bool simulated)
+void ProcessManager::connectProcess(QString anIPAddress, QString exepath, Axis anAxis, bool simulated, bool minimized)
 {
 	QStringList args, axisStr, networkStr;
-#if defined(Q_OS_WIN)
-	QString exepath = "C:/Program Files/American Magnetics, Inc/Magnet-DAQ/Magnet-DAQ.exe";
-#elif defined(Q_OS_MAC)
-    QString exepath = "/Applications/Magnet-DAQ.app/Contents/MacOS/Magnet-DAQ";
-#else
-    QString exepath = "/usr/lib/magnet-daq/Magnet-DAQ";
-#endif
 
 	// ip address to which to connect
 	ipAddress = anIPAddress;
@@ -68,8 +61,11 @@ void ProcessManager::connectProcess(QString anIPAddress, Axis anAxis, bool simul
 				networkStr << "--port 7181" << "--telnet 7190";
 		}
 
-		// launch process with axis label, hidden with parser function at ipAddress
-		args << axisStr << "-h" << "-p" << "-a " + ipAddress << networkStr;
+		// launch process with axis label with parser function at ipAddress
+		if (minimized)
+			args << axisStr << "-h" << "-p" << "-a " + ipAddress << networkStr;
+		else
+			args << axisStr << "-p" << "-a " + ipAddress << networkStr;
 
 #if defined(Q_OS_WIN)
 		process->setNativeArguments(args.join(' '));
@@ -157,7 +153,13 @@ void ProcessManager::readyReadStandardOutput(void)
 	reply = process->readAllStandardOutput();
 
 	// strip trailing terminators (terminate at first terminator pair)
-	int index = reply.indexOf("\r\n");
+	int index;
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+	index = reply.indexOf("\n");
+#else
+	index = reply.indexOf("\r\n");
+#endif
 
 	if (index >= 0)
 		reply.truncate(index);
@@ -269,9 +271,8 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 			process->write(cmd.toLocal8Bit());
 		}
 
-		// turn on switch heater
-		cmd = "PS 1\n";
-		process->write(cmd.toLocal8Bit());
+		// PAUSE unit
+		process->write("PAUSE\n");
 	}
 }
 
@@ -285,6 +286,38 @@ double ProcessManager::getMagnetCurrent(bool *error)
 		QString cmd("CURR:MAG?\n");
 #ifdef LOCAL_DEBUG
 		qDebug() << "CURR:MAG?";
+#endif
+		process->write(cmd.toLocal8Bit());
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return NAN;
+		}
+
+		// parse reply
+		temp = reply.toDouble(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return NAN;
+}
+
+//---------------------------------------------------------------------------
+double ProcessManager::getSupplyCurrent(bool *error)
+{
+	bool ok = false;
+	double temp;
+
+	{
+		QString cmd("CURR:SUPP?\n");
+#ifdef LOCAL_DEBUG
+		qDebug() << "CURR:SUPP?";
 #endif
 		process->write(cmd.toLocal8Bit());
 		process->waitForReadyRead(QUERY_TIMEOUT);
@@ -393,7 +426,13 @@ FieldUnits ProcessManager::getUnits(void)
 	}
 
 	if (ok)
-		return (FieldUnits)temp;
+	{
+		// units must be 0=KG or 1=TESLA
+		if (temp == 0 || temp == 1)
+			return (FieldUnits)temp;
+		else
+			return ERROR_UNITS;
+	}
 	else
 		return ERROR_UNITS;
 }
@@ -426,6 +465,33 @@ State ProcessManager::getState(void)
 }
 
 //---------------------------------------------------------------------------
+bool ProcessManager::getPSwitchHeaterState(void)
+{
+	bool ok;
+	int temp;
+
+	{
+#ifdef LOCAL_DEBUG
+		qDebug() << "PS?";
+#endif
+		process->write("PS?\n");
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+			return false;
+
+		// parse reply
+		temp = reply.toInt(&ok);
+		reply.clear();
+	}
+
+	if (ok)
+		return (bool)temp;
+	else
+		return false;
+}
+
+//---------------------------------------------------------------------------
 // Sends RAMP command
 void ProcessManager::sendRamp(void)
 {
@@ -440,14 +506,28 @@ void ProcessManager::sendPause(void)
 }
 
 //---------------------------------------------------------------------------
-// Sends target in A/sec given a value in current field units
-void ProcessManager::setTargetCurr(AxesParams *params, double value)
+// Sends ZERO command
+void ProcessManager::sendRampToZero(void)
+{
+	process->write("ZERO\n");
+}
+
+//---------------------------------------------------------------------------
+// Sends target in A given a value in current field units, if isFieldValue is
+// true the value is converted by the present coilConst value
+void ProcessManager::setTargetCurr(AxesParams *params, double value, bool isFieldValue)
 {
 	double target = 0;
 
-	if (params->coilConst > 0)
+	if (isFieldValue && (params->coilConst > 0))
 	{
 		target = value / params->coilConst;
+		QString cmd("CONF:CURR:TARG " + QString::number(target, 'f', 10) + "\n");
+		process->write(cmd.toLocal8Bit());
+	}
+	else
+	{
+		target = value;
 		QString cmd("CONF:CURR:TARG " + QString::number(target, 'f', 10) + "\n");
 		process->write(cmd.toLocal8Bit());
 	}
@@ -469,6 +549,7 @@ void ProcessManager::setRampRateCurr(AxesParams *params, double rate)
 //---------------------------------------------------------------------------
 void ProcessManager::heatSwitch(void)
 {
+	// turn ON switch heater
 	QString cmd("PS 1\n");
 	process->write(cmd.toLocal8Bit());
 }
@@ -476,6 +557,7 @@ void ProcessManager::heatSwitch(void)
 //---------------------------------------------------------------------------
 void ProcessManager::coolSwitch(void)
 {
+	// turn OFF switch heater
 	QString cmd("PS 0\n");
 	process->write(cmd.toLocal8Bit());
 }

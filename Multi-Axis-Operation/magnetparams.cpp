@@ -180,6 +180,22 @@ void MagnetParams::clearReadOnly(void)
 }
 
 //---------------------------------------------------------------------------
+// If any active axis has a switch, return true
+bool MagnetParams::switchInstalled(void)
+{
+	if (x.activate && x.switchInstalled)
+		return true;
+
+	if (y.activate && y.switchInstalled)
+		return true;
+
+	if (z.activate && z.switchInstalled)
+		return true;
+
+	return false;
+}
+
+//---------------------------------------------------------------------------
 void MagnetParams::xAxisSwitchUiConfig(bool checked, bool updateUI)
 {
 	if (checked)

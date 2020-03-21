@@ -64,7 +64,7 @@
       </font>
      </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Multi-Axis Operation for AMI MAxes™ Systems&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Copyright © 2019, &lt;/span&gt;&lt;a href=&quot;http://www.americanmagnetics.com&quot;&gt;&lt;span style=&quot; font-size:14pt; text-decoration: underline; color:#0000ff;&quot;&gt;American Magnetics, Inc.&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Multi-Axis Operation for AMI MAxes™ Systems&lt;/p&gt;&lt;p&gt;Copyright © 2020, &lt;a href=&quot;http://www.americanmagnetics.com&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;American Magnetics, Inc.&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>

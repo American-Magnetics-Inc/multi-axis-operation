@@ -9,7 +9,7 @@
 const double MIN_RAMP_RATE = 0.001;
 
 // load/save settings file version
-const int SAVE_FILE_VERSION = 4;
+const int SAVE_FILE_VERSION = 5;
 
 // stdin parsing support
 static Parser *parser;
@@ -31,6 +31,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 
 	// min columns for vector table
 	ui.vectorsTableWidget->setMinimumNumCols(5);
+	ui.polarTableWidget->setMinimumNumCols(3);
 
 #if defined(Q_OS_LINUX)
     this->setWindowIcon(QIcon(":multiaxis/Resources/app.ico"));
@@ -58,6 +59,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 #endif
 
 	// initialization
+	optionsDialog = new OptionsDialog(this);	// create here to initialize all optional settings
 	loadedCoordinates = SPHERICAL_COORDINATES;
 	systemState = DISCONNECTED;
     magnetParams = nullptr;
@@ -111,6 +113,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
     statusConnectState->setFont(QFont("Segoe UI", 9));
     statusMisc->setFont(QFont("Segoe UI", 9));
 	statusState->setFont(QFont("Segoe UI", 9));
+	//ui.mainTabWidget->tabBar()->setStyleSheet("font-family: \"Segoe UI\"; font-size: 9pt; font-weight: bold");
 #endif
 
 	statusBar()->addPermanentWidget(statusConnectState, 1);
@@ -171,6 +174,11 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	switchHeatingTimer->setInterval(1000);
 	connect(switchHeatingTimer, SIGNAL(timeout()), this, SLOT(switchHeatingTimerTick()));
 
+	// create supply/magnet current mismatch timer
+	matchMagnetCurrentTimer = new QTimer(this);
+	matchMagnetCurrentTimer->setInterval(1000);
+	connect(matchMagnetCurrentTimer, SIGNAL(timeout()), this, SLOT(matchMagnetCurrentTimerTick()));
+
 	// create switch cooling timer
 	switchCoolingTimer = new QTimer(this);
 	switchCoolingTimer->setInterval(1000);
@@ -226,6 +234,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	connect(ui.actionUse_ISO_Convention, SIGNAL(triggered()), this, SLOT(actionChange_Convention()));
 	connect(ui.action_SphericalHelp, SIGNAL(triggered()), this, SLOT(actionConvention_Help()));
 	connect(ui.actionGenerate_Excel_Report, SIGNAL(triggered()), this, SLOT(actionGenerate_Excel_Report()));
+	connect(ui.actionOptions, SIGNAL(triggered()), this, SLOT(actionOptions()));
 
 	// other actions
 	connect(ui.vectorsTableWidget, SIGNAL(itemSelectionChanged()), this, SLOT(vectorSelectionChanged()));
@@ -244,6 +253,10 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 
 	// set spherical coordinate labeling convention
 	setSphericalConvention(convention, true);
+
+	// restore vector and polar tab settings
+	restoreVectorTab(&settings);
+	restorePolarTab(&settings);
 
 	updateWindowTitle();
 
@@ -403,6 +416,22 @@ MultiAxisOperation::~MultiAxisOperation()
 
 	// save alignment tab state
 	alignmentTabSaveState();
+
+	// save vector table settings
+	settings.setValue("VectorTable/EnableExecution", ui.executeCheckBox->isChecked());
+	settings.setValue("VectorTable/AppPath", ui.appLocationEdit->text());
+	settings.setValue("VectorTable/AppArgs", ui.appArgsEdit->text());
+	settings.setValue("VectorTable/PythonPath", ui.pythonPathEdit->text());
+	settings.setValue("VectorTable/ExecutionTime", ui.appStartEdit->text());
+	settings.setValue("VectorTable/PythonScript", ui.pythonCheckBox->isChecked());
+
+	// save polar table settings
+	settings.setValue("PolarTable/EnableExecution", ui.executePolarCheckBox->isChecked());
+	settings.setValue("PolarTable/AppPath", ui.polarAppLocationEdit->text());
+	settings.setValue("PolarTable/AppArgs", ui.polarAppArgsEdit->text());
+	settings.setValue("PolarTable/PythonPath", ui.polarPythonPathEdit->text());
+	settings.setValue("PolarTable/ExecutionTime", ui.polarAppStartEdit->text());
+	settings.setValue("PolarTable/PythonScript", ui.polarPythonCheckBox->isChecked());
 }
 
 //---------------------------------------------------------------------------
@@ -440,6 +469,8 @@ void MultiAxisOperation::closeConnection()
 	ui.autostepStartButton->setEnabled(false);
 	ui.manualPolarControlGroupBox->setEnabled(false);
 	ui.autostepStartButtonPolar->setEnabled(false);
+	ui.actionPersistentMode->setEnabled(false);
+	ui.actionPersistentMode->setChecked(false);
 	setStabilizingResistorAvailability();
 
 	statusState->clear();
@@ -470,13 +501,23 @@ void MultiAxisOperation::actionHelp(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionConnect(void)
 {
+	// the following will initialize the activated flag to true for non-active axes
+	// active axes will be initialized to false and must complete comms to be set to true
+	// this logic simplifies (bypasses) checks for non-active axes
 	bool x_activated = !magnetParams->GetXAxisParams()->activate;
 	bool y_activated = !magnetParams->GetYAxisParams()->activate;
 	bool z_activated = !magnetParams->GetZAxisParams()->activate;
+
+	// use similar logic to the above for switch heater states
+	switchHeaterState[0] = x_activated;
+	switchHeaterState[1] = y_activated;
+	switchHeaterState[2] = z_activated;
+
 	longestHeatingTime = 0;
 	longestCoolingTime = 0;
 	switchInstalled = false;
 	processError = false;
+	supplyCurrentMismatch = false;
 
 	if (ui.actionConnect->isChecked())
 	{
@@ -487,7 +528,13 @@ void MultiAxisOperation::actionConnect(void)
 		lastTargetMsg.clear();
 		setStatusMsg("Launching processes, please wait...");
 
+#if defined(Q_OS_MAC)
+		progressDialog.setFont(QFont(".SF NS Text", 13));
+#elif defined(Q_OS_LINUX)
+		progressDialog.setFont(QFont("Ubuntu", 9));
+#else
 		progressDialog.setFont(QFont("Segoe UI", 9));
+#endif
 		progressDialog.setLabelText(QString("Launching processes, please wait...                   "));
 		progressDialog.setWindowTitle("Multi-Axis Connect");
 		progressDialog.show();
@@ -498,7 +545,7 @@ void MultiAxisOperation::actionConnect(void)
 		// if X-axis active, create a QProcess controller
 		if (magnetParams->GetXAxisParams()->activate)
 		{
-			if (xProcess == NULL)
+			if (xProcess == nullptr)
 			{
 				xProcess = new ProcessManager(this);
 				connect(xProcess, SIGNAL(magnetDAQError()), this, SLOT(magnetDAQVersionError()));
@@ -507,11 +554,13 @@ void MultiAxisOperation::actionConnect(void)
 			if (!xProcess->isActive())
 			{
 				if (simulation)
-					xProcess->connectProcess(addressStr, X_AXIS, simulation);
+					xProcess->connectProcess(addressStr, optionsDialog->magnetDAQLocation(), X_AXIS, simulation, optionsDialog->magnetDAQMinimized());
 				else
-					xProcess->connectProcess(magnetParams->GetXAxisParams()->ipAddress, X_AXIS, simulation);
+					xProcess->connectProcess(magnetParams->GetXAxisParams()->ipAddress, optionsDialog->magnetDAQLocation(), X_AXIS, simulation, optionsDialog->magnetDAQMinimized());
 			}
 		}
+		else
+			xProcess = nullptr;
 
 		// check for cancellation
 		progressDialog.setValue(25);
@@ -536,11 +585,13 @@ void MultiAxisOperation::actionConnect(void)
 			if (!yProcess->isActive())
 			{
 				if (simulation)
-					yProcess->connectProcess(addressStr, Y_AXIS, simulation);
+					yProcess->connectProcess(addressStr, optionsDialog->magnetDAQLocation(), Y_AXIS, simulation, optionsDialog->magnetDAQMinimized());
 				else
-					yProcess->connectProcess(magnetParams->GetYAxisParams()->ipAddress, Y_AXIS, simulation);
+					yProcess->connectProcess(magnetParams->GetYAxisParams()->ipAddress, optionsDialog->magnetDAQLocation(), Y_AXIS, simulation, optionsDialog->magnetDAQMinimized());
 			}
 		}
+		else
+			yProcess = nullptr;
 
 		// check for cancellation
 		progressDialog.setValue(50);
@@ -565,11 +616,13 @@ void MultiAxisOperation::actionConnect(void)
 			if (!zProcess->isActive())
 			{
 				if (simulation)
-					zProcess->connectProcess(addressStr, Z_AXIS, simulation);
+					zProcess->connectProcess(addressStr, optionsDialog->magnetDAQLocation(), Z_AXIS, simulation, optionsDialog->magnetDAQMinimized());
 				else
-					zProcess->connectProcess(magnetParams->GetZAxisParams()->ipAddress, Z_AXIS, simulation);
+					zProcess->connectProcess(magnetParams->GetZAxisParams()->ipAddress, optionsDialog->magnetDAQLocation(), Z_AXIS, simulation, optionsDialog->magnetDAQMinimized());
 			}
 		}
+		else
+			zProcess = nullptr;
 
 		// check for cancellation
 		progressDialog.setValue(75);
@@ -596,6 +649,15 @@ void MultiAxisOperation::actionConnect(void)
 					switchInstalled = true;
 					longestHeatingTime = magnetParams->GetXAxisParams()->switchHeatingTime;
 					longestCoolingTime = magnetParams->GetXAxisParams()->switchCoolingTime;
+
+					switchHeaterState[0] = xProcess->getPSwitchHeaterState();
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+					// first query fails for some reason on Unix?
+					switchHeaterState[0] = xProcess->getPSwitchHeaterState();
+#endif
+					// check that switch is not actively heating
+					if (xProcess->getState() == SWITCH_HEATING)
+						switchHeaterState[0] = false;
 				}
 			}
 		}
@@ -629,6 +691,15 @@ void MultiAxisOperation::actionConnect(void)
 
 					if (magnetParams->GetYAxisParams()->switchCoolingTime > longestCoolingTime)
 						longestCoolingTime = magnetParams->GetYAxisParams()->switchCoolingTime;
+
+					switchHeaterState[1] = yProcess->getPSwitchHeaterState();
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+					// first query fails for some reason on Unix?
+					switchHeaterState[1] = yProcess->getPSwitchHeaterState();
+#endif
+					// check that switch is not actively heating
+					if (yProcess->getState() == SWITCH_HEATING)
+						switchHeaterState[1] = false;
 				}
 			}
 		}
@@ -662,6 +733,15 @@ void MultiAxisOperation::actionConnect(void)
 
 					if (magnetParams->GetZAxisParams()->switchCoolingTime > longestCoolingTime)
 						longestCoolingTime = magnetParams->GetZAxisParams()->switchCoolingTime;
+
+					switchHeaterState[2] = zProcess->getPSwitchHeaterState();
+#if defined(Q_OS_LINUX) || defined(Q_OS_MAC)
+					// first query fails for some reason on Unix?
+					switchHeaterState[2] = zProcess->getPSwitchHeaterState();
+#endif
+					// check that switch is not actively heating
+					if (zProcess->getState() == SWITCH_HEATING)
+						switchHeaterState[2] = false;
 				}
 			}
 		}
@@ -677,21 +757,37 @@ void MultiAxisOperation::actionConnect(void)
 			// start data collection timer
 			dataTimer->start();
 
-			// if a switch is present, wait the heating time
+			// if a switch is present, check for persistence mode
 			if (switchInstalled)
 			{
-				// switch heating already initiated by ProcessManager::sendParams()
-				// start switch heating timer
-				systemState = SYSTEM_HEATING;
-				setStatusMsg("Heating switches, please wait...");
-				elapsedHeatingTicks = 0;
-				switchHeatingTimer->start();
+				// check switch heater states for all active axes, are all ON?
+				if (!(switchHeaterState[0] && switchHeaterState[1] && switchHeaterState[2]))
+				{
+					setStatusMsg("Magnet is in persistent mode... exit persistence to continue");
 
-				ui.actionPersistentMode->setChecked(false);
-				ui.actionPersistentMode->setEnabled(true);
-				ui.menuBar->setEnabled(false);
-				ui.mainTabWidget->setEnabled(false);
-				ui.mainToolBar->setEnabled(false);
+					ui.menuBar->setEnabled(true);
+					ui.mainTabWidget->setEnabled(true);
+					ui.mainToolBar->setEnabled(true);
+
+					// disallow target changes
+					ui.makeAlignActiveButton1->setEnabled(false);
+					ui.makeAlignActiveButton2->setEnabled(false);
+					ui.manualVectorControlGroupBox->setEnabled(false);
+					ui.autoStepGroupBox->setEnabled(false);
+					ui.manualPolarControlGroupBox->setEnabled(false);
+					ui.autoStepGroupBoxPolar->setEnabled(false);
+					ui.actionRamp->setEnabled(false);
+					ui.actionPause->setEnabled(false);
+					ui.actionZero->setEnabled(false);
+					ui.actionPersistentMode->setChecked(true);
+					ui.actionPersistentMode->setEnabled(true);
+				}
+				else
+				{
+					ui.actionPersistentMode->setChecked(false);
+					ui.actionPersistentMode->setEnabled(true);
+					setStatusMsg("All active axes initialized successfully");
+				}
 			}
 			else
 			{
@@ -720,11 +816,14 @@ void MultiAxisOperation::actionConnect(void)
 			// no change in stabilizing resistors while connected
 			ui.actionStabilizingResistors->setEnabled(false);
 
-			// allow vector selection
-			ui.manualVectorControlGroupBox->setEnabled(true);
-			ui.autostepStartButton->setEnabled(true);
-			ui.manualPolarControlGroupBox->setEnabled(true);
-			ui.autostepStartButtonPolar->setEnabled(true);
+			// allow vector selection if not persistent
+			if (!ui.actionPersistentMode->isChecked())
+			{
+				ui.manualVectorControlGroupBox->setEnabled(true);
+				ui.autostepStartButton->setEnabled(true);
+				ui.manualPolarControlGroupBox->setEnabled(true);
+				ui.autostepStartButtonPolar->setEnabled(true);
+			}
 
 			// setup sample alignment interface on connect
 			alignmentTabConnect();
@@ -783,6 +882,10 @@ void MultiAxisOperation::actionLoad_Settings(void)
 		}
 		else
 		{
+			// clear any prior data
+			vectorTableClear();
+			polarTableClear();
+
 			// load it!
 			loadFromFile(pFile);
 
@@ -805,6 +908,7 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 	AxesParams *params;
 	QTextStream stream(pFile, QIODevice::ReadOnly);
 	int version;
+	bool switchInstalled = false;
 
 	// read file version
 	version = stream.readLine().toInt();
@@ -838,13 +942,22 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 		params = magnetParams->GetXAxisParams();
 		loadParams(&stream, params);
 
+		if (params->switchInstalled)
+			switchInstalled = true;
+
 		// y-axis params
 		params = magnetParams->GetYAxisParams();
 		loadParams(&stream, params);
 
+		if (params->switchInstalled)
+			switchInstalled = true;
+
 		// z-axis params
 		params = magnetParams->GetZAxisParams();
 		loadParams(&stream, params);
+
+		if (params->switchInstalled)
+			switchInstalled = true;
 
 		// reload vector table
 		ui.vectorsTableWidget->setRowCount(stream.readLine().toInt());
@@ -884,6 +997,9 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 				QString tempStr = stream.readLine();
 				QTableWidgetItem *item;
 
+				if (tempStr.contains("Persistence"))
+					tempStr = "Enter Persistence?\nHold Time (sec)";
+
 				item = ui.vectorsTableWidget->horizontalHeaderItem(i);
 
                 if (item == nullptr)
@@ -921,11 +1037,46 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 				else
 					item->setText(tempStr);
 
+				if (j == 3 && switchInstalled)
+				{
+					if (item->text().length() > 0)
+						item->setCheckState(Qt::Checked);
+					else
+						item->setCheckState(Qt::Unchecked);
+
+					if (version >= 5)
+					{
+						// read check state from saved file
+						QString tempStr = stream.readLine();
+						bool checked = (bool)(tempStr.toUShort());
+
+						if (checked)
+							item->setCheckState(Qt::Checked);
+						else
+							item->setCheckState(Qt::Unchecked);
+					}
+				}
+
 				if (j == 4)
 					item->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
 				else
 					item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 			}
+		}
+
+		if (version >= 5)
+		{
+			// recover vector table executable setup
+			bool tmpBool;
+
+			tmpBool = (bool)(stream.readLine().toUShort());
+			ui.executeCheckBox->setChecked(tmpBool);
+			ui.appLocationEdit->setText(stream.readLine());
+			ui.appArgsEdit->setText(stream.readLine());
+			ui.pythonPathEdit->setText(stream.readLine());
+			ui.appStartEdit->setText(stream.readLine());
+			tmpBool = (bool)(stream.readLine().toUShort());
+			ui.pythonCheckBox->setChecked(tmpBool);
 		}
 
 		if (version >= 2)
@@ -959,6 +1110,9 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 				QString tempStr = stream.readLine();
 				QTableWidgetItem *item;
 
+				if (tempStr.contains("Persistence"))
+					tempStr = "Enter Persistence?\nHold Time (sec)";
+
 				item = ui.polarTableWidget->horizontalHeaderItem(i);
 
                 if (item == nullptr)
@@ -986,9 +1140,47 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 					else
 						item->setText(tempStr);
 
+					if (j == 2 && switchInstalled)
+					{
+						if (item->text().length() > 0)
+							item->setCheckState(Qt::Checked);
+						else
+							item->setCheckState(Qt::Unchecked);
+
+						if (version >= 5)
+						{
+							// read check state from saved file
+							QString tempStr = stream.readLine();
+							bool checked = (bool)(tempStr.toUShort());
+
+							if (checked)
+								item->setCheckState(Qt::Checked);
+							else
+								item->setCheckState(Qt::Unchecked);
+						}
+					}
+
 					item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 				}
 			}
+		}
+
+		if (version >= 5)
+		{
+			// recover polar table executable setup
+			bool tmpBool;
+
+			tmpBool = (bool)(stream.readLine().toUShort());
+			ui.executePolarCheckBox->setChecked(tmpBool);
+			ui.polarAppLocationEdit->setText(stream.readLine());
+			ui.polarAppArgsEdit->setText(stream.readLine());
+			ui.polarPythonPathEdit->setText(stream.readLine());
+			ui.polarAppStartEdit->setText(stream.readLine());
+			tmpBool = (bool)(stream.readLine().toUShort());
+			ui.polarPythonCheckBox->setChecked(tmpBool);
+
+			ui.startIndexEditPolar->setText(stream.readLine());
+			ui.endIndexEditPolar->setText(stream.readLine());
 		}
 
 		if (version >= 4)
@@ -1002,6 +1194,9 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 			setStabilizingResistorAvailability();
 			ui.actionStabilizingResistors->setChecked(false);
 		}
+
+		setTableHeader();
+		setPolarTableHeader();
 	}
 
 #if defined(Q_OS_MACOS)
@@ -1122,10 +1317,20 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 
 		item = ui.vectorsTableWidget->horizontalHeaderItem(i);
 
-        if (item == nullptr)
+		if (item == nullptr)
+		{
 			stream << "\n";
+		}
 		else
-			stream << item->text() << "\n";
+		{
+			if (item->text().contains('\n'))
+			{
+				QString tmp = item->text().remove('\n');
+				stream << tmp << "\n";
+			}
+			else
+				stream << item->text() << "\n";
+		}
 	}
 
 	// save vector table contents
@@ -1141,8 +1346,25 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 				stream << "\n";
 			else
 				stream << item->text() << "\n";
+
+			// save checked state for persistence (added with file version 5)
+			if (j == 3 && magnetParams->switchInstalled())
+			{
+				if (item == nullptr)
+					stream << "\n";
+				else
+					stream << (bool)item->checkState() << "\n";
+			}
 		}
 	}
+
+	// vector executable options
+	stream << ui.executeCheckBox->isChecked() << "\n";
+	stream << ui.appLocationEdit->text() << "\n";
+	stream << ui.appArgsEdit->text() << "\n";
+	stream << ui.pythonPathEdit->text() << "\n";
+	stream << ui.appStartEdit->text() << "\n";
+	stream << ui.pythonCheckBox->isChecked() << "\n";
 
 	// save coordinate selection
 	stream << loadedCoordinates << "\n";
@@ -1161,10 +1383,20 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 
 		item = ui.polarTableWidget->horizontalHeaderItem(i);
 
-        if (item == nullptr)
+		if (item == nullptr)
+		{
 			stream << "\n";
+		}
 		else
-			stream << item->text() << "\n";
+		{
+			if (item->text().contains('\n'))
+			{
+				QString tmp = item->text().remove('\n');
+				stream << tmp << "\n";
+			}
+			else
+				stream << item->text() << "\n";
+		}
 	}
 
 	// save polar table contents
@@ -1180,8 +1412,28 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 				stream << "\n";
 			else
 				stream << item->text() << "\n";
+
+			// save checked state for persistence (added with file version 5)
+			if (j == 2 && magnetParams->switchInstalled())
+			{
+				if (item == nullptr)
+					stream << "\n";
+				else
+					stream << (bool)item->checkState() << "\n";
+			}
 		}
 	}
+
+	// polar table executable options
+	stream << ui.executePolarCheckBox->isChecked() << "\n";
+	stream << ui.polarAppLocationEdit->text() << "\n";
+	stream << ui.polarAppArgsEdit->text() << "\n";
+	stream << ui.polarPythonPathEdit->text() << "\n";
+	stream << ui.polarAppStartEdit->text() << "\n";
+	stream << ui.polarPythonCheckBox->isChecked() << "\n";
+
+	stream << ui.startIndexEditPolar->text() << "\n";
+	stream << ui.endIndexEditPolar->text() << "\n";
 
 	// save stabilizing resistors selection
 	stream << ui.actionStabilizingResistors->isChecked() << "\n";
@@ -1281,36 +1533,38 @@ void MultiAxisOperation::actionShow_Spherical_Coordinates(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionPause(void)
 {
-	if (magnetParams->GetXAxisParams()->activate)
+	if (connected)
 	{
-		if (xProcess)
+		if (magnetParams->GetXAxisParams()->activate)
 		{
-			if (xProcess->isActive())
-			{
-				xProcess->sendPause();
-			}
+			if (xProcess)
+				if (xProcess->isActive())
+					xProcess->sendPause();
 		}
-	}
 
-	if (magnetParams->GetYAxisParams()->activate)
-	{
-		if (yProcess)
+		if (magnetParams->GetYAxisParams()->activate)
 		{
-			if (yProcess->isActive())
-			{
-				yProcess->sendPause();
-			}
+			if (yProcess)
+				if (yProcess->isActive())
+					yProcess->sendPause();
 		}
-	}
 
-	if (magnetParams->GetZAxisParams()->activate)
-	{
-		if (zProcess)
+		if (magnetParams->GetZAxisParams()->activate)
 		{
-			if (zProcess->isActive())
-			{
-				zProcess->sendPause();
-			}
+			if (zProcess)
+				if (zProcess->isActive())
+					zProcess->sendPause();
+		}
+
+		// if autostep or polar step timers are active, suspend timer operation
+		if (autostepTimer->isActive())
+		{
+			suspendAutostep();
+		}
+
+		if (autostepPolarTimer->isActive())
+		{
+			suspendPolarAutostep();
 		}
 	}
 }
@@ -1318,60 +1572,95 @@ void MultiAxisOperation::actionPause(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionRamp(void)
 {
-	if (magnetParams->GetXAxisParams()->activate)
+	if (connected)
 	{
-		if (xProcess)
+		if (magnetParams->GetXAxisParams()->activate)
 		{
-			if (xProcess->isActive())
-			{
-				xProcess->sendRamp();
-			}
+			if (xProcess)
+				if (xProcess->isActive())
+					xProcess->sendRamp();
 		}
-	}
 
-	if (magnetParams->GetYAxisParams()->activate)
-	{
-		if (yProcess)
+		if (magnetParams->GetYAxisParams()->activate)
 		{
-			if (yProcess->isActive())
-			{
-				yProcess->sendRamp();
-			}
+			if (yProcess)
+				if (yProcess->isActive())
+					yProcess->sendRamp();
 		}
-	}
 
-	if (magnetParams->GetZAxisParams()->activate)
-	{
-		if (zProcess)
+		if (magnetParams->GetZAxisParams()->activate)
 		{
-			if (zProcess->isActive())
-			{
-				zProcess->sendRamp();
-			}
+			if (zProcess)
+				if (zProcess->isActive())
+					zProcess->sendRamp();
 		}
-	}
 
-	if (autostepTimer->isActive())	// first checks for active autostep sequence
-	{
-		calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
-	}
+		if (autostepTimer->isActive())	// first checks for active autostep sequence
+		{
+			calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
+			resumeAutostep();
+		}
 
-	if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
-	{
-		calculatePolarRemainingTime(presentPolar + 1, autostepEndIndexPolar);
-	}
+		if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
+		{
+			calculatePolarRemainingTime(presentPolar + 1, autostepEndIndexPolar);
+			resumePolarAutostep();
+		}
 
-	if (!lastTargetMsg.isEmpty())
-		setStatusMsg(lastTargetMsg);
+		if (!lastTargetMsg.isEmpty())
+			setStatusMsg(lastTargetMsg);
+	}
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionZero(void)
 {
-	sendNextVector(0, 0, 0);
-	lastTargetMsg = "Target Vector : Zero Field Vector";
-	setStatusMsg(lastTargetMsg);
-	targetSource = NO_SOURCE;
+	if (connected)
+	{
+		// if magnet is persistent, simply send "RAMP TO ZERO" command
+		// otherwise set the vector to 0, 0, 0
+		if (ui.actionPersistentMode->isChecked())
+		{
+			if (systemState == SYSTEM_HOLDING || systemState == SYSTEM_PAUSED)
+			{
+				setStatusMsg("Magnet is in persistent mode... ramping supplies to zero");
+
+				if (magnetParams->GetXAxisParams()->activate)
+				{
+					if (xProcess)
+						if (xProcess->isActive())
+							xProcess->sendRampToZero();
+				}
+
+				if (magnetParams->GetYAxisParams()->activate)
+				{
+					if (yProcess)
+						if (yProcess->isActive())
+							yProcess->sendRampToZero();
+				}
+
+				if (magnetParams->GetZAxisParams()->activate)
+				{
+					if (zProcess)
+						if (zProcess->isActive())
+							zProcess->sendRampToZero();
+				}
+			}
+		}
+		else
+		{
+			if (autostepTimer->isActive())
+				stopAutostep();
+
+			if (autostepPolarTimer->isActive())
+				stopPolarAutostep();
+
+			sendNextVector(0, 0, 0);
+			lastTargetMsg = "Target Vector : Zero Field Vector";
+			setStatusMsg(lastTargetMsg);
+			targetSource = NO_SOURCE;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -1396,6 +1685,12 @@ void MultiAxisOperation::actionConvention_Help(void)
 {
 	QString link = "https://en.wikipedia.org/wiki/Spherical_coordinate_system";
 	QDesktopServices::openUrl(QUrl(link));
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::actionOptions(void)
+{
+	optionsDialog->show();
 }
 
 //---------------------------------------------------------------------------
@@ -1682,6 +1977,11 @@ void MultiAxisOperation::dataTimerTick(void)
 					}
 
 					xState = xProcess->getState();
+
+					if (magnetParams->GetXAxisParams()->switchInstalled)
+						switchHeaterState[0] = xProcess->getPSwitchHeaterState();
+					else
+						switchHeaterState[0] = false;
 				}
 				else
 				{
@@ -1724,6 +2024,11 @@ void MultiAxisOperation::dataTimerTick(void)
 					}
 
 					yState = yProcess->getState();
+
+					if (magnetParams->GetYAxisParams()->switchInstalled)
+						switchHeaterState[1] = yProcess->getPSwitchHeaterState();
+					else
+						switchHeaterState[1] = false;
 				}
 				else
 				{
@@ -1766,6 +2071,11 @@ void MultiAxisOperation::dataTimerTick(void)
 					}
 
 					zState = zProcess->getState();
+
+					if (magnetParams->GetZAxisParams()->switchInstalled)
+						switchHeaterState[2] = zProcess->getPSwitchHeaterState();
+					else
+						switchHeaterState[2] = false;
 				}
 				else
 				{
@@ -1801,6 +2111,10 @@ void MultiAxisOperation::dataTimerTick(void)
 	//---------------------------------------------------------------------------
 	// update state
 	//---------------------------------------------------------------------------
+
+	if (switchInstalled)
+		checkForSupplyMagnetCurrentMismatch(false);
+
 	if ((x_activated && xState == QUENCH) ||
 		(y_activated && yState == QUENCH) ||
 		(z_activated && zState == QUENCH))
@@ -1810,6 +2124,9 @@ void MultiAxisOperation::dataTimerTick(void)
 		systemState = SYSTEM_QUENCH;
 		statusState->setStyleSheet("color: red; font: bold;");
 		statusState->setText("QUENCH!");
+
+		if (switchInstalled)
+			ui.actionPersistentMode->setEnabled(false);
 
 		// stop any autostep cycle
 		if (autostepTimer->isActive())
@@ -1933,6 +2250,7 @@ void MultiAxisOperation::dataTimerTick(void)
 		systemState = SYSTEM_HEATING;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("HEATING SWITCH");
+
 		if (switchInstalled)
 			ui.actionPersistentMode->setEnabled(false);
 	}
@@ -1942,6 +2260,7 @@ void MultiAxisOperation::dataTimerTick(void)
 		systemState = SYSTEM_COOLING;
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("COOLING SWITCH");
+
 		if (switchInstalled)
 			ui.actionPersistentMode->setEnabled(true);
 	}
@@ -1952,27 +2271,10 @@ void MultiAxisOperation::dataTimerTick(void)
 		if (remainingTime)
 			remainingTime--;	// decrement by one second
 
-		if (autostepTimer->isActive())	// first checks for active autostep sequence
-		{
-			if (autostepRemainingTime)
-			{
-				autostepRemainingTime--;	// decrement by one second
-				displayAutostepRemainingTime();
-			}
-		}
-
-		if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
-		{
-			if (polarRemainingTime)
-			{
-				polarRemainingTime--;	// decrement by one second
-				displayPolarRemainingTime();
-			}
-		}
-
 		magnetState = RAMPING;
 		systemState = SYSTEM_RAMPING;
 		statusState->setStyleSheet("color: black; font: bold;");
+
 		if (switchInstalled)
 			ui.actionPersistentMode->setEnabled(false);
 
@@ -2032,8 +2334,12 @@ void MultiAxisOperation::dataTimerTick(void)
 			statusState->setStyleSheet("color: green; font: bold;");
 			statusState->setText("HOLDING");
 			quenchLogged = false;
+
 			if (switchInstalled)
+			{
+				ui.actionZero->setEnabled(true);
 				ui.actionPersistentMode->setEnabled(true);
+			}
 
 			// mark vector as pass only in Vector Table
 			if (targetSource == VECTOR_TABLE)
@@ -2065,24 +2371,6 @@ void MultiAxisOperation::dataTimerTick(void)
 
 			passCnt = 0;	// reset
 		}
-
-		if (autostepTimer->isActive())	// first checks for active autostep sequence
-		{
-			if (autostepRemainingTime)
-			{
-				autostepRemainingTime--;	// decrement by one second
-				displayAutostepRemainingTime();
-			}
-		}
-
-		if (autostepPolarTimer->isActive())	// first checks for active polar autostep sequence
-		{
-			if (polarRemainingTime)
-			{
-				polarRemainingTime--;	// decrement by one second
-				displayPolarRemainingTime();
-			}
-		}
 	}
 	else if ((x_activated && xState == PAUSED) ||
 			 (y_activated && yState == PAUSED) ||
@@ -2093,8 +2381,12 @@ void MultiAxisOperation::dataTimerTick(void)
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("PAUSED");
 		quenchLogged = false;
+
 		if (switchInstalled)
+		{
+			ui.actionZero->setEnabled(true);
 			ui.actionPersistentMode->setEnabled(true);
+		}
 	}
 	else if ((x_activated && xState == ZEROING) ||
 			 (y_activated && yState == ZEROING) ||
@@ -2105,8 +2397,14 @@ void MultiAxisOperation::dataTimerTick(void)
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("ZEROING");
 		quenchLogged = false;
+
 		if (switchInstalled)
-			ui.actionPersistentMode->setEnabled(false);
+		{
+			if (ui.actionPersistentMode->isChecked())
+				ui.actionPersistentMode->setEnabled(true);
+			else
+				ui.actionPersistentMode->setEnabled(false);
+		}
 	}
 	else if ((!x_activated || (x_activated && xState == AT_ZERO)) &&
 			 (!y_activated || (y_activated && yState == AT_ZERO)) &&
@@ -2117,8 +2415,9 @@ void MultiAxisOperation::dataTimerTick(void)
 		statusState->setStyleSheet("color: black; font: bold;");
 		statusState->setText("AT ZERO");
 		quenchLogged = false;
+
 		if (switchInstalled)
-			ui.actionPersistentMode->setEnabled(false);
+			ui.actionPersistentMode->setEnabled(true);
 	}
 }
 
@@ -2140,8 +2439,10 @@ void MultiAxisOperation::switchHeatingTimerTick(void)
 		ui.makeAlignActiveButton2->setEnabled(true);
 		ui.manualVectorControlGroupBox->setEnabled(true);
 		ui.autoStepGroupBox->setEnabled(true);
+		ui.autostepStartButton->setEnabled(true);
 		ui.manualPolarControlGroupBox->setEnabled(true);
 		ui.autoStepGroupBoxPolar->setEnabled(true);
+		ui.autostepStartButtonPolar->setEnabled(true);
 		ui.actionRamp->setEnabled(true);
 		ui.actionPause->setEnabled(true);
 		ui.actionZero->setEnabled(true);
@@ -2181,9 +2482,19 @@ void MultiAxisOperation::switchCoolingTimerTick(void)
 		ui.makeAlignActiveButton1->setEnabled(false);
 		ui.makeAlignActiveButton2->setEnabled(false);
 		ui.manualVectorControlGroupBox->setEnabled(false);
-		ui.autoStepGroupBox->setEnabled(false);
+
+		if (autostepTimer->isActive())
+			ui.autoStepGroupBox->setEnabled(true);	// stop button should be enabled
+		else
+			ui.autoStepGroupBox->setEnabled(false);
+
 		ui.manualPolarControlGroupBox->setEnabled(false);
-		ui.autoStepGroupBoxPolar->setEnabled(false);
+
+		if (autostepPolarTimer->isActive())
+			ui.autoStepGroupBoxPolar->setEnabled(true);	// stop button should be enabled
+		else
+			ui.autoStepGroupBoxPolar->setEnabled(false);
+
 		ui.actionRamp->setEnabled(false);
 		ui.actionPause->setEnabled(false);
 		ui.actionZero->setEnabled(false);
@@ -2313,7 +2624,7 @@ void MultiAxisOperation::sendNextVector(double x, double y, double z)
 			if (xProcess->isActive())
 			{
 				xProcess->setRampRateCurr(magnetParams->GetXAxisParams(), xRampRate);
-				xProcess->setTargetCurr(magnetParams->GetXAxisParams(), x);
+				xProcess->setTargetCurr(magnetParams->GetXAxisParams(), x, true);
 				xProcess->sendRamp();
 			}
 		}
@@ -2326,7 +2637,7 @@ void MultiAxisOperation::sendNextVector(double x, double y, double z)
 			if (yProcess->isActive())
 			{
 				yProcess->setRampRateCurr(magnetParams->GetYAxisParams(), yRampRate);
-				yProcess->setTargetCurr(magnetParams->GetYAxisParams(), y);
+				yProcess->setTargetCurr(magnetParams->GetYAxisParams(), y, true);
 				yProcess->sendRamp();
 			}
 		}
@@ -2339,7 +2650,7 @@ void MultiAxisOperation::sendNextVector(double x, double y, double z)
 			if (zProcess->isActive())
 			{
 				zProcess->setRampRateCurr(magnetParams->GetZAxisParams(), zRampRate);
-				zProcess->setTargetCurr(magnetParams->GetZAxisParams(), z);
+				zProcess->setTargetCurr(magnetParams->GetZAxisParams(), z, true);
 				zProcess->sendRamp();
 			}
 		}
@@ -2475,45 +2786,298 @@ int MultiAxisOperation::calculateRampingTime(double x, double y, double z, doubl
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionPersistentMode(void)
 {
-	if (ui.actionPersistentMode->isChecked())
+	if (connected)
 	{
-		// first, check for HOLDING or PAUSED state
-		if (systemState == SYSTEM_HOLDING || systemState == SYSTEM_PAUSED)
+		if (ui.actionPersistentMode->isChecked())
 		{
-			// enter persistent mode, cool switch(es)
-			switchControl(false);	// turn off heater
-			systemState = SYSTEM_COOLING;
-			setStatusMsg("Cooling switches, please wait...");
-			elapsedCoolingTicks = 0;
-			switchCoolingTimer->start();
+			// first, check for HOLDING or PAUSED state
+			if (systemState == SYSTEM_HOLDING || systemState == SYSTEM_PAUSED)
+			{
+				// enter persistent mode, cool switch(es)
+				switchControl(false);	// turn off heater
+				systemState = SYSTEM_COOLING;
+				setStatusMsg("Cooling switches, please wait...");
+				elapsedCoolingTicks = 0;
+				switchCoolingTimer->start();
+
+				ui.menuBar->setEnabled(false);
+				ui.mainTabWidget->setEnabled(false);
+				ui.mainToolBar->setEnabled(false);
+			}
+			else
+			{
+				// error message, cannot enter persistent mode while not HOLDING or PAUSED
+				ui.actionPersistentMode->setChecked(false);
+				errorStatusIsActive = true;
+				statusMisc->setStyleSheet("color: red; font: bold");
+				statusMisc->setText("ERROR: Cannot enter persistent mode unless in HOLDING or PAUSED state");
+				QTimer::singleShot(5000, this, SLOT(errorStatusTimeout()));
+			}
+		}
+		else
+		{
+			// first, check all active axes for magnet and supply current match
+			supplyCurrentMismatch = checkForSupplyMagnetCurrentMismatch(false);
+
+			// exit persistent mode, heat switch(es) when supplyCurrentMismatch clears
+			if (!supplyCurrentMismatch)
+			{
+				switchControl(true);	// turn on heater
+
+				systemState = SYSTEM_HEATING;
+				setStatusMsg("Heating switches, please wait...");
+				elapsedHeatingTicks = 0;
+				switchHeatingTimer->start();
+			}
+			else
+			{
+				// we have to match current to the last known magnet field
+				// it could be any value, therefore we can't mark a table row as passed
+				remainingTime = 0;	// clear any prior target ramp time
+				targetSource = NO_SOURCE;	// clear any prior table source
+
+				// clear target sent flags
+				for (int i = 0; i < 3; i++)
+					magnetCurrentTargetSent[i] = false;
+
+				matchMagnetCurrentTimer->start();
+				setStatusMsg("Matching supply and last known magnet currents, please wait...");
+			}
 
 			ui.menuBar->setEnabled(false);
 			ui.mainTabWidget->setEnabled(false);
 			ui.mainToolBar->setEnabled(false);
 		}
-		else
-		{
-			// error message, cannot enter persistent mode while not HOLDING or PAUSED
-			ui.actionPersistentMode->setChecked(false);
-			errorStatusIsActive = true;
-			statusMisc->setStyleSheet("color: red; font: bold");
-			statusMisc->setText("ERROR: Cannot enter persistent mode unless in HOLDING or PAUSED state");
-			QTimer::singleShot(5000, this, SLOT(errorStatusTimeout()));
-		}
 	}
-	else
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::matchMagnetCurrentTimerTick(void)
+{
+	//check all active axes for magnet and supply current match
+	supplyCurrentMismatch = checkForSupplyMagnetCurrentMismatch(true);
+
+	if (!supplyCurrentMismatch)
 	{
-		// exit persistent mode, heat switch(es)
+		matchMagnetCurrentTimer->stop();
 		switchControl(true);	// turn on heater
+
 		systemState = SYSTEM_HEATING;
 		setStatusMsg("Heating switches, please wait...");
 		elapsedHeatingTicks = 0;
 		switchHeatingTimer->start();
-
-		ui.menuBar->setEnabled(false);
-		ui.mainTabWidget->setEnabled(false);
-		ui.mainToolBar->setEnabled(false);
 	}
+}
+
+//---------------------------------------------------------------------------
+bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
+{
+	bool xMismatch = true;
+	bool yMismatch = true;
+	bool zMismatch = true;
+
+	if (magnetParams->GetXAxisParams()->activate && magnetParams->GetXAxisParams()->switchInstalled)
+	{
+		if (xProcess)
+		{
+			if (xProcess->isActive())
+			{
+				if (!xProcess->getPSwitchHeaterState())
+				{
+					bool ok;
+
+					// check for supply current mismatch
+					double magnetCurrent = xProcess->getMagnetCurrent(&ok);
+					double supplyCurrent = xProcess->getSupplyCurrent(&ok);
+
+					if (ok)
+					{
+						// if mismatch larger than 0.1%, then set and ramp 430 to magnet current
+						if (((fabs(magnetCurrent - supplyCurrent) / magnetCurrent) > 0.001) && !magnetCurrentTargetSent[0])
+						{
+							if (forceMatch)
+							{
+								// set target current to last known magnet current
+								xProcess->setTargetCurr(magnetParams->GetXAxisParams(), magnetCurrent, false);
+								magnetCurrentTargetSent[0] = true;
+
+								State state = xProcess->getState();
+								if (state != HOLDING)
+								{
+									xProcess->sendRamp();	// start ramping to target
+									xMismatch = true;
+								}
+								else
+									xMismatch = false;	 // we are HOLDING and target is set to magnet current
+							}
+							else
+								xMismatch = true;
+						}
+						else
+						{
+							if (systemState == SYSTEM_HOLDING)
+								xMismatch = false;	// close enough to exit persistent mode!
+							else
+							{
+								State state = xProcess->getState();
+
+								if (forceMatch && (state == PAUSED || state == AT_ZERO))
+									xProcess->sendRamp();	// start ramping to target
+							}
+						}
+					}
+				}
+				else
+				{
+					xMismatch = false;	// switch is heated so there can be no mismatch!
+					State state = xProcess->getState();
+
+					if (state == PAUSED || state == AT_ZERO)
+						xProcess->sendRamp();	// ramp it to HOLDING state
+				}
+			}
+			else
+				xMismatch = false; // axes not active
+		}
+		else
+			xMismatch = false; // axes not active
+	}
+
+	if (magnetParams->GetYAxisParams()->activate && magnetParams->GetYAxisParams()->switchInstalled)
+	{
+		if (yProcess)
+		{
+			if (yProcess->isActive())
+			{
+				if (!yProcess->getPSwitchHeaterState())
+				{
+					bool ok;
+
+					// check for supply current mismatch
+					double magnetCurrent = yProcess->getMagnetCurrent(&ok);
+					double supplyCurrent = yProcess->getSupplyCurrent(&ok);
+
+					if (ok)
+					{
+						// if mismatch larger than 0.1%, then set and ramp 430 to magnet current
+						if (((fabs(magnetCurrent - supplyCurrent) / magnetCurrent) > 0.001) && !magnetCurrentTargetSent[1])
+						{
+							if (forceMatch)
+							{
+								// set target current to last known magnet current
+								yProcess->setTargetCurr(magnetParams->GetYAxisParams(), magnetCurrent, false);
+								magnetCurrentTargetSent[1] = true;
+
+								State state = yProcess->getState();
+								if (state != HOLDING)
+								{
+									yProcess->sendRamp();	// start ramping to target
+									yMismatch = true;
+								}
+								else
+									yMismatch = false;	 // we are HOLDING and target is set to magnet current
+							}
+							else
+								yMismatch = true;
+						}
+						else
+						{
+							if (systemState == SYSTEM_HOLDING)
+								yMismatch = false;	// close enough to exit persistent mode!
+							else
+							{
+								State state = yProcess->getState();
+
+								if (forceMatch && (state == PAUSED || state == AT_ZERO))
+									yProcess->sendRamp();	// start ramping to target
+							}
+						}
+					}
+				}
+				else
+				{
+					yMismatch = false;	// switch is heated so there can be no mismatch!
+					State state = yProcess->getState();
+
+					if (state == PAUSED || state == AT_ZERO)
+						yProcess->sendRamp();	// ramp it to HOLDING state
+				}
+			}
+			else
+				yMismatch = false; // axes not active
+		}
+		else
+			yMismatch = false; // axes not active
+	}
+
+	if (magnetParams->GetZAxisParams()->activate && magnetParams->GetZAxisParams()->switchInstalled)
+	{
+		if (zProcess)
+		{
+			if (zProcess->isActive())
+			{
+				if (!zProcess->getPSwitchHeaterState())
+				{
+					bool ok;
+
+					// check for supply current mismatch
+					double magnetCurrent = zProcess->getMagnetCurrent(&ok);
+					double supplyCurrent = zProcess->getSupplyCurrent(&ok);
+
+					if (ok)
+					{
+						// if mismatch larger than 0.1%, then set and ramp 430 to magnet current
+						if (((fabs(magnetCurrent - supplyCurrent) / magnetCurrent) > 0.001) && !magnetCurrentTargetSent[2])
+						{
+							if (forceMatch)
+							{
+								// set target current to last known magnet current
+								zProcess->setTargetCurr(magnetParams->GetZAxisParams(), magnetCurrent, false);
+								magnetCurrentTargetSent[2] = true;
+
+								State state = zProcess->getState();
+								if (state != HOLDING)
+								{
+									zProcess->sendRamp();	// start ramping to target
+									zMismatch = true;
+								}
+								else
+									zMismatch = false;	 // we are HOLDING and target is set to magnet current
+							}
+							else
+								zMismatch = true;
+						}
+						else
+						{
+							if (systemState == SYSTEM_HOLDING)
+								zMismatch = false;	// close enough to exit persistent mode!
+							else
+							{
+								State state = zProcess->getState();
+
+								if (forceMatch && (state == PAUSED || state == AT_ZERO))
+									zProcess->sendRamp();	// start ramping to target
+							}
+						}
+					}
+				}
+				else
+				{
+					zMismatch = false;	// switch is heated so there can be no mismatch!
+					State state = zProcess->getState();
+
+					if (state == PAUSED || state == AT_ZERO)
+						zProcess->sendRamp();	// ramp it to HOLDING state
+				}
+			}
+			else
+				zMismatch = false; // axes not active
+		}
+		else
+			zMismatch = false; // axes not active
+	}
+
+	return (xMismatch || yMismatch || zMismatch);
 }
 
 //---------------------------------------------------------------------------

@@ -499,6 +499,12 @@ color: rgb(255, 255, 255);</string>
     </item>
     <item>
      <widget class="QTabWidget" name="mainTabWidget">
+      <property name="font">
+       <font>
+        <weight>50</weight>
+        <bold>false</bold>
+       </font>
+      </property>
       <property name="currentIndex">
        <number>0</number>
       </property>
@@ -512,182 +518,14 @@ color: rgb(255, 255, 255);</string>
        <attribute name="toolTip">
         <string>Vectors relative to physical magnet axes</string>
        </attribute>
-       <layout class="QGridLayout" name="vectorTableTabLayout" columnstretch="4,1">
+       <layout class="QGridLayout" name="vectorTabLayout">
         <property name="horizontalSpacing">
          <number>14</number>
         </property>
         <property name="verticalSpacing">
-         <number>11</number>
+         <number>6</number>
         </property>
-        <item row="0" column="0">
-         <widget class="QLabel" name="fieldValuesTableLabel">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>26</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Field Values relative to Physical Magnet Axes:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1" rowspan="2">
-         <widget class="QGroupBox" name="manualVectorControlGroupBox">
-          <property name="title">
-           <string> Manual Control </string>
-          </property>
-          <layout class="QVBoxLayout" name="manualControlLayout">
-           <property name="spacing">
-            <number>7</number>
-           </property>
-           <property name="topMargin">
-            <number>7</number>
-           </property>
-           <item>
-            <widget class="QPushButton" name="goToSelectedButton">
-             <property name="toolTip">
-              <string>Goes to first row in selection</string>
-             </property>
-             <property name="text">
-              <string>Go To Selected</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="goToNextVectorButton">
-             <property name="toolTip">
-              <string>Goes to next vector in table</string>
-             </property>
-             <property name="text">
-              <string>Go To Next Vector</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QGroupBox" name="autoStepGroupBox">
-          <property name="title">
-           <string> Auto-Stepping </string>
-          </property>
-          <layout class="QGridLayout" name="autostepLayout">
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="endIndexEdit"/>
-           </item>
-           <item row="6" column="0" colspan="2">
-            <widget class="QLabel" name="autostepRemainingTimeLabel">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Total Remaining Time</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="0" colspan="2">
-            <widget class="QLabel" name="autostepRemainingTimeValue">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="1">
-            <spacer name="verticalSpacer_2">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::MinimumExpanding</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>10</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="3" column="0" colspan="2">
-            <widget class="QPushButton" name="autostepStartButton">
-             <property name="text">
-              <string>Start</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Preferred</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>10</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="4" column="0" colspan="2">
-            <widget class="QPushButton" name="autostartStopButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Stop</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="startIndexEdit"/>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="startIndexLabel">
-             <property name="text">
-              <string>Start Index :</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="endIndexLabel">
-             <property name="text">
-              <string>End Index :</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <spacer name="verticalSpacer_5">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Preferred</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>10</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="3" column="1">
+        <item row="0" column="4">
          <widget class="QFrame" name="vectorRowEditFrame">
           <property name="minimumSize">
            <size>
@@ -837,10 +675,252 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
+           <item>
+            <spacer name="tableToolBarSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="pswitchToggleToolButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Toggle Persistence for All Entries</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="multiaxisoperation.qrc">
+               <normaloff>:/multiaxis/Resources/pswitch.png</normaloff>:/multiaxis/Resources/pswitch.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
-        <item row="1" column="0" rowspan="3">
+        <item row="0" column="5" rowspan="4">
+         <widget class="QFrame" name="vectorControlFrame">
+          <property name="maximumSize">
+           <size>
+            <width>180</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <layout class="QVBoxLayout" name="controlFrameLayout">
+           <property name="spacing">
+            <number>11</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="manualVectorControlGroupBox">
+             <property name="title">
+              <string> Manual Control </string>
+             </property>
+             <layout class="QVBoxLayout" name="manualControlLayout">
+              <property name="spacing">
+               <number>7</number>
+              </property>
+              <property name="topMargin">
+               <number>7</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="goToSelectedButton">
+                <property name="toolTip">
+                 <string>Goes to first row in selection</string>
+                </property>
+                <property name="text">
+                 <string>Go To Selected</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="goToNextVectorButton">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Goes to next vector in table</string>
+                </property>
+                <property name="text">
+                 <string>Go To Next Vector</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="autoStepGroupBox">
+             <property name="title">
+              <string> Auto-Stepping </string>
+             </property>
+             <layout class="QGridLayout" name="autostepLayout">
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="endIndexEdit"/>
+              </item>
+              <item row="6" column="0" colspan="2">
+               <widget class="QLabel" name="autostepRemainingTimeLabel">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Total Remaining Time</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0" colspan="2">
+               <widget class="QLabel" name="autostepRemainingTimeValue">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="1">
+               <spacer name="verticalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::MinimumExpanding</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>10</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="3" column="0" colspan="2">
+               <widget class="QPushButton" name="autostepStartButton">
+                <property name="text">
+                 <string>Start</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <spacer name="verticalSpacer">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>10</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="4" column="0" colspan="2">
+               <widget class="QPushButton" name="autostartStopButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Stop</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="startIndexEdit"/>
+              </item>
+              <item row="0" column="0">
+               <widget class="QLabel" name="startIndexLabel">
+                <property name="text">
+                 <string>Start Index :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="endIndexLabel">
+                <property name="text">
+                 <string>End Index :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <spacer name="verticalSpacer_5">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>10</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="5">
          <widget class="QTableWidgetWithCopyPaste" name="vectorsTableWidget">
           <property name="font">
            <font>
@@ -866,21 +946,21 @@ color: rgb(255, 255, 255);</string>
           <property name="wordWrap">
            <bool>false</bool>
           </property>
-          <attribute name="horizontalHeaderDefaultSectionSize">
-           <number>110</number>
-          </attribute>
           <attribute name="horizontalHeaderMinimumSectionSize">
            <number>80</number>
           </attribute>
-          <attribute name="verticalHeaderDefaultSectionSize">
-           <number>26</number>
+          <attribute name="horizontalHeaderDefaultSectionSize">
+           <number>120</number>
           </attribute>
           <attribute name="verticalHeaderMinimumSectionSize">
            <number>24</number>
           </attribute>
+          <attribute name="verticalHeaderDefaultSectionSize">
+           <number>26</number>
+          </attribute>
           <column>
            <property name="text">
-            <string>Mag (kG)</string>
+            <string>Magnitude (kG)</string>
            </property>
            <property name="font">
             <font>
@@ -923,6 +1003,272 @@ color: rgb(255, 255, 255);</string>
             <string>Pass/Fail</string>
            </property>
           </column>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="executeCheckBox">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Launches the specified app or script in the background at each table target</string>
+          </property>
+          <property name="text">
+           <string>Execute App/Script at each Target during Auto-Stepping</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" colspan="5">
+         <widget class="QFrame" name="appFrame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>8</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <layout class="QGridLayout" name="appLayout">
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>6</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>6</number>
+           </property>
+           <item row="1" column="4">
+            <widget class="QToolButton" name="appLocationButton">
+             <property name="toolTip">
+              <string>Browse for location...</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="4">
+            <widget class="QToolButton" name="pythonLocationButton">
+             <property name="toolTip">
+              <string>Browse for Python location...</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="appLocationLabel">
+             <property name="text">
+              <string>App/Script path :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="4">
+            <spacer name="horizontalSpacer_7">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Minimum</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="3" column="2">
+            <widget class="QLabel" name="appStartLabel2">
+             <property name="text">
+              <string>seconds remaining in Hold Time</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="appStartLabel1">
+             <property name="text">
+              <string>Start with</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="pythonPathLabel">
+             <property name="text">
+              <string>Python path :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1" colspan="4">
+            <widget class="QCheckBox" name="pythonCheckBox">
+             <property name="text">
+              <string>Python script (if checked, enter path below)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="appStartEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="appArgsLabel">
+             <property name="text">
+              <string>Arguments :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="3">
+            <spacer name="horizontalSpacer_8">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="1" column="1" colspan="3">
+            <widget class="QLineEdit" name="appLocationEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1" colspan="3">
+            <widget class="QLineEdit" name="pythonPathEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>21</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" colspan="4">
+            <widget class="QLineEdit" name="appArgsEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="2" column="4">
+         <widget class="QPushButton" name="executeNowButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Execute Now</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1" colspan="3">
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Preferred</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>79</width>
+            <height>21</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="0" column="0" colspan="4">
+         <widget class="QLabel" name="fieldValuesTableLabel">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>26</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Field Values relative to Physical Magnet Axes:</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -1501,187 +1847,16 @@ color: rgb(255, 255, 255);</string>
       </widget>
       <widget class="QWidget" name="rotationTab">
        <attribute name="title">
-        <string>Rotation in Sample Alignment Plane</string>
+        <string>Polar Rotation in Sample Alignment Plane</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout" columnstretch="4,1">
+       <layout class="QGridLayout" name="rotationTabLayout">
         <property name="horizontalSpacing">
          <number>14</number>
         </property>
         <property name="verticalSpacing">
-         <number>11</number>
+         <number>6</number>
         </property>
-        <item row="0" column="1" rowspan="2">
-         <widget class="QGroupBox" name="manualPolarControlGroupBox">
-          <property name="title">
-           <string> Manual Control </string>
-          </property>
-          <layout class="QVBoxLayout" name="manualControlLayout_2">
-           <property name="spacing">
-            <number>7</number>
-           </property>
-           <property name="topMargin">
-            <number>7</number>
-           </property>
-           <item>
-            <widget class="QPushButton" name="goToSelectedButtonPolar">
-             <property name="toolTip">
-              <string>Goes to first row in selection</string>
-             </property>
-             <property name="text">
-              <string>Go To Selected</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="goToNextVectorButtonPolar">
-             <property name="toolTip">
-              <string>Goes to next vector in table</string>
-             </property>
-             <property name="text">
-              <string>Go To Next Vector</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QGroupBox" name="autoStepGroupBoxPolar">
-          <property name="title">
-           <string> Auto-Stepping </string>
-          </property>
-          <layout class="QGridLayout" name="autostepLayout_2">
-           <property name="topMargin">
-            <number>7</number>
-           </property>
-           <item row="0" column="0">
-            <widget class="QLabel" name="startIndexLabelPolar">
-             <property name="text">
-              <string>Start Index :</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QLineEdit" name="endIndexEditPolar"/>
-           </item>
-           <item row="4" column="0" colspan="2">
-            <widget class="QPushButton" name="autostepStartButtonPolar">
-             <property name="text">
-              <string>Start</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <spacer name="verticalSpacer_3">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Preferred</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>10</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="9" column="1">
-            <spacer name="verticalSpacer_4">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::MinimumExpanding</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>10</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="endIndexLabelPolar">
-             <property name="text">
-              <string>End Index :</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLineEdit" name="startIndexEditPolar"/>
-           </item>
-           <item row="5" column="0" colspan="2">
-            <widget class="QPushButton" name="autostartStopButtonPolar">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Stop</string>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="0" colspan="2">
-            <widget class="QLabel" name="polarRemainingTimeValue">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string/>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="0" colspan="2">
-            <widget class="QLabel" name="polarRemainingTimeLabel">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Total Remaining Time</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="1">
-            <spacer name="verticalSpacer_6">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeType">
-              <enum>QSizePolicy::Preferred</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>10</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="polarValuesTableLabel">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>26</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Polar Field Values rotated in Sample Plane relative to Sample Alignment Vector #1:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="1">
+        <item row="0" column="3">
          <widget class="QFrame" name="polarRowEditFrame">
           <property name="minimumSize">
            <size>
@@ -1831,10 +2006,267 @@ color: rgb(255, 255, 255);</string>
              </property>
             </widget>
            </item>
+           <item>
+            <spacer name="polarToolBarSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Fixed</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QToolButton" name="polarPswitchToggleToolButton">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>32</width>
+               <height>32</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>Toggle Persistence for All Entries</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="icon">
+              <iconset resource="multiaxisoperation.qrc">
+               <normaloff>:/multiaxis/Resources/pswitch.png</normaloff>:/multiaxis/Resources/pswitch.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>24</width>
+               <height>24</height>
+              </size>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
-        <item row="1" column="0" rowspan="3">
+        <item row="0" column="4" rowspan="4">
+         <widget class="QFrame" name="polarControlFrame">
+          <property name="maximumSize">
+           <size>
+            <width>180</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Raised</enum>
+          </property>
+          <property name="lineWidth">
+           <number>0</number>
+          </property>
+          <layout class="QVBoxLayout" name="polarControlLayout">
+           <property name="spacing">
+            <number>11</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <item>
+            <widget class="QGroupBox" name="manualPolarControlGroupBox">
+             <property name="title">
+              <string> Manual Control </string>
+             </property>
+             <layout class="QVBoxLayout" name="manualControlLayout_2">
+              <property name="spacing">
+               <number>7</number>
+              </property>
+              <property name="topMargin">
+               <number>7</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="goToSelectedButtonPolar">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Goes to first row in selection</string>
+                </property>
+                <property name="text">
+                 <string>Go To Selected</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="goToNextVectorButtonPolar">
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Goes to next vector in table</string>
+                </property>
+                <property name="text">
+                 <string>Go To Next Vector</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="autoStepGroupBoxPolar">
+             <property name="title">
+              <string> Auto-Stepping </string>
+             </property>
+             <layout class="QGridLayout" name="polarAutostepLayout">
+              <property name="topMargin">
+               <number>9</number>
+              </property>
+              <item row="0" column="0">
+               <widget class="QLabel" name="startIndexLabelPolar">
+                <property name="text">
+                 <string>Start Index :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QLineEdit" name="endIndexEditPolar"/>
+              </item>
+              <item row="4" column="0" colspan="2">
+               <widget class="QPushButton" name="autostepStartButtonPolar">
+                <property name="text">
+                 <string>Start</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <spacer name="verticalSpacer_3">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>10</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="9" column="1">
+               <spacer name="verticalSpacer_4">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::MinimumExpanding</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>10</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item row="1" column="0">
+               <widget class="QLabel" name="endIndexLabelPolar">
+                <property name="text">
+                 <string>End Index :</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLineEdit" name="startIndexEditPolar"/>
+              </item>
+              <item row="5" column="0" colspan="2">
+               <widget class="QPushButton" name="autostartStopButtonPolar">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Stop</string>
+                </property>
+               </widget>
+              </item>
+              <item row="8" column="0" colspan="2">
+               <widget class="QLabel" name="polarRemainingTimeValue">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0" colspan="2">
+               <widget class="QLabel" name="polarRemainingTimeLabel">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Total Remaining Time</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <spacer name="verticalSpacer_6">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeType">
+                 <enum>QSizePolicy::Preferred</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>10</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="4">
          <widget class="QTableWidgetWithCopyPaste" name="polarTableWidget">
           <property name="font">
            <font>
@@ -1861,21 +2293,21 @@ color: rgb(255, 255, 255);</string>
           <property name="wordWrap">
            <bool>false</bool>
           </property>
-          <attribute name="horizontalHeaderDefaultSectionSize">
-           <number>110</number>
-          </attribute>
           <attribute name="horizontalHeaderMinimumSectionSize">
            <number>80</number>
           </attribute>
-          <attribute name="verticalHeaderDefaultSectionSize">
-           <number>26</number>
+          <attribute name="horizontalHeaderDefaultSectionSize">
+           <number>120</number>
           </attribute>
           <attribute name="verticalHeaderMinimumSectionSize">
            <number>24</number>
           </attribute>
+          <attribute name="verticalHeaderDefaultSectionSize">
+           <number>26</number>
+          </attribute>
           <column>
            <property name="text">
-            <string>Mag (kG)</string>
+            <string>Magnitude (kG)</string>
            </property>
            <property name="font">
             <font>
@@ -1903,6 +2335,272 @@ color: rgb(255, 255, 255);</string>
             </font>
            </property>
           </column>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="executePolarCheckBox">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Launches the specified app or script in the background at each table target</string>
+          </property>
+          <property name="text">
+           <string>Execute App/Script at each Target during Auto-Stepping</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <spacer name="horizontalSpacer_9">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Preferred</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>79</width>
+            <height>21</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="3" column="0" colspan="4">
+         <widget class="QFrame" name="polarAppFrame">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <family>Arial</family>
+            <pointsize>8</pointsize>
+            <weight>50</weight>
+            <bold>false</bold>
+           </font>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Plain</enum>
+          </property>
+          <layout class="QGridLayout" name="appLayout_2">
+           <property name="leftMargin">
+            <number>6</number>
+           </property>
+           <property name="topMargin">
+            <number>6</number>
+           </property>
+           <property name="rightMargin">
+            <number>6</number>
+           </property>
+           <property name="bottomMargin">
+            <number>6</number>
+           </property>
+           <item row="1" column="4">
+            <widget class="QToolButton" name="polarAppLocationButton">
+             <property name="toolTip">
+              <string>Browse for location...</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="4">
+            <widget class="QToolButton" name="polarPythonLocationButton">
+             <property name="toolTip">
+              <string>Browse for Python location...</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="polarAppLocationLabel">
+             <property name="text">
+              <string>App/Script path :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="4">
+            <spacer name="horizontalSpacer_10">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Minimum</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="3" column="2">
+            <widget class="QLabel" name="polarAppStartLabel2">
+             <property name="text">
+              <string>seconds remaining in Hold Time</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="polarAppStartLabel1">
+             <property name="text">
+              <string>Start with</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="polarPythonPathLabel">
+             <property name="text">
+              <string>Python path :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1" colspan="4">
+            <widget class="QCheckBox" name="polarPythonCheckBox">
+             <property name="text">
+              <string>Python script (if checked, enter path below)</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QLineEdit" name="polarAppStartEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="polarAppArgsLabel">
+             <property name="text">
+              <string>Arguments :</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="3">
+            <spacer name="horizontalSpacer_11">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item row="1" column="1" colspan="3">
+            <widget class="QLineEdit" name="polarAppLocationEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1" colspan="3">
+            <widget class="QLineEdit" name="polarPythonPathEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>21</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1" colspan="4">
+            <widget class="QLineEdit" name="polarAppArgsEdit">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QPushButton" name="executePolarNowButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Execute Now</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0" colspan="3">
+         <widget class="QLabel" name="polarValuesTableLabel">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>26</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Rotation in Sample Plane relative to Sample Alignment Vector #1:</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -2022,6 +2720,8 @@ selection-color: rgb(0, 0, 0);</string>
     <addaction name="actionTest_Mode"/>
     <addaction name="separator"/>
     <addaction name="actionStabilizingResistors"/>
+    <addaction name="separator"/>
+    <addaction name="actionOptions"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -2149,6 +2849,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionLoad_Vector_Table">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/import_from_csv.png</normaloff>:/multiaxis/Resources/import_from_csv.png</iconset>
+   </property>
    <property name="text">
     <string>Load Vector Table...</string>
    </property>
@@ -2160,6 +2864,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionSave_Settings">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/document-save.png</normaloff>:/multiaxis/Resources/document-save.png</iconset>
+   </property>
    <property name="text">
     <string>Save Settings...</string>
    </property>
@@ -2171,6 +2879,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionLoad_Settings">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/document-import.png</normaloff>:/multiaxis/Resources/document-import.png</iconset>
+   </property>
    <property name="text">
     <string>Load Settings...</string>
    </property>
@@ -2182,6 +2894,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="action_SphericalHelp">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/help.png</normaloff>:/multiaxis/Resources/help.png</iconset>
+   </property>
    <property name="text">
     <string>Explanation?...</string>
    </property>
@@ -2240,6 +2956,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionView_Help">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/help.png</normaloff>:/multiaxis/Resources/help.png</iconset>
+   </property>
    <property name="text">
     <string>View Help...</string>
    </property>
@@ -2251,6 +2971,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/info.png</normaloff>:/multiaxis/Resources/info.png</iconset>
+   </property>
    <property name="text">
     <string>About...</string>
    </property>
@@ -2303,6 +3027,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionGenerate_Excel_Report">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/export_to_excel.png</normaloff>:/multiaxis/Resources/export_to_excel.png</iconset>
+   </property>
    <property name="text">
     <string>Generate Excel Report...</string>
    </property>
@@ -2358,6 +3086,10 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionSave_Vector_Table">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/export_to_csv.png</normaloff>:/multiaxis/Resources/export_to_csv.png</iconset>
+   </property>
    <property name="text">
     <string>Save Vector Table...</string>
    </property>
@@ -2377,11 +3109,19 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
   </action>
   <action name="actionLoad_Polar_Table">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/import_from_csv.png</normaloff>:/multiaxis/Resources/import_from_csv.png</iconset>
+   </property>
    <property name="text">
     <string>Load Polar Table...</string>
    </property>
   </action>
   <action name="actionSave_Polar_Table">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/export_to_csv.png</normaloff>:/multiaxis/Resources/export_to_csv.png</iconset>
+   </property>
    <property name="text">
     <string>Save Polar Table...</string>
    </property>
@@ -2434,6 +3174,15 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Stabilizing Resistors Installed</string>
    </property>
   </action>
+  <action name="actionOptions">
+   <property name="icon">
+    <iconset resource="multiaxisoperation.qrc">
+     <normaloff>:/multiaxis/Resources/application-gear.png</normaloff>:/multiaxis/Resources/application-gear.png</iconset>
+   </property>
+   <property name="text">
+    <string>Options...</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -2443,6 +3192,63 @@ selection-color: rgb(0, 0, 0);</string>
    <header>qtablewidgetwithcopypaste.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>mainTabWidget</tabstop>
+  <tabstop>vectorAddRowAboveToolButton</tabstop>
+  <tabstop>vectorAddRowBelowToolButton</tabstop>
+  <tabstop>vectorRemoveRowToolButton</tabstop>
+  <tabstop>vectorTableClearToolButton</tabstop>
+  <tabstop>goToSelectedButton</tabstop>
+  <tabstop>goToNextVectorButton</tabstop>
+  <tabstop>startIndexEdit</tabstop>
+  <tabstop>endIndexEdit</tabstop>
+  <tabstop>autostepStartButton</tabstop>
+  <tabstop>autostartStopButton</tabstop>
+  <tabstop>vectorsTableWidget</tabstop>
+  <tabstop>executeCheckBox</tabstop>
+  <tabstop>executeNowButton</tabstop>
+  <tabstop>appLocationEdit</tabstop>
+  <tabstop>appLocationButton</tabstop>
+  <tabstop>appArgsEdit</tabstop>
+  <tabstop>appStartEdit</tabstop>
+  <tabstop>pythonCheckBox</tabstop>
+  <tabstop>pythonPathEdit</tabstop>
+  <tabstop>pythonLocationButton</tabstop>
+  <tabstop>alignMagValueSpinBox1</tabstop>
+  <tabstop>alignThetaSpinBox1</tabstop>
+  <tabstop>alignPhiSpinBox1</tabstop>
+  <tabstop>makeAlignActiveButton1</tabstop>
+  <tabstop>alignThetaDial1</tabstop>
+  <tabstop>alignPhiDial1</tabstop>
+  <tabstop>alignLock1</tabstop>
+  <tabstop>alignMagValueSpinBox2</tabstop>
+  <tabstop>alignThetaSpinBox2</tabstop>
+  <tabstop>alignPhiSpinBox2</tabstop>
+  <tabstop>makeAlignActiveButton2</tabstop>
+  <tabstop>alignThetaDial2</tabstop>
+  <tabstop>alignPhiDial2</tabstop>
+  <tabstop>alignLock2</tabstop>
+  <tabstop>polarAddRowAboveToolButton</tabstop>
+  <tabstop>polarAddRowBelowToolButton</tabstop>
+  <tabstop>polarRemoveRowToolButton</tabstop>
+  <tabstop>polarTableClearToolButton</tabstop>
+  <tabstop>goToSelectedButtonPolar</tabstop>
+  <tabstop>goToNextVectorButtonPolar</tabstop>
+  <tabstop>startIndexEditPolar</tabstop>
+  <tabstop>endIndexEditPolar</tabstop>
+  <tabstop>autostepStartButtonPolar</tabstop>
+  <tabstop>autostartStopButtonPolar</tabstop>
+  <tabstop>polarTableWidget</tabstop>
+  <tabstop>executePolarCheckBox</tabstop>
+  <tabstop>executePolarNowButton</tabstop>
+  <tabstop>polarAppLocationEdit</tabstop>
+  <tabstop>polarAppLocationButton</tabstop>
+  <tabstop>polarAppArgsEdit</tabstop>
+  <tabstop>polarAppStartEdit</tabstop>
+  <tabstop>polarPythonCheckBox</tabstop>
+  <tabstop>polarPythonPathEdit</tabstop>
+  <tabstop>polarPythonLocationButton</tabstop>
+ </tabstops>
  <resources>
   <include location="multiaxisoperation.qrc"/>
  </resources>
@@ -2806,8 +3612,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>vectorTableAddRowAbove()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>649</x>
-     <y>654</y>
+     <x>445</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>288</x>
@@ -2822,8 +3628,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>vectorTableAddRowBelow()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>684</x>
-     <y>659</y>
+     <x>479</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>793</x>
@@ -2838,8 +3644,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>vectorTableRemoveRow()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>723</x>
-     <y>651</y>
+     <x>513</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>797</x>
@@ -2854,8 +3660,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>vectorTableClear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>753</x>
-     <y>658</y>
+     <x>547</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>798</x>
@@ -2870,8 +3676,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>polarTableAddRowAbove()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>637</x>
-     <y>655</y>
+     <x>445</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>6</x>
@@ -2886,8 +3692,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>polarTableAddRowBelow()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>686</x>
-     <y>663</y>
+     <x>479</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>6</x>
@@ -2902,8 +3708,8 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>polarTableRemoveRow()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>723</x>
-     <y>658</y>
+     <x>513</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>5</x>
@@ -2918,12 +3724,44 @@ selection-color: rgb(0, 0, 0);</string>
    <slot>polarTableClear()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>757</x>
-     <y>660</y>
+     <x>547</x>
+     <y>339</y>
     </hint>
     <hint type="destinationlabel">
      <x>5</x>
      <y>521</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pswitchToggleToolButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MultiAxisOperationClass</receiver>
+   <slot>vectorTableTogglePersistence()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>593</x>
+     <y>309</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>792</x>
+     <y>177</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>polarPswitchToggleToolButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MultiAxisOperationClass</receiver>
+   <slot>polarTableTogglePersistence()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>575</x>
+     <y>320</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>798</x>
+     <y>281</y>
     </hint>
    </hints>
   </connection>
@@ -2956,5 +3794,7 @@ selection-color: rgb(0, 0, 0);</string>
   <slot>polarTableAddRowBelow()</slot>
   <slot>polarTableRemoveRow()</slot>
   <slot>polarTableClear()</slot>
+  <slot>vectorTableTogglePersistence()</slot>
+  <slot>polarTableTogglePersistence()</slot>
  </slots>
 </ui>

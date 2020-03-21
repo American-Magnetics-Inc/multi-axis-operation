@@ -140,10 +140,13 @@ void MultiAxisOperation::deactivateAlignmentVectors(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::alignmentTabConnect(void)
 {
-	ui.makeAlignActiveButton1->setChecked(false);
-	ui.makeAlignActiveButton1->setEnabled(true);
-	ui.makeAlignActiveButton2->setChecked(false);
-	ui.makeAlignActiveButton2->setEnabled(true);
+	if (!ui.actionPersistentMode->isChecked())
+	{
+		ui.makeAlignActiveButton1->setChecked(false);
+		ui.makeAlignActiveButton1->setEnabled(true);
+		ui.makeAlignActiveButton2->setChecked(false);
+		ui.makeAlignActiveButton2->setEnabled(true);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -268,7 +271,7 @@ void MultiAxisOperation::alignVector1ThetaDialChanged(int value)
 	int delta = value - theta1Dial;
 
 	// check for a rollover, if so determine direction
-	if (abs(delta) > ui.alignThetaDial1->maximum() / 2)	
+	if (abs(delta) > ui.alignThetaDial1->maximum() / 2)
 	{
 		if (delta > 0)
 			delta = -(theta1Dial + ui.alignThetaDial1->maximum() - value);

@@ -57,11 +57,13 @@ HEADERS += \
     $$PWD/conversions.h \
     $$PWD/magnetparams.h \
     $$PWD/multiaxisoperation.h \
+    $$PWD/optionsdialog.h \
     $$PWD/parser.h \
     $$PWD/processmanager.h \
     $$PWD/qtablewidgetwithcopypaste.h \
     $$PWD/stdafx.h
 SOURCES += \
+    $$PWD/optionsdialog.cpp \
     $$PWD/source/xlsxabstractooxmlfile.cpp \
     $$PWD/source/xlsxabstractsheet.cpp \
     $$PWD/source/xlsxcell.cpp \
@@ -107,6 +109,7 @@ SOURCES += \
     $$PWD/qtablewidgetwithcopypaste.cpp \
     $$PWD/stdafx.cpp
 FORMS += ./multiaxisoperation.ui \
+    $$PWD/optionsdialog.ui \
     ./magnetparams.ui \
     ./aboutdialog.ui
 RESOURCES += multiaxisoperation.qrc

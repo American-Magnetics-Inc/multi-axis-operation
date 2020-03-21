@@ -13,8 +13,50 @@
 #endif
 
 //---------------------------------------------------------------------------
+// Local constants and static variables.
+//---------------------------------------------------------------------------
+enum VectorAutostepStates
+{
+	VECTOR_TABLE_RAMPING_TO_NEXT_VECTOR = 0,
+	VECTOR_TABLE_SETTLING_AT_VECTOR,
+	VECTOR_TABLE_COOLING_SWITCH,
+	VECTOR_TABLE_HOLDING,
+	VECTOR_TABLE_HEATING_SWITCH,
+	VECTOR_TABLE_NEXT_VECTOR
+};
+
+static int settlingTime = 0;
+VectorAutostepStates vectorAutostepState;	// state machine for autostep
+static bool tableIsLoading = false;
+
+//---------------------------------------------------------------------------
 // Contains methods related to the Vector Table tab view.
 // Broken out from multiaxisoperation.cpp for ease of editing.
+//---------------------------------------------------------------------------
+void MultiAxisOperation::restoreVectorTab(QSettings *settings)
+{
+	// restore any persistent values
+	ui.executeCheckBox->setChecked(settings->value("VectorTable/EnableExecution", false).toBool());
+	ui.appLocationEdit->setText(settings->value("VectorTable/AppPath", "").toString());
+	ui.appArgsEdit->setText(settings->value("VectorTable/AppArgs", "").toString());
+	ui.pythonPathEdit->setText(settings->value("VectorTable/PythonPath", "").toString());
+	ui.appStartEdit->setText(settings->value("VectorTable/ExecutionTime", "").toString());
+	ui.pythonCheckBox->setChecked(settings->value("VectorTable/PythonScript", false).toBool());
+
+	// init app/script execution
+	appCheckBoxChanged(0);
+
+	// make connections
+	connect(ui.executeCheckBox, SIGNAL(stateChanged(int)), this, SLOT(appCheckBoxChanged(int)));
+	connect(ui.pythonCheckBox, SIGNAL(stateChanged(int)), this, SLOT(pythonCheckBoxChanged(int)));
+	connect(ui.appLocationButton, SIGNAL(clicked()), this, SLOT(browseForAppPath()));
+	connect(ui.pythonLocationButton, SIGNAL(clicked()), this, SLOT(browseForPythonPath()));
+	connect(ui.executeNowButton, SIGNAL(clicked()), this, SLOT(executeNowClick()));
+	connect(ui.vectorsTableWidget, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(vectorTableItemChanged(QTableWidgetItem*)));
+
+	setTableHeader();
+}
+
 //---------------------------------------------------------------------------
 void MultiAxisOperation::actionLoad_Vector_Table(void)
 {
@@ -40,6 +82,8 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
         if (inFile != nullptr)
 		{
 			QTextStream in(inFile);
+
+			tableIsLoading = true;
 
 			// read first line for coordinate system selection
 			QString str = in.readLine();
@@ -100,6 +144,9 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
 			fclose(inFile);
 		}
 
+		// clear any prior data
+		vectorTableClear();
+
 		// clear status text
 		statusMisc->clear();
 
@@ -107,13 +154,27 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
 		actionPause();
 
 		// now read in data
-		ui.vectorsTableWidget->loadFromFile(vectorsFileName, false, skipCnt);
+		if (magnetParams->switchInstalled())
+		{
+			ui.vectorsTableWidget->loadFromFile(vectorsFileName, skipCnt);
+
+			// set persistence if switched
+			if (optionsDialog->enterPersistence())
+				setVectorTablePersistence(true);
+			else
+				setVectorTablePersistence(false);
+		}
+		else
+			ui.vectorsTableWidget->loadFromFile(vectorsFileName, skipCnt);
 
 		// save path
 		settings.setValue("LastVectorFilePath", lastVectorsLoadPath);
 
 		presentVector = -1;	// no selection
 		//ui.vectorsTableWidget->selectRow(presentVector);
+
+		// set alignment on "Pass/Fail" column
+		ui.vectorsTableWidget->setColumnAlignment(4, (Qt::AlignCenter | Qt::AlignVCenter));
 
 		// set headings as appropriate
 		setTableHeader();
@@ -129,6 +190,7 @@ void MultiAxisOperation::actionLoad_Vector_Table(void)
 
 		QApplication::restoreOverrideCursor();
 		vectorSelectionChanged();
+		tableIsLoading = false;
 	}
 }
 
@@ -139,11 +201,11 @@ void MultiAxisOperation::setTableHeader(void)
 	{
 		if (fieldUnits == KG)
 		{
-			ui.vectorsTableWidget->horizontalHeaderItem(0)->setText("Mag (kG)");
+			ui.vectorsTableWidget->horizontalHeaderItem(0)->setText("Magnitude (kG)");
 		}
 		else
 		{
-			ui.vectorsTableWidget->horizontalHeaderItem(0)->setText("Mag (T)");
+			ui.vectorsTableWidget->horizontalHeaderItem(0)->setText("Magnitude (T)");
 		}
 
 		if (convention == MATHEMATICAL)
@@ -172,6 +234,26 @@ void MultiAxisOperation::setTableHeader(void)
 			ui.vectorsTableWidget->horizontalHeaderItem(2)->setText("Z (T)");
 		}
 	}
+
+	// set quench current header if present
+	if (ui.vectorsTableWidget->columnCount() > 5)
+	{
+		if (ui.vectorsTableWidget->columnCount() >= 8)
+		{
+			ui.vectorsTableWidget->setHorizontalHeaderItem(5, new QTableWidgetItem("X Quench (A)"));
+			ui.vectorsTableWidget->horizontalHeaderItem(5)->font().setBold(true);
+			ui.vectorsTableWidget->setHorizontalHeaderItem(6, new QTableWidgetItem("Y Quench (A)"));
+			ui.vectorsTableWidget->horizontalHeaderItem(6)->font().setBold(true);
+			ui.vectorsTableWidget->setHorizontalHeaderItem(7, new QTableWidgetItem("Z Quench (A)"));
+			ui.vectorsTableWidget->horizontalHeaderItem(7)->font().setBold(true);
+		}
+	}
+
+	// set hold time format
+	if (magnetParams->switchInstalled())
+		ui.vectorsTableWidget->horizontalHeaderItem(3)->setText("Enter Persistence?/\nHold Time (sec)");
+	else
+		ui.vectorsTableWidget->horizontalHeaderItem(3)->setText("Hold Time (sec)");
 }
 
 //---------------------------------------------------------------------------
@@ -227,6 +309,23 @@ void MultiAxisOperation::actionSave_Vector_Table(void)
 }
 
 //---------------------------------------------------------------------------
+void MultiAxisOperation::recalculateRemainingTime(void)
+{
+	if (autostepTimer->isActive())
+		calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
+	else
+		autostepRangeChanged();
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::vectorTableItemChanged(QTableWidgetItem *item)
+{
+	// recalculate time after change and check for errors
+	if (!tableIsLoading)
+		recalculateRemainingTime();
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::vectorSelectionChanged(void)
 {
 	if (autostepTimer->isActive())
@@ -236,6 +335,7 @@ void MultiAxisOperation::vectorSelectionChanged(void)
 		ui.vectorAddRowBelowToolButton->setEnabled(false);
 		ui.vectorRemoveRowToolButton->setEnabled(false);
 		ui.vectorTableClearToolButton->setEnabled(false);
+		ui.pswitchToggleToolButton->setEnabled(false);
 	}
 	else
 	{
@@ -265,9 +365,17 @@ void MultiAxisOperation::vectorSelectionChanged(void)
 		}
 
 		if (ui.vectorsTableWidget->rowCount())
+		{
 			ui.vectorTableClearToolButton->setEnabled(true);
+
+			if ((switchInstalled = magnetParams->switchInstalled()))
+				ui.pswitchToggleToolButton->setEnabled(true);
+		}
 		else
+		{
 			ui.vectorTableClearToolButton->setEnabled(false);
+			ui.pswitchToggleToolButton->setEnabled(false);
+		}
 	}
 }
 
@@ -348,6 +456,9 @@ void MultiAxisOperation::initNewRow(int newRow)
 		else
 			cell->setText("");
 
+		if (i == 3 && magnetParams->switchInstalled())
+			cell->setCheckState(Qt::Unchecked);
+
 		if (i == (numColumns - 1))
 			cell->setTextAlignment(Qt::AlignCenter);
 		else
@@ -424,6 +535,52 @@ void MultiAxisOperation::vectorTableClear(void)
 }
 
 //---------------------------------------------------------------------------
+// Set persistence for all entries in table.
+void MultiAxisOperation::setVectorTablePersistence(bool state)
+{
+	int numRows = ui.vectorsTableWidget->rowCount();
+
+	if (numRows)
+	{
+		for (int i = numRows; i > 0; i--)
+		{
+			QTableWidgetItem *cell = ui.vectorsTableWidget->item(i - 1, 3);
+
+			if (cell)
+			{
+				if (state)
+					cell->setCheckState(Qt::Checked);
+				else
+					cell->setCheckState(Qt::Unchecked);
+			}
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+// Toggles persistence for all entries in table.
+void MultiAxisOperation::vectorTableTogglePersistence(void)
+{
+	int numRows = ui.vectorsTableWidget->rowCount();
+
+	if (numRows)
+	{
+		for (int i = numRows; i > 0; i--)
+		{
+			QTableWidgetItem *cell = ui.vectorsTableWidget->item(i - 1, 3);
+
+			if (cell)
+			{
+				if (cell->checkState() == Qt::Checked)
+					cell->setCheckState(Qt::Unchecked);
+				else
+					cell->setCheckState(Qt::Checked);
+			}
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::actionGenerate_Excel_Report(void)
 {
 	QSettings settings;
@@ -446,7 +603,7 @@ void MultiAxisOperation::saveReport(QString reportFileName)
 
 		// save filename path
 		settings.setValue("LastReportPath", reportFileName);
-		
+
 		// set document properties
 		xlsx.setDocumentProperty("title", "Multi-Axis Magnet " + magnetParams->getMagnetID() + " Test Report");
 		xlsx.setDocumentProperty("subject", "Magnet ID " + magnetParams->getMagnetID());
@@ -586,7 +743,9 @@ void MultiAxisOperation::saveReport(QString reportFileName)
 		xlsx.mergeCells("F3:H3", boldAlignCenterFormat);
 
 		for (int i = 0; i < ui.vectorsTableWidget->columnCount(); i++)
+		{
 			xlsx.write(4, i + 1, ui.vectorsTableWidget->horizontalHeaderItem(i)->text(), boldAlignCenterFormat);
+		}
 
 		xlsx.write("F4", "X-Axis", boldAlignCenterFormat);
 		xlsx.write("G4", "Y-Axis", boldAlignCenterFormat);
@@ -599,12 +758,24 @@ void MultiAxisOperation::saveReport(QString reportFileName)
 			{
 				QTableWidgetItem *item;
 
-                if ((item = ui.vectorsTableWidget->item(i, j)))
+				if ((item = ui.vectorsTableWidget->item(i, j)))
 				{
 					if (item->text() == "Pass" || item->text() == "Fail" || item->text().isEmpty())
+					{
 						xlsx.write(i + 1 + 4, j + 1, ui.vectorsTableWidget->item(i, j)->text(), alignCenterFormat);
+					}
 					else
-						xlsx.write(i + 1 + 4, j + 1, ui.vectorsTableWidget->item(i, j)->text().toDouble(), alignRightFormat);
+					{
+						if (((switchInstalled = magnetParams->switchInstalled())) && j == 3)
+						{
+							if (item->checkState() == Qt::Checked)
+								xlsx.write(i + 1 + 4, j + 1, "Yes / " + ui.vectorsTableWidget->item(i, j)->text(), alignRightFormat);
+							else
+								xlsx.write(i + 1 + 4, j + 1, "No / " + ui.vectorsTableWidget->item(i, j)->text(), alignRightFormat);
+						}
+						else
+							xlsx.write(i + 1 + 4, j + 1, ui.vectorsTableWidget->item(i, j)->text().toDouble(), alignRightFormat);
+					}
 				}
 			}
 		}
@@ -832,6 +1003,16 @@ void MultiAxisOperation::calculateAutostepRemainingTime(int startIndex, int endI
 			temp = ui.vectorsTableWidget->item(i, 3)->text().toDouble(&ok);
 			if (ok)
                 autostepRemainingTime += static_cast<int>(temp);
+
+			if (magnetParams->switchInstalled())
+			{
+				// transition switch at this step?
+				if (ui.vectorsTableWidget->item(i, 3)->checkState() == Qt::Checked)
+				{
+					// add time required to cool and reheat switch, plus settling time
+					autostepRemainingTime += longestCoolingTime + longestHeatingTime + optionsDialog->settlingTime();
+				}
+			}
 		}
 		else
 			break;	// break on any vector error
@@ -860,52 +1041,84 @@ void MultiAxisOperation::startAutostep(void)
 		// deactivate any alignment vectors
 		deactivateAlignmentVectors();
 
-		autostepStartIndex = ui.startIndexEdit->text().toInt();
-		autostepEndIndex = ui.endIndexEdit->text().toInt();
-		autostepRangeChanged();
-
-		if (autostepStartIndex < 1 || autostepStartIndex > ui.vectorsTableWidget->rowCount())
+		if (systemState < SYSTEM_QUENCH)
 		{
-			showErrorString("Starting Index is out of range!");
-			return;
-		}
+			autostepStartIndex = ui.startIndexEdit->text().toInt();
+			autostepEndIndex = ui.endIndexEdit->text().toInt();
+			autostepRangeChanged();
 
-		if (autostepEndIndex <= autostepStartIndex || autostepEndIndex > ui.vectorsTableWidget->rowCount())
+			if (vectorError == NO_VECTOR_ERROR)
+			{
+				if (autostepStartIndex < 1 || autostepStartIndex > ui.vectorsTableWidget->rowCount())
+				{
+					showErrorString("Starting Index is out of range!");
+				}
+				else if (autostepEndIndex <= autostepStartIndex || autostepEndIndex > ui.vectorsTableWidget->rowCount())
+				{
+					showErrorString("Ending Index is out of range!");
+				}
+				else if (ui.executeCheckBox->isChecked() && !QFile::exists(ui.appLocationEdit->text()))
+				{
+					showErrorString("App/script does not exist at specified path!");
+				}
+				else if (ui.executeCheckBox->isChecked() && !checkExecutionTime())
+				{
+					showErrorString("App/script execution time is not a positive, non-zero integer!");
+				}
+				else if (ui.executeCheckBox->isChecked() && ui.pythonCheckBox->isChecked() && !QFile::exists(ui.pythonPathEdit->text()))
+				{
+					showErrorString("Python not found at specified path!");
+				}
+				else if (magnetParams->switchInstalled() && ui.actionPersistentMode->isChecked())
+				{
+					showErrorString("Cannot ramp to target current or field in persistent mode (i.e. cooled switch)!");
+					lastStatusString.clear();
+					QApplication::beep();
+				}
+				else
+				{
+					ui.startIndexEdit->setEnabled(false);
+					ui.endIndexEdit->setEnabled(false);
+					ui.autostepRemainingTimeLabel->setEnabled(true);
+					ui.autostepRemainingTimeValue->setEnabled(true);
+
+					elapsedHoldTimerTicks = 0;
+					autostepTimer->start();
+
+					ui.autostepStartButton->setEnabled(false);
+					ui.autostartStopButton->setEnabled(true);
+					ui.manualVectorControlGroupBox->setEnabled(false);
+					ui.actionLoad_Vector_Table->setEnabled(false);
+
+					ui.manualPolarControlGroupBox->setEnabled(false);
+					ui.autoStepGroupBoxPolar->setEnabled(false);
+					ui.actionLoad_Polar_Table->setEnabled(false);
+					if ((switchInstalled = magnetParams->switchInstalled()))
+						ui.actionPersistentMode->setEnabled(false);
+
+					// begin with first vector
+					presentVector = autostepStartIndex - 1;
+
+					// highlight row in table
+					ui.vectorsTableWidget->selectRow(presentVector);
+					magnetState = RAMPING;
+					systemState = SYSTEM_RAMPING;
+					vectorSelectionChanged(); // lockout row changes
+					haveAutosavedReport = false;
+
+					goToVector(presentVector, true);
+					settlingTime = 0;
+					suspendAutostepFlag = false;
+					vectorAutostepState = VECTOR_TABLE_RAMPING_TO_NEXT_VECTOR;
+				}
+			}
+		}
+		else
 		{
-			showErrorString("Ending Index is out of range!");
-			return;
+			showErrorString("Cannot start autostep mode in present system state");
+			lastStatusString.clear();
+			QApplication::beep();
 		}
-
-		ui.startIndexEdit->setEnabled(false);
-		ui.endIndexEdit->setEnabled(false);
-		ui.autostepRemainingTimeLabel->setEnabled(true);
-		ui.autostepRemainingTimeValue->setEnabled(true);
-
-		elapsedTimerTicks = 0;
-		autostepTimer->start();
-
-		ui.autostepStartButton->setEnabled(false);
-		ui.autostartStopButton->setEnabled(true);
-		ui.manualVectorControlGroupBox->setEnabled(false);
-		ui.actionLoad_Vector_Table->setEnabled(false);
-
-		ui.manualPolarControlGroupBox->setEnabled(false);
-		ui.autoStepGroupBoxPolar->setEnabled(false);
-		ui.actionLoad_Polar_Table->setEnabled(false);
-		if (switchInstalled)
-			ui.actionPersistentMode->setEnabled(false);
-
-		// begin with first vector
-		presentVector = autostepStartIndex - 1;
-
-		// highlight row in table
-		ui.vectorsTableWidget->selectRow(presentVector);
-		magnetState = RAMPING;
-		systemState = SYSTEM_RAMPING;
-		vectorSelectionChanged(); // lockout row changes
-		haveAutosavedReport = false;
-
-		goToVector(presentVector, true);
 	}
 }
 
@@ -924,25 +1137,13 @@ void MultiAxisOperation::abortAutostep(QString errorString)
 			Sleep(100);
 #endif
 		}
+
 		lastTargetMsg.clear();
 		setStatusMsg(errorString);
-		ui.startIndexEdit->setEnabled(true);
-		ui.endIndexEdit->setEnabled(true);
-		ui.autostepRemainingTimeLabel->setEnabled(false);
-		ui.autostepRemainingTimeValue->setEnabled(false);
-		ui.autostepStartButton->setEnabled(true);
-		ui.autostartStopButton->setEnabled(false);
-		ui.manualVectorControlGroupBox->setEnabled(true);
-		ui.actionLoad_Vector_Table->setEnabled(true);
-
-		ui.manualPolarControlGroupBox->setEnabled(true);
-		ui.autoStepGroupBoxPolar->setEnabled(true);
-		ui.actionLoad_Polar_Table->setEnabled(true);
-		if (switchInstalled)
-			ui.actionPersistentMode->setEnabled(true);
-
-		vectorSelectionChanged();
 		autostepRangeChanged();
+		enableVectorTableControls();
+		haveExecuted = false;
+		suspendAutostepFlag = false;
 	}
 }
 
@@ -954,132 +1155,272 @@ void MultiAxisOperation::stopAutostep(void)
 		autostepTimer->stop();
 		lastTargetMsg.clear();
 		setStatusMsg("Auto-Stepping aborted via Stop button");
-		ui.startIndexEdit->setEnabled(true);
-		ui.endIndexEdit->setEnabled(true);
-		ui.autostepRemainingTimeLabel->setEnabled(false);
-		ui.autostepRemainingTimeValue->setEnabled(false);
-		ui.autostepStartButton->setEnabled(true);
-		ui.autostartStopButton->setEnabled(false);
-		ui.manualVectorControlGroupBox->setEnabled(true);
-		ui.actionLoad_Vector_Table->setEnabled(true);
-
-		ui.manualPolarControlGroupBox->setEnabled(true);
-		ui.autoStepGroupBoxPolar->setEnabled(true);
-		ui.actionLoad_Polar_Table->setEnabled(true);
-		if (switchInstalled)
-			ui.actionPersistentMode->setEnabled(true);
-
-		vectorSelectionChanged();
+		enableVectorTableControls();
 		autostepRangeChanged();
+		haveExecuted = false;
+		suspendAutostepFlag = false;
 	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::suspendAutostep(void)
+{
+	settlingTime = 0;
+	suspendAutostepFlag = true;
+	setStatusMsg("Auto-Stepping of Vector Table suspended... Press Ramp to resume");
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::resumeAutostep(void)
+{
+	suspendAutostepFlag = false;
+	setStatusMsg("Auto-Stepping of Vector Table resumed");
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::autostepTimerTick(void)
 {
-	if (magnetState == HOLDING)
+	if (!suspendAutostepFlag)
 	{
-		elapsedTimerTicks++;
-
-		bool ok;
-		double temp;
-
-		// get time
-		temp = ui.vectorsTableWidget->item(presentVector, 3)->text().toDouble(&ok);
-
-		if (ok)
+		if (autostepRemainingTime)
 		{
-            if (elapsedTimerTicks >= static_cast<int>(temp))
-			{
-				elapsedTimerTicks = 0;
-				
-				if (presentVector + 1 < autostepEndIndex)
-				{
-					// highlight row in table
-					presentVector++;
-					ui.vectorsTableWidget->selectRow(presentVector);
-					magnetState = RAMPING;
-					systemState = SYSTEM_RAMPING;
+			autostepRemainingTime--;	// decrement by one second
+			displayAutostepRemainingTime();
+		}
 
-					// next vector!
-					goToVector(presentVector, true);
+		//////////////////////////////////////
+		// VECTOR_TABLE_RAMPING_TO_NEXT_VECTOR
+		//////////////////////////////////////
+		if (vectorAutostepState == VECTOR_TABLE_RAMPING_TO_NEXT_VECTOR)
+		{
+			if (magnetState == HOLDING)	// waiting for HOLDING state
+			{
+				// if a switch is installed, check to see if we want to enter persistent mode
+				if (magnetParams->switchInstalled())
+				{
+					if (ui.vectorsTableWidget->item(presentVector, 3)->checkState() == Qt::Checked)
+					{
+						// enter settling time
+						vectorAutostepState = VECTOR_TABLE_SETTLING_AT_VECTOR;
+					}
+					else
+					{
+						vectorAutostepState = VECTOR_TABLE_HOLDING;	// no switch transition preferred, enter HOLD time
+					}
 				}
 				else
 				{
-					// successfully completed vector table auto-stepping
-					lastTargetMsg = "Auto-Step Completed @ Vector #" + QString::number(presentVector + 1);
-					setStatusMsg(lastTargetMsg);
-					autostepTimer->stop();
-					ui.startIndexEdit->setEnabled(true);
-					ui.endIndexEdit->setEnabled(true);
-					ui.autostepRemainingTimeLabel->setEnabled(false);
-					ui.autostepRemainingTimeValue->setEnabled(false);
-					ui.autostepStartButton->setEnabled(true);
-					ui.autostartStopButton->setEnabled(false);
-					ui.manualVectorControlGroupBox->setEnabled(true);
-					vectorSelectionChanged();
-					doAutosaveReport();
+					vectorAutostepState = VECTOR_TABLE_HOLDING;	// no switch, enter HOLD time
+				}
+			}
+		}
 
-					ui.manualPolarControlGroupBox->setEnabled(true);
-					ui.autoStepGroupBoxPolar->setEnabled(true);
-					ui.actionLoad_Polar_Table->setEnabled(true);
-					if (switchInstalled)
-						ui.actionPersistentMode->setEnabled(true);
+		//////////////////////////////////////
+		// VECTOR_TABLE_SETTLING_AT_VECTOR
+		//////////////////////////////////////
+		else if (vectorAutostepState == VECTOR_TABLE_SETTLING_AT_VECTOR)
+		{
+			settlingTime++;
+
+			// wait for settling time and magnetVoltage to decay
+			if (settlingTime >= optionsDialog->settlingTime() /* && fabs(model430.magnetVoltage) < 0.01 */)
+			{
+				/////////////////////
+				// enter persistence
+				/////////////////////
+				vectorAutostepState = VECTOR_TABLE_COOLING_SWITCH;
+				ui.actionPersistentMode->setChecked(true);
+				actionPersistentMode();
+
+				lastStatusString = "Entering persistence, wait for cooling cycle to complete...";
+				setStatusMsg(lastStatusString);
+
+				settlingTime = 0; // reset for next time
+			}
+			else
+			{
+				int settlingRemaining = optionsDialog->settlingTime() - settlingTime;
+
+				if (settlingTime > 0)
+					lastStatusString = "Waiting for settling time of " + QString::number(settlingRemaining) + " sec before entering persistent mode...";
+				else
+					lastStatusString = "Waiting for magnet voltage to decay to zero before entering persistent mode...";
+
+				setStatusMsg(lastStatusString);
+			}
+		}
+
+		//////////////////////////////////////
+		// VECTOR_TABLE_COOLING_SWITCH
+		//////////////////////////////////////
+		else if (vectorAutostepState == VECTOR_TABLE_COOLING_SWITCH)
+		{
+			if (switchCoolingTimer->isActive() == false)
+			{
+				vectorAutostepState = VECTOR_TABLE_HOLDING;
+			}
+		}
+
+		//////////////////////////////////////
+		// VECTOR_TABLE_HOLDING
+		//////////////////////////////////////
+		else if (vectorAutostepState == VECTOR_TABLE_HOLDING)
+		{
+			if (magnetState == HOLDING || (magnetParams->switchInstalled() && magnetState == PAUSED))
+			{
+				elapsedHoldTimerTicks++;
+
+				// check time
+				if (ui.vectorsTableWidget->item(presentVector, 3) != nullptr)
+				{
+					bool ok;
+					double temp;
+
+					// get time
+					temp = ui.vectorsTableWidget->item(presentVector, 3)->text().toDouble(&ok);
+
+					if (ok)	// time is a number
+					{
+						// check for external execution
+						if (ui.executeCheckBox->isChecked())
+						{
+							int executionTime = ui.appStartEdit->text().toInt();	// we already verified the time is proper format
+
+							if ((elapsedHoldTimerTicks >= (static_cast<int>(temp) - executionTime)) && !haveExecuted)
+							{
+								haveExecuted = true;
+								executeApp();
+							}
+						}
+
+						// has HOLD time expired?
+						if (elapsedHoldTimerTicks >= static_cast<int>(temp))  // if true, hold time has expired
+						{
+							// reset for next HOLD time
+							elapsedHoldTimerTicks = 0;
+
+							// first check to see if we need to exit persistence
+							if (magnetParams->switchInstalled())
+							{
+								if (ui.vectorsTableWidget->item(presentVector, 3)->checkState() == Qt::Checked || ui.actionPersistentMode->isChecked())
+								{
+									if (ui.actionPersistentMode->isChecked())	// heater is OFF, persistent
+									{
+										////////////////////
+										// exit persistence
+										////////////////////
+										ui.actionPersistentMode->setChecked(false);
+										actionPersistentMode();
+
+										lastStatusString = "Exiting persistence, wait for heating cycle to complete...";
+										setStatusMsg(lastStatusString);
+
+										vectorAutostepState = VECTOR_TABLE_HEATING_SWITCH;
+									}
+								}
+								else // no switch transition needed, move to next vector
+								{
+									vectorAutostepState = VECTOR_TABLE_NEXT_VECTOR;
+								}
+							}
+							else // no switch, move to next vector
+							{
+								vectorAutostepState = VECTOR_TABLE_NEXT_VECTOR;
+							}
+						}
+						else // HOLD time continues
+						{
+							if (!errorStatusIsActive)
+							{
+								// update the HOLDING countdown
+								QString tempStr = statusMisc->text();
+								int index = tempStr.indexOf('(');
+								if (index >= 1)
+									tempStr.truncate(index - 1);
+
+								QString timeStr = " (" + QString::number(temp - elapsedHoldTimerTicks) + " sec of Hold Time remaining)";
+								setStatusMsg(tempStr + timeStr);
+							}
+						}
+					}
+					else
+					{
+						autostepTimer->stop();
+						lastTargetMsg.clear();
+						setStatusMsg("Auto-Stepping aborted due to non-integer dwell time on line #" + QString::number(presentVector + 1));
+						enableVectorTableControls();
+						haveExecuted = false;
+					}
+				}
+				else
+				{
+					autostepTimer->stop();
+					lastTargetMsg.clear();
+					setStatusMsg("Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentVector + 1));
+					enableVectorTableControls();
+					haveExecuted = false;
 				}
 			}
 			else
 			{
 				if (!errorStatusIsActive)
 				{
-					// update the HOLDING countdown
+					// remove any erroneous countdown text
 					QString tempStr = statusMisc->text();
 					int index = tempStr.indexOf('(');
 					if (index >= 1)
 						tempStr.truncate(index - 1);
 
-					QString timeStr = " (" + QString::number(temp - elapsedTimerTicks) + " sec remaining)";
-					setStatusMsg(tempStr + timeStr);
+					setStatusMsg(tempStr);
 				}
 			}
 		}
-		else
-		{
-			autostepTimer->stop();
-			lastTargetMsg.clear();
-			setStatusMsg("Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentVector + 1));
-			ui.startIndexEdit->setEnabled(true);
-			ui.endIndexEdit->setEnabled(true);
-			ui.autostepRemainingTimeLabel->setEnabled(false);
-			ui.autostepRemainingTimeValue->setEnabled(false);
-			ui.autostepStartButton->setEnabled(true);
-			ui.autostartStopButton->setEnabled(false);
-			ui.manualVectorControlGroupBox->setEnabled(true);
-			vectorSelectionChanged();
 
-			ui.manualPolarControlGroupBox->setEnabled(true);
-			ui.autoStepGroupBoxPolar->setEnabled(true);
-			ui.actionLoad_Polar_Table->setEnabled(true);
-			if (switchInstalled)
-				ui.actionPersistentMode->setEnabled(true);
+		//////////////////////////////////////
+		// VECTOR_TABLE_HEATING_SWITCH
+		//////////////////////////////////////
+		else if (vectorAutostepState == VECTOR_TABLE_HEATING_SWITCH)
+		{
+			if (matchMagnetCurrentTimer->isActive() == false && switchHeatingTimer->isActive() == false)
+				vectorAutostepState = VECTOR_TABLE_NEXT_VECTOR;
 		}
-	}
-	else if (magnetState == SWITCH_COOLING || magnetState == SWITCH_HEATING)
-	{
-		elapsedTimerTicks = 0;
-	}
-	else
-	{
-		elapsedTimerTicks = 0;
 
-		if (!errorStatusIsActive)
+		//////////////////////////////////////
+		// VECTOR_TABLE_NEXT_VECTOR
+		//////////////////////////////////////
+		else if (vectorAutostepState == VECTOR_TABLE_NEXT_VECTOR)
 		{
-			// remove any erroneous countdown text
-			QString tempStr = statusMisc->text();
-			int index = tempStr.indexOf('(');
-			if (index >= 1)
-				tempStr.truncate(index - 1);
+			if (presentVector + 1 < autostepEndIndex)
+			{
+				// highlight row in table
+				presentVector++;
+				ui.vectorsTableWidget->selectRow(presentVector);
+				magnetState = RAMPING;
+				systemState = SYSTEM_RAMPING;
 
-			setStatusMsg(tempStr);
+				// update remaining time (remember presentVector is zero-based)
+				calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
+
+				///////////////////////////////////////////////
+				// go to next vector!
+				///////////////////////////////////////////////
+				goToVector(presentVector, true);
+				haveExecuted = false;
+				vectorAutostepState = VECTOR_TABLE_RAMPING_TO_NEXT_VECTOR;
+			}
+			else
+			{
+				/////////////////////////////////////////////////////
+				// successfully completed vector table auto-stepping
+				/////////////////////////////////////////////////////
+				lastTargetMsg = "Auto-Step Completed @ Vector #" + QString::number(presentVector + 1);
+				setStatusMsg(lastTargetMsg);
+				autostepTimer->stop();
+				enableVectorTableControls();
+				doAutosaveReport();
+				haveExecuted = false;
+				suspendAutostepFlag = false;
+			}
 		}
 	}
 }
@@ -1123,6 +1464,197 @@ void MultiAxisOperation::doAutosaveReport(void)
 				}
 			}
 		}
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::enableVectorTableControls(void)
+{
+	ui.startIndexEdit->setEnabled(true);
+	ui.endIndexEdit->setEnabled(true);
+	ui.autostepRemainingTimeLabel->setEnabled(false);
+	ui.autostepRemainingTimeValue->setEnabled(false);
+	ui.autostepStartButton->setEnabled(true);
+	ui.autostartStopButton->setEnabled(false);
+	ui.manualVectorControlGroupBox->setEnabled(true);
+	ui.actionLoad_Vector_Table->setEnabled(true);
+
+	vectorSelectionChanged();
+
+	ui.manualPolarControlGroupBox->setEnabled(true);
+	ui.autoStepGroupBoxPolar->setEnabled(true);
+	ui.actionLoad_Polar_Table->setEnabled(true);
+	if ((switchInstalled = magnetParams->switchInstalled()))
+		ui.actionPersistentMode->setEnabled(true);
+
+	if (ui.actionPersistentMode->isChecked())	// oops! heater is OFF, persistent
+	{
+		// don't allow target changes in persistent mode
+		ui.manualVectorControlGroupBox->setEnabled(false);
+		ui.autoStepGroupBox->setEnabled(false);
+		ui.manualPolarControlGroupBox->setEnabled(false);
+		ui.autoStepGroupBoxPolar->setEnabled(false);
+	}
+}
+
+
+//---------------------------------------------------------------------------
+// App/Script management and processing support
+//---------------------------------------------------------------------------
+void MultiAxisOperation::browseForAppPath(void)
+{
+	QString exeFileName;
+	QSettings settings;
+	QString extension = NULL;
+
+	lastAppFilePath = settings.value("LastAppFilePath").toString();
+
+	// what type of file was last selected?
+	QStringList parts = lastAppFilePath.split(".");
+	QString lastBit = parts.at(parts.size() - 1);
+
+	if (lastBit == "py")
+		extension = "Script Files (*.py)";
+#if defined(Q_OS_MAC)
+	else if (lastBit == "app")
+		extension = "Applications(*.app)";
+	else
+		extension = "All Files (*.*)";
+#endif
+
+#if defined(Q_OS_LINUX)
+	exeFileName = QFileDialog::getOpenFileName(this, "Choose App/Script File", lastAppFilePath, "All Files (*);;Script Files (*.py)", &extension);
+#elif defined(Q_OS_MACOS)
+	exeFileName = QFileDialog::getOpenFileName(this, "Choose App/Script File", lastAppFilePath, "Applications (*.app);;Script Files (*.py);;All Files (*)", &extension);
+#else
+	exeFileName = QFileDialog::getOpenFileName(this, "Choose App/Script File", lastAppFilePath, "Applications (*.exe);;Script Files (*.py)", &extension);
+#endif
+
+	if (!exeFileName.isEmpty())
+	{
+		lastAppFilePath = exeFileName;
+		ui.appLocationEdit->setText(exeFileName);
+
+		// save path
+		settings.setValue("LastAppFilePath", lastAppFilePath);
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::browseForPythonPath(void)
+{
+	QString pythonFileName;
+	QSettings settings;
+
+	lastPythonPath = settings.value("LastPythonPath").toString();
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+	pythonFileName = QFileDialog::getOpenFileName(this, "Choose Python Executable", lastPythonPath, "Python Executable (*)");
+#else
+	pythonFileName = QFileDialog::getOpenFileName(this, "Choose Python Executable", lastPythonPath, "Python Executable (*.exe)");
+#endif
+
+	if (!pythonFileName.isEmpty())
+	{
+		lastPythonPath = pythonFileName;
+		ui.pythonPathEdit->setText(pythonFileName);
+
+		// save path
+		settings.setValue("LastPythonPath", lastPythonPath);
+	}
+}
+
+//---------------------------------------------------------------------------
+bool MultiAxisOperation::checkExecutionTime(void)
+{
+	bool ok = false;
+
+	int temp = ui.appStartEdit->text().toInt(&ok);
+
+	if (ok)
+	{
+		// must be >= 0
+		if (temp < 0)
+			ok = false;
+	}
+
+	return ok;
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::executeNowClick(void)
+{
+	if (ui.executeCheckBox->isChecked() && !QFile::exists(ui.appLocationEdit->text()))
+	{
+		showErrorString("App/script does not exist at specified path!");
+	}
+	else if (ui.executeCheckBox->isChecked() && !checkExecutionTime())
+	{
+		showErrorString("App/script execution time is not a positive, non-zero integer!");
+	}
+	else if (ui.executeCheckBox->isChecked() && ui.pythonCheckBox->isChecked() && !QFile::exists(ui.pythonPathEdit->text()))
+	{
+		showErrorString("Python not found at specified path!");
+	}
+	else // all good! start!
+	{
+		executeApp();
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::executeApp(void)
+{
+	QString program = ui.appLocationEdit->text();
+	QString args = ui.appArgsEdit->text();
+	QStringList arguments = args.split(" ", QString::SkipEmptyParts);
+
+	// if a python script, use python path for executable
+	if (ui.pythonCheckBox->isChecked())
+	{
+		program = ui.pythonPathEdit->text();
+		arguments.insert(0, ui.appLocationEdit->text());
+	}
+
+	// launch detached background process
+	QProcess *process = new QProcess(this);
+	process->setProgram(program);
+	process->setArguments(arguments);
+	process->startDetached();
+	process->deleteLater();
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::appCheckBoxChanged(int state)
+{
+	if (ui.executeCheckBox->isChecked())
+	{
+		ui.appFrame->setVisible(true);
+		ui.executeNowButton->setVisible(true);
+	}
+	else
+	{
+		ui.appFrame->setVisible(false);
+		ui.executeNowButton->setVisible(false);
+	}
+
+	pythonCheckBoxChanged(0);
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::pythonCheckBoxChanged(int state)
+{
+	if (ui.pythonCheckBox->isChecked())
+	{
+		ui.pythonPathLabel->setVisible(true);
+		ui.pythonPathEdit->setVisible(true);
+		ui.pythonLocationButton->setVisible(true);
+	}
+	else
+	{
+		ui.pythonPathLabel->setVisible(false);
+		ui.pythonPathEdit->setVisible(false);
+		ui.pythonLocationButton->setVisible(false);
 	}
 }
 

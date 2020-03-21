@@ -106,7 +106,7 @@ void QTableWidgetWithCopyPaste::keyPressEvent(QKeyEvent * event)
 void QTableWidgetWithCopyPaste::saveToFile(QString filename)
 {
 	FILE *outFile;
-	outFile = fopen(filename.toLocal8Bit(), "a");
+	outFile = fopen(filename.toLocal8Bit(), "w");
 
 	if (outFile != NULL)
 	{
@@ -121,16 +121,16 @@ void QTableWidgetWithCopyPaste::saveToFile(QString filename)
 				out << ',';
 
 			if (cell)
-				out << cell->text();
+				out << cell->text().remove('\n');	// strip any hard line feeds
 		}
 		out << '\n';
 
 		// output table data
-		for (int i = 0; i < rowCount(); ++i) 
+		for (int i = 0; i < rowCount(); ++i)
 		{
 			if (i > 0)
 				out << '\n';
-			for (int j = 0; j < columnCount(); ++j) 
+			for (int j = 0; j < columnCount(); ++j)
 			{
 				if (j > 0)
 					out << ',';
@@ -138,7 +138,7 @@ void QTableWidgetWithCopyPaste::saveToFile(QString filename)
 				QTableWidgetItem *cell = item(i, j);
 
 				if (cell)
-					out << cell->text();
+					out << cell->text().remove('\n');	// strip any hard line feeds
 			}
 		}
 
@@ -148,12 +148,12 @@ void QTableWidgetWithCopyPaste::saveToFile(QString filename)
 }
 
 //---------------------------------------------------------------------------
-void QTableWidgetWithCopyPaste::loadFromFile(QString filename, bool makeCheckable, int skipCnt)
+void QTableWidgetWithCopyPaste::loadFromFile(QString filename, int skipRowsCnt)
 {
 	FILE *inFile;
 	inFile = fopen(filename.toLocal8Bit(), "r");
 
-	// read in table data, skip horizontal header titles in row 1
+	// read in table data
 	if (inFile != NULL)
 	{
 		QTextStream in(inFile);
@@ -170,15 +170,18 @@ void QTableWidgetWithCopyPaste::loadFromFile(QString filename, bool makeCheckabl
 		if (rows.last().isEmpty())
 			numRows--;	// skip it
 
-		setRowCount(numRows - skipCnt);
-		qDebug() << "Set row count = " + QString::number(numRows - skipCnt);
+		setRowCount(numRows - skipRowsCnt);
+		qDebug() << "Set row count = " + QString::number(numRows - skipRowsCnt);
 
+#ifdef DEBUG
+		qDebug() << "Check column count";
+#endif
 		if (numColumns < minimumNumCols)
 		{
 			setColumnCount(minimumNumCols);
 #ifdef DEBUG
 			qDebug() << "Set col count = " + QString::number(minimumNumCols);
-#endif			
+#endif
 			numColumns = minimumNumCols;
 		}
 		else
@@ -186,61 +189,54 @@ void QTableWidgetWithCopyPaste::loadFromFile(QString filename, bool makeCheckabl
 			setColumnCount(numColumns);
 #ifdef DEBUG
 			qDebug() << "Set col count = " + QString::number(numColumns);
-#endif		
+#endif
 		}
 
 		int cellRow = 0;
 
-		for (int i = skipCnt; i < numRows; ++i) 
+		for (int i = skipRowsCnt; i < numRows; ++i)
 		{
 			if (rows[i].length() > 0)
 			{
 				QStringList columns = rows[i].split(',');
 
-				for (int j = 0; j < numColumns; ++j)
+				for (int j = 0; j < numColumns; j++)
 				{
-					if (j >= columns.count())
+					if (j >= minimumNumCols)
 					{
 						QTableWidgetItem *cell = item(cellRow, j);
+						QString cellStr = "";
 
-						if (cell == NULL)
-							setItem(cellRow, j, cell = new QTableWidgetItem(""));
-						else
-							cell->setText("");
-
-						cell->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
-					}
-					else
-					{
-						QTableWidgetItem *cell = item(cellRow, j);
-						QString cellStr = columns[j];
-
-						if (cellStr.isEmpty())
-							cellStr = "";
+						if (j < columns.count())
+							cellStr = columns[j];
 
 						if (cell == NULL)
 							setItem(cellRow, j, cell = new QTableWidgetItem(cellStr));
 						else
 							cell->setText(cellStr);
 
-						if (j == (columns.count() - 1))
-							cell->setTextAlignment(Qt::AlignCenter);
-						else
-							cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+						cell->setTextAlignment(Qt::AlignCenter | Qt::AlignVCenter);
+					}
+					else
+					{
+						QTableWidgetItem *cell = item(cellRow, j);
+						QString cellStr = "";
 
+						if (j < columns.count())
+							cellStr = columns[j];
+
+						if (cell == NULL)
+							setItem(cellRow, j, cell = new QTableWidgetItem(cellStr));
+						else
+							cell->setText(cellStr);
+
+						cell->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
 #ifdef DEBUG
 						qDebug() << "Set text for item = " + QString::number(cellRow) + "," + QString::number(j);
 #endif
-						if (j == 0 && makeCheckable)
-						{
-							if (cell->text().length() > 0)
-								cell->setCheckState(Qt::Checked);
-							else
-								cell->setCheckState(Qt::Unchecked);
-						}
 					}
 				}
-				
+
 				cellRow++;
 			}
 		}
@@ -250,6 +246,23 @@ void QTableWidgetWithCopyPaste::loadFromFile(QString filename, bool makeCheckabl
 #ifdef DEBUG
 		qDebug() << "Closed file";
 #endif
+	}
+}
+
+//---------------------------------------------------------------------------
+void QTableWidgetWithCopyPaste::setColumnAlignment(int col, int alignment)
+{
+	int numRows = rowCount();
+
+	if (numRows)
+	{
+		for (int i = numRows; i > 0; i--)
+		{
+			QTableWidgetItem *cell = item(i - 1, col);
+
+			if (cell)
+				cell->setTextAlignment(alignment);
+		}
 	}
 }
 

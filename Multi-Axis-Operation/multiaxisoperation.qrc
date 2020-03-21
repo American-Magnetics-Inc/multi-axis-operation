@@ -33,5 +33,19 @@
         <file>Resources/action_pause@2x.png</file>
         <file>Resources/Multi-Axis-Operation.png</file>
         <file>Resources/app.ico</file>
+        <file>Resources/pswitch.png</file>
+        <file>Resources/pswitch@2x.png</file>
+        <file>Resources/application-gear.png</file>
+        <file>Resources/application-gear@2x.png</file>
+        <file>Resources/export_to_csv.png</file>
+        <file>Resources/export_to_csv@2x.png</file>
+        <file>Resources/export_to_excel.png</file>
+        <file>Resources/export_to_excel@2x.png</file>
+        <file>Resources/import_from_csv.png</file>
+        <file>Resources/import_from_csv@2x.png</file>
+        <file>Resources/document-import.png</file>
+        <file>Resources/document-import@2x.png</file>
+        <file>Resources/document-save.png</file>
+        <file>Resources/document-save@2x.png</file>
     </qresource>
 </RCC>

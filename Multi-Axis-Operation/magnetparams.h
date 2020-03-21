@@ -3,21 +3,21 @@
 #include <QDialog>
 #include "ui_magnetparams.h"
 
-typedef enum
+enum Axis
 {
 	X_AXIS = 0,
 	Y_AXIS,
 	Z_AXIS
-} Axis;
+};
 
-typedef enum
+enum FieldUnits
 {
 	ERROR_UNITS = -1,
 	KG = 0,
 	TESLA
-} FieldUnits;
+};
 
-typedef enum
+enum State
 {
 	ERROR_STATE = 0,
 	RAMPING = 1,
@@ -31,9 +31,9 @@ typedef enum
 	SWITCH_HEATING,
 	SWITCH_COOLING,
 	EXTERNAL_RAMPDOWN
-} State;
+};
 
-typedef struct
+struct AxesParams
 {
 	bool activate;
 	QString ipAddress;
@@ -46,7 +46,7 @@ typedef struct
 	double switchHeaterCurrent;
 	int switchCoolingTime;
 	int switchHeatingTime;
-} AxesParams;
+};
 
 class MagnetParams : public QDialog
 {
@@ -61,6 +61,7 @@ public:
 	void setMagnetID(QString id) { magnetID = id; }
 	double getMagnitudeLimit(void) { return (magnitudeLimit * 1.00001); }	// slight adjustment for round-off error
 	void setMagnitudeLimit(double value) { magnitudeLimit = value; }
+	bool switchInstalled(void);		// returns if any active axis has a persistent switch installed
 	AxesParams *GetXAxisParams(void) { return &x; }
 	AxesParams *GetYAxisParams(void) { return &y; }
 	AxesParams *GetZAxisParams(void) { return &z; }

@@ -9,7 +9,7 @@
 // Type declarations
 //---------------------------------------------------------------------------
 
-typedef enum
+enum SystemError
 {
 	ERR_NONE = 0,
 	ERR_UNRECOGNIZED_COMMAND = -101,
@@ -32,14 +32,13 @@ typedef enum
 
 	ERR_NOT_CONNECTED = -301,
 	ERR_SWITCH_TRANSITION = -302,
-	ERR_QUENCH_CONDITION = -303, 
+	ERR_QUENCH_CONDITION = -303,
 	ERR_NO_UNITS_CHANGE = -304,
 	ERR_NO_PERSISTENCE = -305,
 	ERR_IS_PERSISTENT = -306,
 	ERR_NO_SWITCH = -307,
 	ERR_CANNOT_LOAD = -308
-
-} SystemError;
+};
 
 
 

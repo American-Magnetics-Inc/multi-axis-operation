@@ -464,7 +464,7 @@ VectorError MultiAxisOperation::check_polar_table(int tableRow)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::set_persistence(bool persistent)
 {
-	if (switchInstalled)
+	if ((switchInstalled = magnetParams->switchInstalled()))
 	{
 		if (persistent)
 		{

@@ -14,8 +14,9 @@ public:
 	  {minimumNumCols = 1;};
 
 	void saveToFile(QString filename);
-	void loadFromFile(QString filename, bool makeCheckable, int skipCnt);
+	void loadFromFile(QString filename, int skipRowsCnt);
 	void setMinimumNumCols(int numCols) { minimumNumCols = numCols; }
+	void setColumnAlignment(int col, int alignment);
 
 private:
 	int minimumNumCols;

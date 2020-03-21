@@ -291,7 +291,19 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_302A17FDA27F430FBE94B3178336E1F8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_32DA149338C842A8AF4F4A1446C75954"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_3B0128C37CE44E778E1CAF287678F5FD"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -316,6 +328,12 @@
         "Entry"
         {
         "MsmKey" = "8:_3F439695AA3C4C23A25D3ED82FF0943D"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_40AF6C0C656F454D9DD9A14C80599DEB"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -531,6 +549,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_75667C9A56B44281AFA6DAB718C19C7C"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_767B65BD17174E71A95C8572A03F52C5"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -544,6 +568,12 @@
         "Entry"
         {
         "MsmKey" = "8:_77160E15BDF14920BE20B4F25FAB24AC"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_780CF537CEDC4F89A8A676363C0D9084"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -622,6 +652,12 @@
         "Entry"
         {
         "MsmKey" = "8:_8B7214FA7E364FE19656B46987D78297"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_8F5445A96D854C6BBADADCD6CA222E5E"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -927,6 +963,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_D60A472FD8EF41A6953208078362A303"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_D77A8B44D51B4658BF6A09FFD4C0505C"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -1120,6 +1162,12 @@
         "Entry"
         {
         "MsmKey" = "8:_FADD0B276B034C3BB0E179FDCD255F04"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_FB260CC17593480E99D3806C80A263E9"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -2149,12 +2197,52 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_302A17FDA27F430FBE94B3178336E1F8"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\pswitch@2x.png"
+            "TargetName" = "8:pswitch@2x.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_32DA149338C842A8AF4F4A1446C75954"
             {
             "SourcePath" = "8:..\\bin\\translations\\qt_cs.qm"
             "TargetName" = "8:qt_cs.qm"
             "Tag" = "8:"
             "Folder" = "8:_05C0FE6834AB40EE8615EDEA9BCDD3BB"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_3B0128C37CE44E778E1CAF287678F5FD"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\persistent.png"
+            "TargetName" = "8:persistent.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2235,6 +2323,26 @@
             "TargetName" = "8:hmprojectstyles.css"
             "Tag" = "8:"
             "Folder" = "8:_8C64F0660204497098BC5984A548E209"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_40AF6C0C656F454D9DD9A14C80599DEB"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\options.html"
+            "TargetName" = "8:options.html"
+            "Tag" = "8:"
+            "Folder" = "8:_47EA8C0221D34FFBA8C48CC0B2BD00FC"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -2929,6 +3037,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_75667C9A56B44281AFA6DAB718C19C7C"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\jstopics\\example-python-script.js"
+            "TargetName" = "8:example-python-script.js"
+            "Tag" = "8:"
+            "Folder" = "8:_8D5B479EAD984191B119700F705714A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_767B65BD17174E71A95C8572A03F52C5"
             {
             "SourcePath" = "8:..\\help\\HTML\\index.html"
@@ -2975,6 +3103,26 @@
             "TargetName" = "8:jquery.history.js"
             "Tag" = "8:"
             "Folder" = "8:_AD8D5536AD8A44E29C02FFC396C1D9FA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_780CF537CEDC4F89A8A676363C0D9084"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\options.png"
+            "TargetName" = "8:options.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -3235,6 +3383,26 @@
             "TargetName" = "8:hm_mail_feedback.js"
             "Tag" = "8:"
             "Folder" = "8:_AD8D5536AD8A44E29C02FFC396C1D9FA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_8F5445A96D854C6BBADADCD6CA222E5E"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\jstopics\\options.js"
+            "TargetName" = "8:options.js"
+            "Tag" = "8:"
+            "Folder" = "8:_8D5B479EAD984191B119700F705714A0"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -4249,6 +4417,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D60A472FD8EF41A6953208078362A303"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\example-python-script.html"
+            "TargetName" = "8:example-python-script.html"
+            "Tag" = "8:"
+            "Folder" = "8:_47EA8C0221D34FFBA8C48CC0B2BD00FC"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_D7FDEB28B4294DD892BCBC4876D406F7"
             {
             "SourcePath" = "8:..\\help\\HTML\\images\\magnet-params.png"
@@ -4889,6 +5077,26 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FB260CC17593480E99D3806C80A263E9"
+            {
+            "SourcePath" = "8:..\\help\\HTML\\images\\execute.png"
+            "TargetName" = "8:execute.png"
+            "Tag" = "8:"
+            "Folder" = "8:_D0A346B7D98248768F7270197A1B76A0"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_FDD2CCA8137142A5A08F3EBC2C435F02"
             {
             "SourcePath" = "8:..\\bin\\translations\\qt_ko.qm"
@@ -5157,15 +5365,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Multi-Axis Operation"
-        "ProductCode" = "8:{5A290C72-54A2-4666-AC0D-235006D94FCB}"
-        "PackageCode" = "8:{CF5A96C1-B48B-4A2C-A7AB-D487C7C1738A}"
+        "ProductCode" = "8:{6324A3CD-9085-4DC2-B033-508CD613D7A0}"
+        "PackageCode" = "8:{85AD6F56-42DD-4DE8-9B2E-8A9D23BA7DA3}"
         "UpgradeCode" = "8:{628D8A88-27D5-471C-BD03-99676CC09EF7}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:TRUE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:0.93.1"
+        "ProductVersion" = "8:1.00"
         "Manufacturer" = "8:American Magnetics, Inc."
         "ARPHELPTELEPHONE" = "8:865 482-1056"
         "ARPHELPLINK" = "8:http://www.americanmagnetics.com/support-center/"
@@ -5173,7 +5381,7 @@
         "Subject" = "8:AMI Maxes(tm) Operation app"
         "ARPCONTACT" = "8:American Magnetics, Inc."
         "Keywords" = "8:"
-        "ARPCOMMENTS" = "8:Multi-Axis Operation v0.93.1"
+        "ARPCOMMENTS" = "8:Multi-Axis Operation v1.00"
         "ARPURLINFOABOUT" = "8:http://www.americanmagnetics.com"
         "ARPPRODUCTICON" = "8:_F7B8AF449B154A99A93194495A39C513"
         "ARPIconIndex" = "3:0"
