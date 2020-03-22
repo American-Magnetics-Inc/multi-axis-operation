@@ -4,13 +4,13 @@
 
 # Multi-Axis Operation Application #
 
-This repository is the source code and binary distribution point for the Multi-Axis Operation application for control of AMI Maxes(tm) magnet systems -- including 3D vectors or polar vectors, in a sample alignment plane, with automatic execution of a table of values. Execution of a external custom app or script is also now supported at each target vector.
+This repository is the source code and binary distribution point for the Multi-Axis Operation application for control of AMI Maxes(tm) magnet systems -- including 3D vectors or polar vectors, in a sample alignment plane, with automatic execution of a table of values. Execution of an external custom app or script is also now supported at each target vector.
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png)
 
 **The current application version is 1.00.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
-**NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Controls | Options...* dialog.
+**NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Control | Options...* dialog.
 
 The Multi-Axis Operation application contains a comprehensive Help file which should be adequate to understand how to use the application to control a multi-axis system. The application attempts to meet the needs of end-user experiments by including Sample Alignment, (polar) Rotation in the Sample Plane, and a scripting interface via stdin/stdout that is Python-compatible. A Python example is included in the Help file.
 
@@ -20,15 +20,15 @@ An example of calling the Multi-Axis Operation application from within LabVIEW (
 
 Version 1.00 is now distributed with Linux and macOS ready-to-use binaries, along with the x64 Windows support. The Linux deployment folder format is improved and should work more reliably.
 
-#### New Table Feature
+#### New External App/Script Execution Feature
 
-Version 1.00 introduces an option to execute an external application or Python script at each target during *Auto-Stepping*, as well as *automatically* entering and exiting persistence at each target. This feature is intended to allow the customer to use the Multi-Axis Operation application as a sequencer for automated data acquisition or other experimental procedure that *repeat*s at various field points.
+Version 1.00 introduces an option to execute an external application or Python script at each target during *Auto-Stepping*, as well as optionally *automatically* entering and exiting persistence at each target. This feature is intended to allow the customer to use the Multi-Axis Operation application as a sequencer for automated data acquisition or other experimental procedure that *repeat*s at various field points.
 
-An example Python script is included in the Help. All the customer need do is write the data acquisition code. All the magnet field parameters are controlled by the Multi-Axis Operation application. The customer can concentrate on what is specific to an experiment rather than *reinventing* the 3D field control.
+An example Python script is included in the Help. All the customer need do is write the data acquisition code. All the 3D magnet field parameters are controlled by the Multi-Axis Operation application. The customer can concentrate on what is specific to an experiment rather than *reinventing* the 3D field control.
 
 ![table](https://bitbucket.org/americanmagneticsinc/magnet-daq/raw/fd38e070b36eef59ecea22f000a22da181c272f8/help/images/screenshot4.png)
 
-Future improvements might include argument variables format (e.g. %MAGNETFIELD%) that allows passing of present magnet field states to the external script. Customer [feedback](mailto:support@americanmagnetics.com) is requested!
+Future improvements might include argument variables format (e.g. %MAGNITUDE%, %AZIMUTH%, etc.) that allows passing of present magnet field states to the external script. Customer [feedback](mailto:support@americanmagnetics.com) is requested!
 
 ## How do I install? ##
 
