@@ -2264,8 +2264,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		if (switchInstalled)
 			ui.actionPersistentMode->setEnabled(true);
 	}
-	else if ((x_activated && xState == RAMPING) ||
-			 (y_activated && yState == RAMPING) ||
+	else if ((x_activated && xState == RAMPING) || 
+			 (y_activated && yState == RAMPING) || 
 			 (z_activated && zState == RAMPING))
 	{
 		if (remainingTime)
@@ -2315,20 +2315,6 @@ void MultiAxisOperation::dataTimerTick(void)
 		}
 		else if (passCnt >= 2 || magnetState == HOLDING)
 		{
-			// update total remaining time on first transition to HOLDING
-			if (magnetState != HOLDING)
-			{
-				if (autostepTimer->isActive())	// first checks for active autostep sequence
-				{
-					calculateAutostepRemainingTime(presentVector + 1, autostepEndIndex);
-				}
-
-				if (autostepPolarTimer->isActive())	// first checks for active autostep sequence
-				{
-					calculatePolarRemainingTime(presentPolar + 1, autostepEndIndexPolar);
-				}
-			}
-
 			magnetState = HOLDING;
 			systemState = SYSTEM_HOLDING;
 			statusState->setStyleSheet("color: green; font: bold;");

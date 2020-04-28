@@ -8,7 +8,7 @@ This repository is the source code and binary distribution point for the Multi-A
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png)
 
-**The current application version is 1.00.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
+**The current application version is 1.01.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
 **NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Control | Options...* dialog.
 
@@ -18,13 +18,13 @@ An example of calling the Multi-Axis Operation application from within LabVIEW (
 
 ## What's new? ##
 
-Version 1.00 is now distributed with Linux and macOS ready-to-use binaries, along with the x64 Windows support. The Linux deployment folder format is improved and should work more reliably.
+The app is now distributed with Linux and macOS ready-to-use binaries, along with the x64 Windows support. The Linux deployment folder format is improved and should deploy more reliably.
 
 #### New External App/Script Execution Feature
 
-Version 1.00 introduces an option to execute an external application or Python script at each target during *Auto-Stepping*, as well as optionally *automatically* entering and exiting persistence at each target. This feature is intended to allow the customer to use the Multi-Axis Operation application as a sequencer for automated data acquisition or other experimental procedure that *repeat*s at various field points.
+A new option has been added to execute an external application or Python script at each target during *Auto-Stepping*, as well as optionally *automatically* entering and exiting persistence at each target. This feature is intended to allow the customer to use the Multi-Axis Operation application as a sequencer for automated data acquisition or other procedure that *repeat*s at various field points.
 
-An example Python script is included in the Help. All the customer need do is write the data acquisition code. All the 3D magnet field parameters are controlled by the Multi-Axis Operation application. The customer can concentrate on what is specific to an experiment rather than *reinventing* the 3D field control.
+An example Python script is included in the Help. All the customer need do is write the data acquisition code. All the 3D magnet field parameters are controlled by the Multi-Axis Operation application. The customer can concentrate on what is specific to an experiment rather than managing the 3D field control.
 
 ![table](https://bitbucket.org/americanmagneticsinc/magnet-daq/raw/fd38e070b36eef59ecea22f000a22da181c272f8/help/images/screenshot4.png)
 
@@ -45,15 +45,15 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 * __Summary of set up__
 	* Clone or download the source code repository to your local drive.
 
-	* *For Windows*: Open the Multi-Axis-Operation.sln file in [Visual Studio 2017](https://www.visualstudio.com/free-developer-offers/). If using Visual Studio, you should also install the [Qt Visual Studio Tools](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.QtVisualStudioTools-19123) extension to enable pointing your project to your currently installed Qt distribution for Visual Studio.
+	* *For Windows*: Open the Multi-Axis-Operation.sln file in [Visual Studio 2017](https://docs.microsoft.com/en-us/visualstudio/releasenotes/vs2017-relnotes). If using Visual Studio, you should also install the [Qt Visual Studio Tools](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.QtVisualStudioTools-19123) extension to enable pointing your project to your currently installed Qt distribution for Visual Studio.
 
 	* NOTE: On Windows, compiling the application in Debug mode will open a console on launch for interactively testing the scripting functions.
 
-	* *For Linux and Mac*: Open the Magnet-DAQ.pro file in QtCreator
+	* *For Linux and Mac*: Open the Magnet-DAQ.pro file in QtCreator.
 
 
 * __Dependencies__
-	* Requires [Qt 5.14.1 or later open-source distribution](https://www.qt.io/download-open-source/)
+	* Requires [Qt 5.14.1 or later open-source distribution](https://www.qt.io/download-open-source/).
 	
 	* Uses the [QtXlsxWriter library](https://github.com/dbzhang800/QtXlsxWriter) built as a DLL for the Windows version.
 	
