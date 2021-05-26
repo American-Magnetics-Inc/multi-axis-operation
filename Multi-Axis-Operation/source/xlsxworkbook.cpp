@@ -40,6 +40,10 @@
 #include <QBuffer>
 #include <QDir>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QtCore5Compat/QStringRef>
+#endif
+
 QT_BEGIN_NAMESPACE_XLSX
 
 WorkbookPrivate::WorkbookPrivate(Workbook *q, Workbook::CreateFlag flag) :
@@ -210,7 +214,7 @@ AbstractSheet *Workbook::addSheet(const QString &name, int sheetId, AbstractShee
     Q_D(Workbook);
     if (sheetId > d->last_sheet_id)
         d->last_sheet_id = sheetId;
-    AbstractSheet *sheet=0;
+    AbstractSheet *sheet = Q_NULLPTR;
     if (type == AbstractSheet::ST_WorkSheet) {
         sheet = new Worksheet(name, sheetId, this, F_LoadFromExists);
     } else if (type == AbstractSheet::ST_ChartSheet) {
@@ -230,12 +234,12 @@ AbstractSheet *Workbook::insertSheet(int index, const QString &name, AbstractShe
     QString sheetName = createSafeSheetName(name);
     if(index > d->last_sheet_id){
         //User tries to insert, where no sheet has gone before.
-        return 0;
+        return Q_NULLPTR;
     }
     if (!sheetName.isEmpty()) {
         //If user given an already in-used name, we should not continue any more!
         if (d->sheetNames.contains(sheetName))
-            return 0;
+            return Q_NULLPTR;
     } else {
         if (type == AbstractSheet::ST_WorkSheet) {
             do {
@@ -249,7 +253,7 @@ AbstractSheet *Workbook::insertSheet(int index, const QString &name, AbstractShe
             } while (d->sheetNames.contains(sheetName));
         } else {
             qWarning("unsupported sheet type.");
-            return 0;
+            return Q_NULLPTR;
         }
     }
 
@@ -391,7 +395,7 @@ AbstractSheet *Workbook::sheet(int index) const
 {
     Q_D(const Workbook);
     if (index < 0 || index >= d->sheets.size())
-        return 0;
+        return Q_NULLPTR;
     return d->sheets.at(index).data();
 }
 
@@ -566,7 +570,11 @@ bool Workbook::loadFromXmlFile(QIODevice *device)
                  const QString name = attributes.value(QLatin1String("name")).toString();
                  int sheetId = attributes.value(QLatin1String("sheetId")).toString().toInt();
                  const QString rId = attributes.value(QLatin1String("r:id")).toString();
-                 const QStringRef &stateString = attributes.value(QLatin1String("state"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+                 const QStringRef& stateString = attributes.value(QLatin1String("state"));
+#else
+                 QStringView stateString = attributes.value(QLatin1String("state"));
+#endif
                  AbstractSheet::SheetState state = AbstractSheet::SS_Visible;
                  if (stateString == QLatin1String("hidden"))
                      state = AbstractSheet::SS_Hidden;

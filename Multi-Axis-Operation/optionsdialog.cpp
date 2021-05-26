@@ -49,6 +49,13 @@ void OptionsDialog::restoreSettings(void)
 		ui.minimizedCheckBox->setChecked(true);
 	else
 		ui.minimizedCheckBox->setChecked(false);
+
+	m_disableAutoStability = settings.value("Options/DisableAutoStability", false).toBool();
+
+	if (m_disableAutoStability)
+		ui.autoModeDisableCheckBox->setChecked(true);
+	else
+		ui.autoModeDisableCheckBox->setChecked(false);
 }
 
 //---------------------------------------------------------------------------
@@ -60,6 +67,7 @@ void OptionsDialog::saveSettings(void)
 	settings.setValue("Options/SettlingTime", m_settlingTime);
 	settings.setValue("Options/MagnetDAQLocation", m_magnetDAQLocation);
 	settings.setValue("Options/MagnetDAQMinimzed", m_magnetDAQMinimized);
+	settings.setValue("Options/DisableAutoStability", m_disableAutoStability);
 }
 
 //---------------------------------------------------------------------------
@@ -94,6 +102,9 @@ bool OptionsDialog::readSettingsFromDialog(void)
 
 	// read minimized preference
 	m_magnetDAQMinimized = ui.minimizedCheckBox->isChecked();
+
+	// read AUTO Stability Mode override
+	m_disableAutoStability = ui.autoModeDisableCheckBox->isChecked();
 
 	saveSettings();
 

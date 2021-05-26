@@ -149,7 +149,7 @@ struct XlsxColumnInfo
     bool collapsed;
 };
 
-class  WorksheetPrivate : public AbstractSheetPrivate
+class XLSX_AUTOTEST_EXPORT WorksheetPrivate : public AbstractSheetPrivate
 {
     Q_DECLARE_PUBLIC(Worksheet)
 public:
@@ -223,6 +223,13 @@ public:
     bool showRuler;
     bool showOutlineSymbols;
     bool showWhiteSpace;
+
+    double topPageMargin;
+    double rightPageMargin;
+    double leftPageMargin;
+    double bottomPageMargin;
+    double headerPageMargin;
+    double footerPageMargin;
 
     QRegularExpression urlPattern;
 private:

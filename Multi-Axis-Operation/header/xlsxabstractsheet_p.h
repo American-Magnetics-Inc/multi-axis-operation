@@ -44,7 +44,7 @@
 
 namespace QXlsx {
 
-class  AbstractSheetPrivate : public AbstractOOXmlFilePrivate
+class XLSX_AUTOTEST_EXPORT AbstractSheetPrivate : public AbstractOOXmlFilePrivate
 {
     Q_DECLARE_PUBLIC(AbstractSheet)
 public:

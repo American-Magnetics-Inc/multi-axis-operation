@@ -126,7 +126,8 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	QSettings settings;
 
 	// restore different geometry for different DPI screens
-	QString dpiStr = QString::number(QApplication::desktop()->screen()->logicalDpiX());
+	QScreen* screen = QApplication::primaryScreen();
+	QString dpiStr = QString::number(screen->logicalDotsPerInch());
 	restoreGeometry(settings.value("MainWindow/Geometry/" + dpiStr).toByteArray());
 	restoreState(settings.value("MainWindow/WindowState/" + dpiStr).toByteArray());
 
@@ -401,7 +402,8 @@ MultiAxisOperation::~MultiAxisOperation()
 	QSettings settings;
 
 	// save different geometry for different DPI screens
-	QString dpiStr = QString::number(QApplication::desktop()->screen()->logicalDpiX());
+	QScreen* screen = QApplication::primaryScreen();
+	QString dpiStr = QString::number(screen->logicalDotsPerInch());
 
 	settings.setValue("MainWindow/Geometry/" + dpiStr, saveGeometry());
 	settings.setValue("MainWindow/WindowState/" + dpiStr, saveState());
@@ -640,7 +642,7 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (xProcess->isActive())
 			{
-				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked());
+				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), optionsDialog->disableAutoStability());
 				x_activated = true;
 
 				// switch heating/cooling required?
@@ -678,7 +680,7 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (yProcess->isActive())
 			{
-				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked());
+				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), optionsDialog->disableAutoStability());
 				y_activated = true;
 
 				// switch heating/cooling required?
@@ -720,7 +722,7 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (zProcess->isActive())
 			{
-				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked());
+				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), optionsDialog->disableAutoStability());
 				z_activated = true;
 
 				// switch heating/cooling required?
@@ -942,21 +944,16 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 		params = magnetParams->GetXAxisParams();
 		loadParams(&stream, params);
 
-		if (params->switchInstalled)
-			switchInstalled = true;
-
 		// y-axis params
 		params = magnetParams->GetYAxisParams();
 		loadParams(&stream, params);
-
-		if (params->switchInstalled)
-			switchInstalled = true;
 
 		// z-axis params
 		params = magnetParams->GetZAxisParams();
 		loadParams(&stream, params);
 
-		if (params->switchInstalled)
+		// check if any activated axis has a switch
+		if (magnetParams->switchInstalled())
 			switchInstalled = true;
 
 		// reload vector table
@@ -1096,13 +1093,15 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 			alignmentTabLoadFromStream(&stream);
 
 			// reload polar table
-			ui.polarTableWidget->setRowCount(stream.readLine().toInt());
+			int rowCount = stream.readLine().toInt();
+			ui.polarTableWidget->setRowCount(rowCount);
 
 			// load columns count
 			int columnCount = stream.readLine().toInt();
 
 			// recover horizontal header labels
-			ui.polarTableWidget->setColumnCount(columnCount);
+			if (columnCount >= ui.polarTableWidget->getMinimumNumCols())
+				ui.polarTableWidget->setColumnCount(columnCount);
 
 			for (int i = 0; i < columnCount; i++)
 			{

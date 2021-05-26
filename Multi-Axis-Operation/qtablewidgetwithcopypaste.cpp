@@ -103,10 +103,15 @@ void QTableWidgetWithCopyPaste::keyPressEvent(QKeyEvent * event)
 }
 
 //---------------------------------------------------------------------------
-void QTableWidgetWithCopyPaste::saveToFile(QString filename)
+void QTableWidgetWithCopyPaste::saveToFile(QString filename, bool append)
 {
 	FILE *outFile;
-	outFile = fopen(filename.toLocal8Bit(), "w");
+	char mode[10] = "w";
+
+	if (append)
+		sprintf(mode, "a");
+
+	outFile = fopen(filename.toLocal8Bit(), mode);
 
 	if (outFile != NULL)
 	{
@@ -142,7 +147,7 @@ void QTableWidgetWithCopyPaste::saveToFile(QString filename)
 			}
 		}
 
-		flush(out);
+		Qt::flush(out);
 		fclose(outFile);
 	}
 }

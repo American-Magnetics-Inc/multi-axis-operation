@@ -48,7 +48,7 @@ class QIODevice;
 
 namespace QXlsx {
 
-class  ZipReader
+class XLSX_AUTOTEST_EXPORT ZipReader
 {
 public:
     explicit ZipReader(const QString &fileName);

@@ -32,6 +32,10 @@
 #include <QDebug>
 #include <QBuffer>
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QtCore5Compat/QStringRef>
+#endif
+
 namespace QXlsx {
 
 DocPropsCore::DocPropsCore(CreateFlag flag)
@@ -136,8 +140,13 @@ bool DocPropsCore::loadFromXmlFile(QIODevice *device)
     while (!reader.atEnd()) {
          QXmlStreamReader::TokenType token = reader.readNext();
          if (token == QXmlStreamReader::StartElement) {
-             const QStringRef nsUri = reader.namespaceUri();
-             const QStringRef name = reader.name();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+			 const QStringRef nsUri = reader.namespaceUri();
+			 const QStringRef name = reader.name();
+#else
+			 QStringView nsUri = reader.namespaceUri();
+             QStringView name = reader.name();
+#endif
              if (name == QStringLiteral("subject") && nsUri == dc) {
                  setProperty(QStringLiteral("subject"), reader.readElementText());
              } else if (name == QStringLiteral("title") && nsUri == dc) {

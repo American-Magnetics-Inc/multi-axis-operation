@@ -294,12 +294,12 @@ void MultiAxisOperation::actionSave_Vector_Table(void)
 
 			out << tempStr << "\n";
 
-			flush(out);
+			Qt::flush(out);
 			fclose(outFile);
 		}
 
 		// save table contents
-		ui.vectorsTableWidget->saveToFile(saveVectorsFileName);
+		ui.vectorsTableWidget->saveToFile(saveVectorsFileName, true);
 
 		// save path
 		settings.setValue("LastVectorSavePath", lastVectorsSavePath);
@@ -1607,7 +1607,7 @@ void MultiAxisOperation::executeApp(void)
 {
 	QString program = ui.appLocationEdit->text();
 	QString args = ui.appArgsEdit->text();
-	QStringList arguments = args.split(" ", QString::SkipEmptyParts);
+	QStringList arguments = args.split(" ", Qt::SkipEmptyParts);
 
 	// if a python script, use python path for executable
 	if (ui.pythonCheckBox->isChecked())

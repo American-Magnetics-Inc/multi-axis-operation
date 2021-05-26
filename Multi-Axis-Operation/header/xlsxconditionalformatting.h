@@ -44,7 +44,7 @@ class Worksheet;
 class Styles;
 
 class ConditionalFormattingPrivate;
-class   ConditionalFormatting
+class Q_XLSX_EXPORT ConditionalFormatting
 {
 public:
     enum HighlightRuleType {
@@ -126,7 +126,7 @@ private:
     friend class Worksheet;
     friend class ::ConditionalFormattingTest;
     bool saveToXml(QXmlStreamWriter &writer) const;
-    bool loadFromXml(QXmlStreamReader &reader, Styles *styles=0);
+    bool loadFromXml(QXmlStreamReader &reader, Styles *styles = Q_NULLPTR);
     QSharedDataPointer<ConditionalFormattingPrivate> d;
 };
 

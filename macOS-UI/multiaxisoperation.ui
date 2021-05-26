@@ -28,7 +28,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="mainVerticalLayout" stretch="1,10">
     <property name="spacing">
-     <number>17</number>
+     <number>25</number>
     </property>
     <property name="leftMargin">
      <number>11</number>
@@ -272,13 +272,13 @@ color: rgb(255, 255, 255);</string>
             </font>
            </property>
            <property name="autoFillBackground">
-            <bool>false</bool>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(230,231,232);</string>
+            <bool>true</bool>
            </property>
            <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
+            <enum>QFrame::StyledPanel</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
            </property>
            <property name="text">
             <string>Field Relative to Physical Magnet Axes</string>
@@ -596,7 +596,7 @@ color: rgb(255, 255, 255);</string>
          <number>14</number>
         </property>
         <property name="verticalSpacing">
-         <number>6</number>
+         <number>12</number>
         </property>
         <item row="0" column="4">
          <widget class="QFrame" name="vectorRowEditFrame">
@@ -815,7 +815,7 @@ color: rgb(255, 255, 255);</string>
           </property>
           <layout class="QVBoxLayout" name="controlFrameLayout">
            <property name="spacing">
-            <number>11</number>
+            <number>25</number>
            </property>
            <property name="leftMargin">
             <number>0</number>
@@ -1375,7 +1375,7 @@ color: rgb(255, 255, 255);</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout" stretch="1,1">
         <property name="spacing">
-         <number>13</number>
+         <number>25</number>
         </property>
         <property name="leftMargin">
          <number>11</number>
@@ -1506,7 +1506,10 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
+               <family>.SF NS</family>
                <pointsize>15</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
               </font>
              </property>
              <property name="text">
@@ -1527,7 +1530,10 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
+               <family>.SF NS</family>
                <pointsize>15</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
               </font>
              </property>
              <property name="text">
@@ -1548,7 +1554,10 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
+               <family>.SF NS</family>
                <pointsize>15</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
               </font>
              </property>
              <property name="text">
@@ -1846,7 +1855,10 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
+               <family>.SF NS</family>
                <pointsize>15</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
               </font>
              </property>
              <property name="text">
@@ -1867,7 +1879,10 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
+               <family>.SF NS</family>
                <pointsize>15</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
               </font>
              </property>
              <property name="text">
@@ -1888,7 +1903,10 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
+               <family>.SF NS</family>
                <pointsize>15</pointsize>
+               <weight>50</weight>
+               <bold>false</bold>
               </font>
              </property>
              <property name="text">
@@ -2031,7 +2049,7 @@ color: rgb(255, 255, 255);</string>
          <number>14</number>
         </property>
         <property name="verticalSpacing">
-         <number>6</number>
+         <number>12</number>
         </property>
         <item row="0" column="3">
          <widget class="QFrame" name="polarRowEditFrame">
@@ -2250,7 +2268,7 @@ color: rgb(255, 255, 255);</string>
           </property>
           <layout class="QVBoxLayout" name="polarControlLayout">
            <property name="spacing">
-            <number>11</number>
+            <number>25</number>
            </property>
            <property name="leftMargin">
             <number>0</number>
@@ -2915,6 +2933,7 @@ color: rgb(255, 255, 255);</string>
    </property>
    <property name="font">
     <font>
+     <family>.AppleSystemUIFont</family>
      <pointsize>14</pointsize>
     </font>
    </property>
@@ -3042,6 +3061,7 @@ selection-color: rgb(0, 0, 0);</string>
   <widget class="QToolBar" name="mainToolBar">
    <property name="font">
     <font>
+     <family>.SF NS</family>
      <pointsize>11</pointsize>
     </font>
    </property>

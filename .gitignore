@@ -266,3 +266,4 @@ __pycache__/
 /help/HTML
 *.bak
 *.DS_Store
+/Multi-Axis-Operation/header/.directory

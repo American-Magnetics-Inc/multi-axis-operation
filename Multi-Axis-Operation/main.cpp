@@ -21,19 +21,19 @@ void customMessageHandler(QtMsgType type, const QMessageLogContext &context, con
 	{
 		case QtDebugMsg:
 			txt = QString("Debug: %1 (%2:%3, %4)").arg(msg, QString(context.file), QString::number(context.line), QString(context.function));
-			ts << timestamp << txt << endl;
+			ts << timestamp << txt << Qt::endl;
 			break;
 		case QtWarningMsg:
 			txt = QString("Warning: %1 (%2:%3, %4)").arg(msg, QString(context.file), QString::number(context.line), QString(context.function));
-			ts << timestamp << txt << endl;
+			ts << timestamp << txt << Qt::endl;
 			break;
 		case QtCriticalMsg:
 			txt = QString("Critical: %1 (%2:%3, %4)").arg(msg, QString(context.file), QString::number(context.line), QString(context.function));
-			ts << timestamp << txt << endl;
+			ts << timestamp << txt << Qt::endl;
 			break;
 		case QtFatalMsg:
 			txt = QString("Fatal: %1 (%2:%3, %4)").arg(msg, QString(context.file), QString::number(context.line), QString(context.function));
-			ts << timestamp << txt << endl;
+			ts << timestamp << txt << Qt::endl;
 			abort();
 	}
 }

@@ -82,7 +82,11 @@ void ProcessManager::connectProcess(QString anIPAddress, QString exepath, Axis a
 #else
         process->setProcessChannelMode(QProcess::SeparateChannels);
         exepath += " " + args.join(' ');
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         process->start(exepath, QIODevice::ReadWrite);
+#else
+        process->startCommand(exepath, QIODevice::ReadWrite);
+#endif
 #endif
 	}
 	else
@@ -170,7 +174,7 @@ void ProcessManager::readyReadStandardOutput(void)
 }
 
 //---------------------------------------------------------------------------
-void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors)
+void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors, bool disableAutoStabilty)
 {
 	QString cmd;
 
@@ -206,14 +210,14 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 	{
 		if (testMode)
 		{
-			// set MANUAL stability mode and 100% Stability Setting
-			cmd = "CONF:STAB 100.0\n";
+			// set TEST stability mode
+			cmd = "CONF:STAB:MODE 2\n";
 			process->write(cmd.toLocal8Bit());
 
 			// since no switch, set Stability Resistor present to allow testing
 			// at ramp rates other than the cooled-switch ramp rate
-			cmd = "CONF:STAB:RES 1\n";
-			process->write(cmd.toLocal8Bit());
+			//cmd = "CONF:STAB:RES 1\n";
+			//process->write(cmd.toLocal8Bit());
 		}
 		else
 		{
@@ -224,9 +228,18 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 				cmd = "CONF:STAB:RES 0\n";
 			process->write(cmd.toLocal8Bit());
 
-			// set AUTO stability mode
-			cmd = "CONF:STAB:MODE 0\n";
-			process->write(cmd.toLocal8Bit());
+			if (disableAutoStabilty)
+			{
+				// set MANUAL stability mode
+				cmd = "CONF:STAB:MODE 1\n";
+				process->write(cmd.toLocal8Bit());
+			}
+			else
+			{
+				// set AUTO stability mode
+				cmd = "CONF:STAB:MODE 0\n";
+				process->write(cmd.toLocal8Bit());
+			}
 		}
 
 		// no switch installed, send last to prevent false quench
@@ -260,15 +273,24 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 
 		if (testMode)
 		{
-			// set MANUAL stability mode and 100% Stability Setting
-			cmd = "CONF:STAB 100.0\n";
+			// set TEST stability mode
+			cmd = "CONF:STAB:MODE 2\n";
 			process->write(cmd.toLocal8Bit());
 		}
 		else
 		{
-			// set AUTO stability mode
-			cmd = "CONF:STAB:MODE 0\n";
-			process->write(cmd.toLocal8Bit());
+			if (disableAutoStabilty)
+			{
+				// set MANUAL stability mode
+				cmd = "CONF:STAB:MODE 1\n";
+				process->write(cmd.toLocal8Bit());
+			}
+			else
+			{
+				// set AUTO stability mode
+				cmd = "CONF:STAB:MODE 0\n";
+				process->write(cmd.toLocal8Bit());
+			}
 		}
 
 		// PAUSE unit

@@ -4,8 +4,8 @@
 
 TEMPLATE = app
 TARGET = Multi-Axis-Operation
-QT += core network gui widgets concurrent 3dcore gui-private
-DEFINES += QT_CONCURRENT_LIB QT_NETWORK_LIB QT_WIDGETS_LIB QT_3DCORE_LIB QT_3DANIMATION_LIB QT_3DEXTRAS_LIB QT_3DINPUT_LIB QT_3DLOGIC_LIB QT_3DRENDER_LIB
+QT += core network widgets gui concurrent gui-private
+DEFINES += QT_NETWORK_LIB QT_CONCURRENT_LIB QT_WIDGETS_LIB
 INCLUDEPATH += ./GeneratedFiles/$(ConfigurationName) \
     ./GeneratedFiles \
     ./header \

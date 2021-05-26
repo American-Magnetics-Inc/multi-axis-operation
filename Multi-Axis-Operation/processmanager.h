@@ -12,7 +12,7 @@ public:
 	ProcessManager(QObject *parent);
 	~ProcessManager();
 	bool isActive(void) { return ((process->isOpen() && started) ? true : false); }
-	void sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors);
+	void sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors, bool disableAutoStabilty);
 	double getMagnetCurrent(bool *error);
 	double getSupplyCurrent(bool *error);
 	double getField(bool *error);

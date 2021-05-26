@@ -47,7 +47,7 @@ class QIODevice;
 
 namespace QXlsx {
 
-class  DocPropsApp : public AbstractOOXmlFile
+class XLSX_AUTOTEST_EXPORT DocPropsApp : public AbstractOOXmlFile
 {
 public:
     DocPropsApp(CreateFlag flag);

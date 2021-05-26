@@ -84,7 +84,7 @@ void MultiAxisOperation::polarToCartesian(double magnitude, double angle, QVecto
 	rotationQuaternion.setScalar(cos(angleRad / 2.0));
 
 	// calculate polar rotation in sample alignment plane
-	QQuaternion result = (rotationQuaternion * referenceQuaternion) * rotationQuaternion.conjugate();
+	QQuaternion result = (rotationQuaternion * referenceQuaternion) * rotationQuaternion.conjugated();
 
 	// load conversion vector
 	conversion->setX(result.x());
@@ -271,7 +271,7 @@ void MultiAxisOperation::actionSave_Polar_Table(void)
 		lastPolarSavePath = savePolarFileName;
 
 		// save table contents
-		ui.polarTableWidget->saveToFile(savePolarFileName);
+		ui.polarTableWidget->saveToFile(savePolarFileName, false);
 
 		// save path
 		settings.setValue("LastPolarSavePath", lastPolarSavePath);
@@ -1300,7 +1300,7 @@ void MultiAxisOperation::executePolarApp(void)
 {
 	QString program = ui.polarAppLocationEdit->text();
 	QString args = ui.polarAppArgsEdit->text();
-	QStringList arguments = args.split(" ", QString::SkipEmptyParts);
+	QStringList arguments = args.split(" ", Qt::SkipEmptyParts);
 
 	// if a python script, use python path for executable
 	if (ui.polarPythonCheckBox->isChecked())

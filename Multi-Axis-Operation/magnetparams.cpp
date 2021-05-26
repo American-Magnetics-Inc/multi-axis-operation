@@ -19,7 +19,8 @@ MagnetParams::MagnetParams(QWidget *parent)
 	// restore geometry and settings
 	QSettings settings;
 
-	QString dpiStr = QString::number(QApplication::desktop()->screen()->logicalDpiX());
+	QScreen* screen = QApplication::primaryScreen();
+	QString dpiStr = QString::number(screen->logicalDotsPerInch());
 	restoreGeometry(settings.value("MagnetParams/Geometry/" + dpiStr).toByteArray());
 
 	restore();
@@ -32,7 +33,8 @@ MagnetParams::~MagnetParams()
 	QSettings settings;
 
 	// save different geometry for different DPI screens
-	QString dpiStr = QString::number(QApplication::desktop()->screen()->logicalDpiX());
+	QScreen* screen = QApplication::primaryScreen();
+	QString dpiStr = QString::number(screen->logicalDotsPerInch());
 
 	settings.setValue("MagnetParams/Geometry/" + dpiStr, saveGeometry());
 }

@@ -304,7 +304,6 @@ void SharedStrings::readPlainStringPart(QXmlStreamReader &reader, RichString &ri
 
     //QXmlStreamAttributes attributes = reader.attributes();
 
-	// NOTICE: CHECK POINT
     QString text = reader.readElementText();
     richString.addFragment(text, Format());
 }

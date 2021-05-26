@@ -41,7 +41,7 @@ class ChartPrivate;
 class CellRange;
 class DrawingAnchor;
 
-class   Chart : public AbstractOOXmlFile
+class Q_XLSX_EXPORT Chart : public AbstractOOXmlFile
 {
     Q_DECLARE_PRIVATE(Chart)
 
@@ -67,7 +67,7 @@ public:
 
     ~Chart();
 
-    void addSeries(const CellRange &range, AbstractSheet *sheet=0);
+    void addSeries(const CellRange &range, AbstractSheet *sheet = Q_NULLPTR);
     void setChartType(ChartType type);
     void setChartStyle(int id);
 

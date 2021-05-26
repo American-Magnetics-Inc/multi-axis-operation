@@ -44,7 +44,7 @@
 
 QT_BEGIN_NAMESPACE_XLSX
 
-class  AbstractOOXmlFilePrivate
+class XLSX_AUTOTEST_EXPORT AbstractOOXmlFilePrivate
 {
     Q_DECLARE_PUBLIC(AbstractOOXmlFile)
 

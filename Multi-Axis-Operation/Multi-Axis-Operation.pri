@@ -109,6 +109,7 @@ SOURCES += \
     $$PWD/qtablewidgetwithcopypaste.cpp \
     $$PWD/stdafx.cpp
 FORMS += ./multiaxisoperation.ui \
+    $$PWD/multiaxisoperation.ui \
     $$PWD/optionsdialog.ui \
     ./magnetparams.ui \
     ./aboutdialog.ui

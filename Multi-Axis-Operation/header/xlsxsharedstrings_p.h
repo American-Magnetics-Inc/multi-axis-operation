@@ -61,7 +61,7 @@ public:
     int count;
 };
 
-class  SharedStrings : public AbstractOOXmlFile
+class XLSX_AUTOTEST_EXPORT SharedStrings : public AbstractOOXmlFile
 {
 public:
     SharedStrings(CreateFlag flag);

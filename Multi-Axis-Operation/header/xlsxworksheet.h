@@ -53,7 +53,7 @@ class Relationships;
 class Chart;
 
 class WorksheetPrivate;
-class   Worksheet : public AbstractSheet
+class Q_XLSX_EXPORT Worksheet : public AbstractSheet
 {
     Q_DECLARE_PRIVATE(Worksheet)
 public:
@@ -139,6 +139,19 @@ public:
     void setOutlineSymbolsVisible(bool visible);
     bool isWhiteSpaceVisible() const;
     void setWhiteSpaceVisible(bool visible);
+
+    double  topPageMargin();
+    void    setTopPageMargin(double topPageMargin);
+    double  leftPageMargin();
+    void    setLeftPageMargin(double leftPageMargin);
+    double  rightPageMargin();
+    void    setRightPageMargin(double rightPageMargin);
+    double  bottomPageMargin();
+    void    setBottomPageMargin(double bottomPageMargin);
+    double  headerPageMargin();
+    void    setHeaderPageMargin(double headerPageMargin);
+    double  footerPageMargin();
+    void    setFooterPageMargin(double footerPageMargin);
 
     ~Worksheet();
 

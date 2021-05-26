@@ -44,7 +44,7 @@ class RichStringPrivate;
 class SharedStrings;
 
 class FormatPrivate;
-class   Format
+class Q_XLSX_EXPORT Format
 {
 public:
     enum FontScript
@@ -266,7 +266,7 @@ public:
 private:
     friend class Styles;
     friend class ::FormatTest;
-    friend   QDebug operator<<(QDebug, const Format &f);
+    friend Q_XLSX_EXPORT QDebug operator<<(QDebug, const Format &f);
 
     int theme() const;
 
@@ -274,7 +274,7 @@ private:
 };
 
 #ifndef QT_NO_DEBUG_STREAM
-  QDebug operator<<(QDebug dbg, const Format &f);
+Q_XLSX_EXPORT QDebug operator<<(QDebug dbg, const Format &f);
 #endif
 
 QT_END_NAMESPACE_XLSX

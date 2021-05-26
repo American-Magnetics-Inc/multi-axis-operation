@@ -13,9 +13,10 @@ public:
 	  QTableWidget(parent)
 	  {minimumNumCols = 1;};
 
-	void saveToFile(QString filename);
+	void saveToFile(QString filename, bool append);
 	void loadFromFile(QString filename, int skipRowsCnt);
 	void setMinimumNumCols(int numCols) { minimumNumCols = numCols; }
+	int getMinimumNumCols(void) { return minimumNumCols; }
 	void setColumnAlignment(int col, int alignment);
 
 private:

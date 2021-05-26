@@ -8,9 +8,9 @@ This repository is the source code and binary distribution point for the Multi-A
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png)
 
-**The current application version is 1.01.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
+**The current application version is 1.02.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
-**NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Control | Options...* dialog.
+**NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Control | Options...* dialog (or *Preferences* on macOS).
 
 The Multi-Axis Operation application contains a comprehensive Help file which should be adequate to understand how to use the application to control a multi-axis system. The application attempts to meet the needs of end-user experiments by including Sample Alignment, (polar) Rotation in the Sample Plane, and a scripting interface via stdin/stdout that is Python-compatible. A Python example is included in the Help file.
 
@@ -38,22 +38,22 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 
 * [Executable for 64-bit Linux (Ubuntu 18.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.tar.gz) - See the README file in the download for the instructions for deploying on Ubuntu.
 
-* [Application for 64-bit Apple macOS (Sierra or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.app.zip) - Unzip the download and copy the Magnet-DAQ.app folder to your desired location.
+* [Application for 64-bit Apple macOS (Sierra or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.dmg) - Open the DMG download and copy the Multi-Axis-Operation.app folder to your desired location.
 
 ## How do I compile the source? ##
 
 * __Summary of set up__
 	* Clone or download the source code repository to your local drive.
 
-	* *For Windows*: Open the Multi-Axis-Operation.sln file in [Visual Studio 2017](https://docs.microsoft.com/en-us/visualstudio/releasenotes/vs2017-relnotes). If using Visual Studio, you should also install the [Qt Visual Studio Tools](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.QtVisualStudioTools-19123) extension to enable pointing your project to your currently installed Qt distribution for Visual Studio.
+	* *For Windows*: Open the Multi-Axis-Operation.sln file in [Visual Studio 2019](https://visualstudio.microsoft.com/downloads/). If using Visual Studio, you should also install the [Qt Visual Studio Tools](https://marketplace.visualstudio.com/items?itemName=TheQtCompany.QtVisualStudioTools2019) extension to enable pointing your project to your currently installed Qt distribution for Visual Studio.
 
 	* NOTE: On Windows, compiling the application in Debug mode will open a console on launch for interactively testing the scripting functions.
 
-	* *For Linux and Mac*: Open the Magnet-DAQ.pro file in QtCreator.
+	* *For Linux and Mac*: Open the Multi-Axis-Operation.pro file in QtCreator.
 
 
 * __Dependencies__
-	* Requires [Qt 5.14.1 or later open-source distribution](https://www.qt.io/download-open-source/).
+	* Requires [Qt 5.15 or later open-source distribution](https://www.qt.io/download-open-source/). The Windows and macOS releases have moved to Qt 6 for binary distribution, however the Linux version is still Qt 5.15 to support Ubuntu 18.
 	
 	* Uses the [QtXlsxWriter library](https://github.com/dbzhang800/QtXlsxWriter) built as a DLL for the Windows version.
 	
@@ -63,11 +63,10 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 
 
 * __Deployment and compilation hints__
-	* *For Windows*: The MultiAxis-Setup folder contains a setup project for producing a Windows installer. This requires the [Visual Studio Installer](https://marketplace.visualstudio.com/items?itemName=VisualStudioProductTeam.MicrosoftVisualStudio2017InstallerProjects) extension. A bin folder is referenced by the installer where you should place the Qt binaries for packaging by the installer.
+	* *For Windows*: The MagnetDAQ-Setup folder contains a setup project for producing a Windows installer. This requires the [Visual Studio Installer](https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2017InstallerProjects) extension. A bin folder is referenced by the installer where you should place the Qt runtime binaries and plugins for packaging by the installer.
 	* *For Linux:* See the README file in the binary download (see above) for the instructions for deploying on Ubuntu. Other versions of Linux may require a different procedure.
-	* *For Linux:* High-DPI display support functions flawlessly in KDE Plasma (not surprising since KDE is Qt-based). The application may exhibit various unaddressed issues with high-DPI display in other desktop managers such as Unity and Gnome, as does the general desktop environment for those desktop managers at present.
-	* *For Mac*: Simply unzip the binary distribution and copy the .app folder to the desired location. In order to include the Qt runtime libraries in any app bundle you compile yourself, you should use the [Mac Deployment Tool](http://doc.qt.io/qt-5/osx-deployment.html#macdeploy). Dark mode in Mojave is now supported in the binary distribution.
-	
+	* Linux high-DPI display support functions flawlessly in KDE Plasma (not surprising since KDE is Qt-based). The application may exhibit various unaddressed issues with high-DPI display in other desktop managers such as Unity and Gnome, as does the general desktop environment for those desktop managers at present.
+	* *For Mac*: Simply copy the .app folder to the desired location. In order to include the Qt runtime libraries in any app bundle you compile yourself, you should use the [Mac Deployment Tool](https://doc.qt.io/qt-6/macos-deployment.html). The macOS "dark mode" is supported.
 ## License ##
 
 The Multi-Axis Operation program is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License](https://www.gnu.org/licenses/gpl.html) as published by the Free Software Foundation, either version 3 of the License, or any later version.
@@ -86,5 +85,4 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot3.png)
-
 

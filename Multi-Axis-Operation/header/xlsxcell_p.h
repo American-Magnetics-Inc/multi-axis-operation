@@ -1,33 +1,46 @@
-//--------------------------------------------------------------------
-//
-// QXlsx https://github.com/j2doll/QXlsx
-//
-// GPL License v3 https://www.gnu.org/licenses/gpl-3.0.en.html
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-// 
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-// 
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-//--------------------------------------------------------------------
-
-
+/****************************************************************************
+** Copyright (c) 2013-2014 Debao Zhang <hello@debao.me>
+** All right reserved.
+**
+** Permission is hereby granted, free of charge, to any person obtaining
+** a copy of this software and associated documentation files (the
+** "Software"), to deal in the Software without restriction, including
+** without limitation the rights to use, copy, modify, merge, publish,
+** distribute, sublicense, and/or sell copies of the Software, and to
+** permit persons to whom the Software is furnished to do so, subject to
+** the following conditions:
+**
+** The above copyright notice and this permission notice shall be
+** included in all copies or substantial portions of the Software.
+**
+** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+** NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+** LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+** OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+** WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+**
+****************************************************************************/
 #ifndef XLSXCELL_P_H
 #define XLSXCELL_P_H
+
+//
+//  W A R N I N G
+//  -------------
+//
+// This file is not part of the Qt Xlsx API.  It exists for the convenience
+// of the Qt Xlsx.  This header file may change from
+// version to version without notice, or even be removed.
+//
+// We mean it.
+//
 
 #include "xlsxglobal.h"
 #include "xlsxcell.h"
 #include "xlsxcellrange.h"
 #include "xlsxrichstring.h"
 #include "xlsxcellformula.h"
-#include <QtGlobal>
 #include <QList>
 #include <QSharedPointer>
 
@@ -40,7 +53,6 @@ public:
     CellPrivate(Cell *p);
     CellPrivate(const CellPrivate * const cp);
 
-public:
     QVariant value;
     CellFormula formula;
     Cell::CellType cellType;
@@ -50,8 +62,6 @@ public:
 
     Worksheet *parent;
     Cell *q_ptr;
-
-	qint32 styleNumber;
 };
 
 QT_END_NAMESPACE_XLSX

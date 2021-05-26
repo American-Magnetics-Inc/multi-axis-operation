@@ -38,7 +38,7 @@ class CellRange;
 class Worksheet;
 class WorksheetPrivate;
 
-class   CellFormula
+class Q_XLSX_EXPORT CellFormula
 {
 public:
     enum FormulaType {
