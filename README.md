@@ -42,6 +42,8 @@ Pre-compiled, ready-to-use binaries are available in the Downloads section of th
 
 ## How do I compile the source? ##
 
+Please note that this is not *required* since binary distributions are provided above. However, if you wish to produce your own binaries and/or edit the code for custom needs, the following are some suggestions:
+
 * __Summary of set up__
 	* Clone or download the source code repository to your local drive.
 
