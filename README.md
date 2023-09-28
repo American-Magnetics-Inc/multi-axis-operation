@@ -1,12 +1,12 @@
 [logo]:http://www.americanmagnetics.com/images/header_r2_c1.jpg "AMI Logo"
 
-![logo](http://www.americanmagnetics.com/images/header_r2_c1.jpg)
+<img src="http://www.americanmagnetics.com/images/header_r2_c1.jpg" alt="logo" style="zoom:67%;" />
 
 # Multi-Axis Operation Application #
 
 This repository is the source code and binary distribution point for the Multi-Axis Operation application for control of AMI Maxes(tm) magnet systems -- including 3D vectors or polar vectors, in a sample alignment plane, with automatic execution of a table of values. Execution of an external custom app or script is also now supported at each target vector.
 
-![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png)
+<img src="https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png" alt="screenshot" style="zoom:67%;" />
 
 **The current application version is 1.04.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
@@ -22,13 +22,15 @@ The app is now distributed with Linux and macOS ready-to-use binaries, along wit
 
 #### External App/Script Execution Feature with "Special Variables"
 
-![table](https://bitbucket.org/americanmagneticsinc/magnet-daq/raw/fd38e070b36eef59ecea22f000a22da181c272f8/help/images/screenshot4.png)
+<img src="https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/450a7bd29acdf165c6ae5648a33ab3cc0694565b/help/images/execute-variables.png" alt="table" style="zoom:50%;" />
 
 The latest version now includes "special variables" (e.g. %MAGNITUDE%, %AZIMUTH%, etc.) that allows passing of selected magnet field states to the external app/script in a table. See the [Help](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf) for more details. Customer [feedback](mailto:support@americanmagnetics.com) is requested!
 
 #### Projection of Field Vector in Sample Plane
 
 The main window now supports optional polar coordinates display of the present field vector as projected into the sample plane as defined in the Sample Alignment tab.
+
+<img src="https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/450a7bd29acdf165c6ae5648a33ab3cc0694565b/help/images/screenshot5.png" alt="table" style="zoom:50%;" />
 
 ## How do I install? ##
 
@@ -82,9 +84,9 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 
 ## Screenshots ##
 
-![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot2.png)
+<img src="https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot2.png" alt="screenshot" style="zoom: 67%;" />
 
 
 
-![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot3.png)
+<img src="https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot3.png" alt="screenshot" style="zoom:67%;" />
 
