@@ -82,11 +82,7 @@ void ProcessManager::connectProcess(QString anIPAddress, QString exepath, Axis a
 #else
         process->setProcessChannelMode(QProcess::SeparateChannels);
         exepath += " " + args.join(' ');
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        process->start(exepath, QIODevice::ReadWrite);
-#else
         process->startCommand(exepath, QIODevice::ReadWrite);
-#endif
 #endif
 	}
 	else
@@ -174,9 +170,10 @@ void ProcessManager::readyReadStandardOutput(void)
 }
 
 //---------------------------------------------------------------------------
-void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors, bool disableAutoStabilty)
+void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testMode, bool useStabilizingResistors, bool disableAutoStabilty, bool readParams)
 {
 	QString cmd;
+	bool error;
 
 	// send field units
 	cmd = "CONF:FIELD:UNITS " + QString::number((int)(units)) + "\n";
@@ -186,25 +183,68 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 	cmd = "CONF:RAMP:RATE:UNITS 0\n";
 	process->write(cmd.toLocal8Bit());
 
-	// send current limit
-	cmd = "CONF:CURR:LIM " + QString::number(params->currentLimit, 'f', 4) + "\n";
-	process->write(cmd.toLocal8Bit());
+	// if the user prefers to read the Model 430 configuration, then it is likely
+	// safe to assume that the manual stability mode is preferred
+	if (readParams)
+		disableAutoStabilty = true;
 
-	// send voltage limit
-	cmd = "CONF:VOLT:LIM " + QString::number(params->voltageLimit, 'f', 4) + "\n";
-	process->write(cmd.toLocal8Bit());
+	if (readParams)
+	{
+		// read current limit
+		params->currentLimit = getCurrentLimit(&error);
+	}
+	else
+	{
+		// send current limit
+		cmd = "CONF:CURR:LIM " + QString::number(params->currentLimit, 'f', 4) + "\n";
+		process->write(cmd.toLocal8Bit());
+	}
 
-	// set max ramp rate
+	if (readParams)
+	{
+		// read voltage limit
+		params->voltageLimit = getVoltageLimit(&error);
+	}
+	else
+	{
+		// send voltage limit
+		cmd = "CONF:VOLT:LIM " + QString::number(params->voltageLimit, 'f', 4) + "\n";
+		process->write(cmd.toLocal8Bit());
+	}
+
+	// always set max ramp rate
 	cmd = "CONF:RAMP:RATE:CURR 1," + QString::number(params->maxRampRate, 'f', 6) + "," + QString::number(params->currentLimit, 'f', 4) + "\n";
 	process->write(cmd.toLocal8Bit());
 
-	// send coil constant
-	cmd = "CONF:COIL " + QString::number(params->coilConst, 'f', 6) + "\n";
-	process->write(cmd.toLocal8Bit());
+	if (readParams)
+	{
+		// read coil constant
+		params->coilConst = getCoilConstant(&error);
+	}
+	else
+	{
+		// send coil constant
+		cmd = "CONF:COIL " + QString::number(params->coilConst, 'f', 6) + "\n";
+		process->write(cmd.toLocal8Bit());
+	}
 
-	// send inductance
-	cmd = "CONF:IND " + QString::number(params->inductance, 'f', 6) + "\n";
-	process->write(cmd.toLocal8Bit());
+	if (readParams)
+	{
+		// read inductance
+		params->inductance = getInductance(&error);
+	}
+	else
+	{
+		// send inductance
+		cmd = "CONF:IND " + QString::number(params->inductance, 'f', 6) + "\n";
+		process->write(cmd.toLocal8Bit());
+	}
+
+	// read if switch is installed
+	if (readParams)
+	{
+		params->switchInstalled = getSwitchInstallation(&error);
+	}
 
 	if (!params->switchInstalled)
 	{
@@ -251,25 +291,43 @@ void ProcessManager::sendParams(AxesParams *params, FieldUnits units, bool testM
 	}
 	else
 	{
-		// switch installed
-		cmd = "CONF:PS 1\n";
-		process->write(cmd.toLocal8Bit());
+		if (readParams)
+		{
+			// read switch current
+			params->switchHeaterCurrent = getSwitchCurrent(&error);
 
-		// send switch current
-		cmd = "CONF:PS:CURR " + QString::number(params->switchHeaterCurrent, 'f', 1) + "\n";
-		process->write(cmd.toLocal8Bit());
+			// use timer-based transition
+			cmd = "CONF:PS:TRAN 0\n";
+			process->write(cmd.toLocal8Bit());
 
-		// use timer-based transition
-		cmd = "CONF:PS:TRAN 0\n";
-		process->write(cmd.toLocal8Bit());
+			// read heating time
+			params->switchHeatingTime = getSwitchHeatingTime(&error);
 
-		// send heating time
-		cmd = "CONF:PS:HTIME " + QString::number(params->switchHeatingTime) + "\n";
-		process->write(cmd.toLocal8Bit());
+			// read cooling time
+			params->switchCoolingTime = getSwitchCoolingTime(&error);
+		}
+		else
+		{
+			// switch installed
+			cmd = "CONF:PS 1\n";
+			process->write(cmd.toLocal8Bit());
 
-		// send cooling time
-		cmd = "CONF:PS:CTIME " + QString::number(params->switchCoolingTime) + "\n";
-		process->write(cmd.toLocal8Bit());
+			// send switch current
+			cmd = "CONF:PS:CURR " + QString::number(params->switchHeaterCurrent, 'f', 1) + "\n";
+			process->write(cmd.toLocal8Bit());
+
+			// use timer-based transition
+			cmd = "CONF:PS:TRAN 0\n";
+			process->write(cmd.toLocal8Bit());
+
+			// send heating time
+			cmd = "CONF:PS:HTIME " + QString::number(params->switchHeatingTime) + "\n";
+			process->write(cmd.toLocal8Bit());
+
+			// send cooling time
+			cmd = "CONF:PS:CTIME " + QString::number(params->switchCoolingTime) + "\n";
+			process->write(cmd.toLocal8Bit());
+		}
 
 		if (testMode)
 		{
@@ -424,6 +482,255 @@ double ProcessManager::getQuenchCurrent(bool *error)
 		return temp;
 	else
 		return NAN;
+}
+
+//---------------------------------------------------------------------------
+double ProcessManager::getCurrentLimit(bool* error)
+{
+	bool ok = false;
+	double temp;
+
+	{
+		QString cmd("CURR:LIM?\n");
+#ifdef LOCAL_DEBUG
+		qDebug() << "CURR:LIM?";
+#endif
+		process->write(cmd.toLocal8Bit());
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return NAN;
+		}
+
+		// parse reply
+		temp = reply.toDouble(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return NAN;
+}
+
+//---------------------------------------------------------------------------
+double ProcessManager::getVoltageLimit(bool* error)
+{
+	bool ok = false;
+	double temp;
+
+	{
+		QString cmd("VOLT:LIM?\n");
+#ifdef LOCAL_DEBUG
+		qDebug() << "VOLT:LIM?";
+#endif
+		process->write(cmd.toLocal8Bit());
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return NAN;
+		}
+
+		// parse reply
+		temp = reply.toDouble(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return NAN;
+}
+
+//---------------------------------------------------------------------------
+double ProcessManager::getCoilConstant(bool* error)
+{
+	bool ok = false;
+	double temp;
+
+	{
+		QString cmd("COIL?\n");
+#ifdef LOCAL_DEBUG
+		qDebug() << "COIL?";
+#endif
+		process->write(cmd.toLocal8Bit());
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return NAN;
+		}
+
+		// parse reply
+		temp = reply.toDouble(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return NAN;
+}
+
+//---------------------------------------------------------------------------
+double ProcessManager::getInductance(bool* error)
+{
+	bool ok = false;
+	double temp;
+
+	{
+		QString cmd("IND?\n");
+#ifdef LOCAL_DEBUG
+		qDebug() << "IND?";
+#endif
+		process->write(cmd.toLocal8Bit());
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return NAN;
+		}
+
+		// parse reply
+		temp = reply.toDouble(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return NAN;
+}
+
+//---------------------------------------------------------------------------
+bool ProcessManager::getSwitchInstallation(bool* error)
+{
+	bool ok;
+	int temp;
+
+	{
+#ifdef LOCAL_DEBUG
+		qDebug() << "PS:INST?";
+#endif
+		process->write("PS:INST?\n");
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+			return false;
+
+		// parse reply
+		temp = reply.toInt(&ok);
+		reply.clear();
+	}
+
+	if (ok)
+		return (bool)temp;
+	else
+		return false;
+}
+
+//---------------------------------------------------------------------------
+double ProcessManager::getSwitchCurrent(bool* error)
+{
+	bool ok = false;
+	double temp;
+
+	{
+		QString cmd("PS:CURR?\n");
+#ifdef LOCAL_DEBUG
+		qDebug() << "PS:CURR?";
+#endif
+		process->write(cmd.toLocal8Bit());
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return NAN;
+		}
+
+		// parse reply
+		temp = reply.toDouble(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return NAN;
+}
+
+//---------------------------------------------------------------------------
+int ProcessManager::getSwitchHeatingTime(bool* error)
+{
+	bool ok;
+	int temp;
+
+	{
+#ifdef LOCAL_DEBUG
+		qDebug() << "PS:HTIME?";
+#endif
+		process->write("PS:HTIME?\n");
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return 0;
+		}
+
+		// parse reply
+		temp = reply.toInt(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return 0;
+}
+
+//---------------------------------------------------------------------------
+int ProcessManager::getSwitchCoolingTime(bool* error)
+{
+	bool ok;
+	int temp;
+
+	{
+#ifdef LOCAL_DEBUG
+		qDebug() << "PS:CTIME?";
+#endif
+		process->write("PS:CTIME?\n");
+		process->waitForReadyRead(QUERY_TIMEOUT);
+
+		if (reply.isEmpty())
+		{
+			*error = ok;
+			return 0;
+		}
+
+		// parse reply
+		temp = reply.toInt(&ok);
+		*error = ok;
+		reply.clear();
+	}
+
+	if (ok)
+		return temp;
+	else
+		return 0;
 }
 
 //---------------------------------------------------------------------------

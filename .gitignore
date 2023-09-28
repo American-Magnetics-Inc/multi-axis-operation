@@ -266,4 +266,8 @@ __pycache__/
 /help/HTML
 *.bak
 *.DS_Store
-/Multi-Axis-Operation/header/.directory
+/bin-qt5-x64
+/bin32
+/Distribution/BitBucket-Issue-Migration
+*.directory
+/Distribution/v1.03

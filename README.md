@@ -8,33 +8,37 @@ This repository is the source code and binary distribution point for the Multi-A
 
 ![screenshot](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png)
 
-**The current application version is 1.02.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
+**The current application version is 1.04.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
 **NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Control | Options...* dialog (or *Preferences* on macOS).
 
-The Multi-Axis Operation application contains a comprehensive Help file which should be adequate to understand how to use the application to control a multi-axis system. The application attempts to meet the needs of end-user experiments by including Sample Alignment, (polar) Rotation in the Sample Plane, and a scripting interface via stdin/stdout that is Python-compatible. A Python example is included in the Help file.
+The Multi-Axis Operation application contains a comprehensive Help file which should be adequate to understand how to use the application to control a multi-axis system. The application attempts to meet the needs of end-user experiments by including Sample Alignment, (polar) Rotation in the Sample Plane, and a scripting interface via stdin/stdout that is Python-compatible. Python examples are included in the Help file.
 
 An example of calling the Multi-Axis Operation application from within LabVIEW (Windows) is provided in the latest [AMI Drivers for LabVIEW](https://bitbucket.org/americanmagneticsinc/ami-drivers). Using the functionality of Multi-Axis Operation within LabVIEW greatly simplifies controlling a multi-axis magnet system for higher-level experiments.
 
 ## What's new? ##
 
-The app is now distributed with Linux and macOS ready-to-use binaries, along with the x64 Windows support. The Linux deployment folder format is improved and should deploy more reliably.
+The app is now distributed with Linux and macOS ready-to-use binaries, along with the x64 and x86 Windows support. The Linux deployment folder format is improved and should deploy more reliably.
 
-#### New External App/Script Execution Feature
-
-A new option has been added to execute an external application or Python script at each target during *Auto-Stepping*, as well as optionally *automatically* entering and exiting persistence at each target. This feature is intended to allow the customer to use the Multi-Axis Operation application as a sequencer for automated data acquisition or other procedure that *repeat*s at various field points.
-
-An example Python script is included in the Help. All the customer need do is write the data acquisition code. All the 3D magnet field parameters are controlled by the Multi-Axis Operation application. The customer can concentrate on what is specific to an experiment rather than managing the 3D field control.
+#### External App/Script Execution Feature with "Special Variables"
 
 ![table](https://bitbucket.org/americanmagneticsinc/magnet-daq/raw/fd38e070b36eef59ecea22f000a22da181c272f8/help/images/screenshot4.png)
 
-Future improvements might include argument variables format (e.g. %MAGNITUDE%, %AZIMUTH%, etc.) that allows passing of present magnet field states to the external script. Customer [feedback](mailto:support@americanmagnetics.com) is requested!
+The latest version now includes "special variables" (e.g. %MAGNITUDE%, %AZIMUTH%, etc.) that allows passing of selected magnet field states to the external app/script in a table. See the [Help](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf) for more details. Customer [feedback](mailto:support@americanmagnetics.com) is requested!
+
+#### Projection of Field Vector in Sample Plane
+
+The main window now supports optional polar coordinates display of the present field vector as projected into the sample plane as defined in the Sample Alignment tab.
 
 ## How do I install? ##
 
-Pre-compiled, ready-to-use binaries are available in the Downloads section of this repository:
+Pre-compiled, *ready-to-use* version 1.04 binaries are available in the Downloads section of this repository:
 
 * [Installer for 64-bit Microsoft Windows 7 or later](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/MultiAxis-Setup.msi) - Simply download and run the installer.
+
+* [Installer for 32-bit Microsoft Windows 7 or later](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/MultiAxis-Setup-Win32.msi)
+
+The Linux and Mac version binaries are still at version 1.02 but will be updated soon:
 
 * [Executable for 64-bit Linux (Ubuntu 18.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.tar.gz) - See the README file in the download for the instructions for deploying on Ubuntu.
 
@@ -55,12 +59,8 @@ Please note that this is not *required* since binary distributions are provided 
 
 
 * __Dependencies__
-	* Requires [Qt 5.15 or later open-source distribution](https://www.qt.io/download-open-source/). The Windows and macOS releases have moved to Qt 6 for binary distribution, however the Linux version is still Qt 5.15 to support Ubuntu 18.
-	
-	* Uses the [QtXlsxWriter library](https://github.com/dbzhang800/QtXlsxWriter) built as a DLL for the Windows version.
-	
-	* Linux and macOS versions use the files from the [QXlsx project](https://github.com/QtExcel/QXlsx) and include the source directly in the project. Note this library may link to private Qt API which can break in future Qt releases.
-
+	* Requires [Qt 5.15 or later open-source distribution](https://www.qt.io/download-open-source/). The Windows and macOS releases support Qt 6 for binary distribution, however the Linux version is still Qt 5.15 to support Ubuntu 18.
+	* All versions use the files from the [QXlsx project](https://github.com/QtExcel/QXlsx) and include the source directly in the project. Note this library may link to private Qt API which can break in future Qt releases.
 	* The help file was written using [Help & Manual 7.5.4](https://www.helpandmanual.com/). Reproduction or edits of the Help output included in the binaries requires a license for Help & Manual.
 
 

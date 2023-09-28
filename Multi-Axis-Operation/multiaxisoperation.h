@@ -76,6 +76,8 @@ public:
 	~MultiAxisOperation();
 	void updateWindowTitle();
 	void polarToCartesian(double magnitude, double angle, QVector3D *conversion);
+	void altPolarToCartesian(double magnitude, double angle, QVector3D* conversion);
+	void cartesianToPolar(double x, double y, double z);
 
 	// accessors for parser
 	bool isConnected(void) { return connected; }
@@ -111,6 +113,7 @@ private slots:
 	void actionDefine(void);
 	void actionShow_Cartesian_Coordinates(void);
 	void actionShow_Spherical_Coordinates(void);
+	void actionShow_Polar_Coordinates(void);
 	void actionPersistentMode(void);
 	void actionPause(void);
 	void actionRamp(void);
@@ -119,6 +122,7 @@ private slots:
 	void actionChange_Convention(void);
 	void actionConvention_Help(void);
 	void actionOptions(void);
+	void pinErrorString(QString errMsg, bool highlight);
 	void showErrorString(QString errMsg);
 	void parserErrorString(QString errMsg);
 	void errorStatusTimeout(void);
@@ -167,6 +171,7 @@ private slots:
 	bool checkExecutionTime(void);
 	void executeNowClick(void);
 	void executeApp(void);
+	void finishedApp(int exitCode, QProcess::ExitStatus exitStatus);
 	void appCheckBoxChanged(int state);
 	void pythonCheckBoxChanged(int state);
 
@@ -198,7 +203,6 @@ private slots:
 
 	// polar table slots
 	void setNormalUnitVector(QVector3D *v1, QVector3D *v2);
-	void altPolarToCartesian(double magnitude, double angle, QVector3D *conversion);
 	void actionLoad_Polar_Table(void);
 	void convertPolarFieldValues(FieldUnits newUnits);
 	void setPolarTableHeader(void);
@@ -228,6 +232,7 @@ private slots:
 	bool checkPolarExecutionTime(void);
 	void executePolarNowClick(void);
 	void executePolarApp(void);
+	void finishedPolarApp(int exitCode, QProcess::ExitStatus exitStatus);
 	void polarAppCheckBoxChanged(int state);
 	void polarPythonCheckBoxChanged(int state);
 
@@ -265,6 +270,7 @@ private:
 	QString lastTargetMsg;	// last target status string to restore upon resume
 	std::atomic<bool> processError;
 	bool haveExecuted;	// indicates whether the current table target specified app/script has executed
+	std::atomic<bool> madeFirstMeasurement;
 
 	// error handling
 	VectorError vectorError;	// last selected vector had error?
@@ -351,6 +357,7 @@ private:
 
 	// vector table autostepping
 	QTimer *autostepTimer;
+	QProcess* process;
 	int elapsedHoldTimerTicks;
 	int autostepStartIndex;
 	int autostepEndIndex;
@@ -376,6 +383,14 @@ private:
 	QVector3D crossResult;	// normalized "normal" vector to sample alignment plane
 	QQuaternion referenceQuaternion;
 	QQuaternion rotationQuaternion;
+
+	// present polar state
+	double polarMagnitude;
+	double polarAngle;
+
+	// polar target
+	double polarTargetMagnitude;
+	double polarTargetAngle;
 
 	// polar table
 	QString polarFileName;

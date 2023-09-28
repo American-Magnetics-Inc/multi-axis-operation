@@ -45,6 +45,12 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Header Files\Qxlsx">
+      <UniqueIdentifier>{fb152952-25e0-4cb5-9560-4e8a76cac5ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Qxlsx">
+      <UniqueIdentifier>{de98e8c8-cbca-4e00-bcf8-9dfc4ab67b7b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aboutdialog.cpp">
@@ -89,6 +95,105 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="source\xlsxabstractooxmlfile.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxabstractsheet.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcell.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcellformula.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcelllocation.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcellrange.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcellreference.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxchart.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxchartsheet.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcolor.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxconditionalformatting.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxcontenttypes.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdatavalidation.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdatetype.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdocpropsapp.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdocpropscore.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdocument.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdrawing.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxdrawinganchor.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxformat.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxmediafile.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxnumformatparser.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxrelationships.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxrichstring.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxsharedstrings.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxsimpleooxmlfile.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxstyles.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxtheme.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxutility.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxworkbook.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxworksheet.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxzipreader.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
+    <ClCompile Include="source\xlsxzipwriter.cpp">
+      <Filter>Source Files\Qxlsx</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="aboutdialog.h">
@@ -121,6 +226,9 @@
     <ClInclude Include="version.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <QtMoc Include="header\xlsxdocument.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\moc_aboutdialog.cpp">
@@ -174,5 +282,58 @@
     <CustomBuild Include="GeneratedFiles\debug\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="header\xlsxabstractooxmlfile.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxabstractsheet.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxcell.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxcellformula.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxcelllocation.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxcellrange.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxcellreference.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxchart.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxchartsheet.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxconditionalformatting.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxdatavalidation.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxdatetype.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxformat.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxglobal.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxrichstring.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxworkbook.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
+    <ClInclude Include="header\xlsxworksheet.h">
+      <Filter>Header Files\Qxlsx</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

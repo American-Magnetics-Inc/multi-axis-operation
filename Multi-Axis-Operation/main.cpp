@@ -90,7 +90,7 @@ __declspec(noinline) int MyEntryPoint(void)
 int main(int argc, char *argv[])
 {
 #ifdef Q_OS_WIN
-	SetProcessDPIAware(); // call before the main event loop
+    //SetProcessDPIAware(); // call before the main event loop
 #endif // Q_OS_WIN
 
 	QCoreApplication::setOrganizationName("American Magnetics Inc.");

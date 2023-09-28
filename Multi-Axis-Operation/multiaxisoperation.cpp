@@ -9,7 +9,9 @@
 const double MIN_RAMP_RATE = 0.001;
 
 // load/save settings file version
-const int SAVE_FILE_VERSION = 5;
+// version 6 settings adds polar coordinates display setting
+// version 7 settings adds "read from device" option in Magnet Params
+const int SAVE_FILE_VERSION = 7;
 
 // stdin parsing support
 static Parser *parser;
@@ -97,6 +99,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	statusConnectState->setToolTip("Connection status");
 	statusMisc = new QLabel("", this);
 	statusMisc->setFrameStyle(QFrame::Panel | QFrame::Sunken);
+	lastStatusMiscStyle = statusMisc->styleSheet();
 	statusState = new QLabel("", this);
 	statusState->setFrameStyle(QFrame::Panel | QFrame::Sunken);
     statusState->setToolTip("Operating state");
@@ -130,6 +133,19 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	QString dpiStr = QString::number(screen->logicalDotsPerInch());
 	restoreGeometry(settings.value("MainWindow/Geometry/" + dpiStr).toByteArray());
 	restoreState(settings.value("MainWindow/WindowState/" + dpiStr).toByteArray());
+
+	// restore field displays
+	ui.actionShow_Cartesian_Coordinates->setChecked(settings.value("ShowCartesian", true).toBool());
+	ui.actionShow_Spherical_Coordinates->setChecked(settings.value("ShowSpherical", true).toBool());
+	ui.actionShow_Polar_Coordinates->setChecked(settings.value("ShowPolar", false).toBool());
+	
+	actionShow_Cartesian_Coordinates();
+	actionShow_Spherical_Coordinates();
+
+	if (ui.actionShow_Polar_Coordinates->isChecked())
+		ui.polarFieldFrame->setVisible(true);
+	else
+		ui.polarFieldFrame->setVisible(false);
 
 	// restore other interface settings
     fieldUnits = static_cast<FieldUnits>(settings.value("FieldUnits").toInt());
@@ -225,6 +241,7 @@ MultiAxisOperation::MultiAxisOperation(QWidget *parent)
 	connect(ui.actionExit, SIGNAL(triggered()), this, SLOT(close()));
 	connect(ui.actionShow_Cartesian_Coordinates, SIGNAL(triggered()), this, SLOT(actionShow_Cartesian_Coordinates()));
 	connect(ui.actionShow_Spherical_Coordinates, SIGNAL(triggered()), this, SLOT(actionShow_Spherical_Coordinates()));
+	connect(ui.actionShow_Polar_Coordinates, SIGNAL(triggered()), this, SLOT(actionShow_Polar_Coordinates()));
 	connect(ui.actionPersistentMode, SIGNAL(triggered()), this, SLOT(actionPersistentMode()));
 	connect(ui.actionPause, SIGNAL(triggered()), this, SLOT(actionPause()));
 	connect(ui.actionRamp, SIGNAL(triggered()), this, SLOT(actionRamp()));
@@ -419,6 +436,11 @@ MultiAxisOperation::~MultiAxisOperation()
 	// save alignment tab state
 	alignmentTabSaveState();
 
+	// save field display state
+	settings.setValue("ShowCartesian", ui.actionShow_Cartesian_Coordinates->isChecked());
+	settings.setValue("ShowSpherical", ui.actionShow_Spherical_Coordinates->isChecked());
+	settings.setValue("ShowPolar", ui.actionShow_Polar_Coordinates->isChecked());
+
 	// save vector table settings
 	settings.setValue("VectorTable/EnableExecution", ui.executeCheckBox->isChecked());
 	settings.setValue("VectorTable/AppPath", ui.appLocationEdit->text());
@@ -520,6 +542,7 @@ void MultiAxisOperation::actionConnect(void)
 	switchInstalled = false;
 	processError = false;
 	supplyCurrentMismatch = false;
+	madeFirstMeasurement.store(false);
 
 	if (ui.actionConnect->isChecked())
 	{
@@ -642,7 +665,8 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (xProcess->isActive())
 			{
-				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), optionsDialog->disableAutoStability());
+				xProcess->sendParams(magnetParams->GetXAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), 
+									 optionsDialog->disableAutoStability(), magnetParams->readsParams());
 				x_activated = true;
 
 				// switch heating/cooling required?
@@ -661,6 +685,8 @@ void MultiAxisOperation::actionConnect(void)
 					if (xProcess->getState() == SWITCH_HEATING)
 						switchHeaterState[0] = false;
 				}
+				else
+					switchHeaterState[0] = true;	// no heater installed, so set to true to prevent block of other logic
 			}
 		}
 
@@ -680,7 +706,8 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (yProcess->isActive())
 			{
-				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), optionsDialog->disableAutoStability());
+				yProcess->sendParams(magnetParams->GetYAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), 
+									 optionsDialog->disableAutoStability(), magnetParams->readsParams());
 				y_activated = true;
 
 				// switch heating/cooling required?
@@ -703,6 +730,8 @@ void MultiAxisOperation::actionConnect(void)
 					if (yProcess->getState() == SWITCH_HEATING)
 						switchHeaterState[1] = false;
 				}
+				else
+					switchHeaterState[1] = true;	// no heater installed, so set to true to prevent block of other logic
 			}
 		}
 
@@ -722,7 +751,8 @@ void MultiAxisOperation::actionConnect(void)
 		{
 			if (zProcess->isActive())
 			{
-				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), optionsDialog->disableAutoStability());
+				zProcess->sendParams(magnetParams->GetZAxisParams(), fieldUnits, ui.actionTest_Mode->isChecked(), ui.actionStabilizingResistors->isChecked(), 
+									 optionsDialog->disableAutoStability(), magnetParams->readsParams());
 				z_activated = true;
 
 				// switch heating/cooling required?
@@ -745,6 +775,8 @@ void MultiAxisOperation::actionConnect(void)
 					if (zProcess->getState() == SWITCH_HEATING)
 						switchHeaterState[2] = false;
 				}
+				else
+					switchHeaterState[2] = true;	// no heater installed, so set to true to prevent block of other logic
 			}
 		}
 
@@ -755,6 +787,12 @@ void MultiAxisOperation::actionConnect(void)
 		if (x_activated && y_activated && z_activated && !processError)
 		{
 			connected = true;
+
+			// if we read the magnet params from the 430's, save the params
+			magnetParams->save();
+
+			// sync the UI with the newly loaded values
+			magnetParams->syncUI();
 
 			// start data collection timer
 			dataTimer->start();
@@ -928,6 +966,13 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 		actionShow_Cartesian_Coordinates();
         ui.actionShow_Spherical_Coordinates->setChecked(static_cast<bool>(stream.readLine().toInt()));
 		actionShow_Spherical_Coordinates();
+
+		if (version >= 6)
+		{
+			ui.actionShow_Polar_Coordinates->setChecked(static_cast<bool>(stream.readLine().toInt()));
+			actionShow_Polar_Coordinates();
+		}
+
         fieldUnits = static_cast<FieldUnits>(stream.readLine().toInt());
 		setFieldUnits(fieldUnits, true);
         convention = static_cast<SphericalConvention>(stream.readLine().toInt());
@@ -1194,6 +1239,20 @@ bool MultiAxisOperation::loadFromFile(FILE *pFile)
 			ui.actionStabilizingResistors->setChecked(false);
 		}
 
+		if (version >= 7)
+		{
+			// recover read params option from Magnet Params dialog
+			bool tmpBool;
+
+			tmpBool = (bool)(stream.readLine().toUShort());
+			magnetParams->setReadParams(tmpBool);
+		}
+		else
+		{
+			// read option does not exist in pre-version 7 files saves, so uncheck
+			magnetParams->setReadParams(false);
+		}
+
 		setTableHeader();
 		setPolarTableHeader();
 	}
@@ -1283,6 +1342,7 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 	// preferences and ui settings
 	stream << ui.actionShow_Cartesian_Coordinates->isChecked() << "\n";
 	stream << ui.actionShow_Spherical_Coordinates->isChecked() << "\n";
+	stream << ui.actionShow_Polar_Coordinates->isChecked() << "\n";	// added v6
 	stream << fieldUnits << "\n";
 	stream << convention << "\n";
 	stream << ui.actionAutosave_Report->isChecked() << "\n";
@@ -1437,6 +1497,9 @@ bool MultiAxisOperation::saveToFile(FILE *pFile)
 	// save stabilizing resistors selection
 	stream << ui.actionStabilizingResistors->isChecked() << "\n";
 
+	// save Magnet Params read from device selection
+	stream << magnetParams->readsParams();
+
 	stream.flush();
 
 	return true;
@@ -1487,6 +1550,7 @@ void MultiAxisOperation::actionShow_Cartesian_Coordinates(void)
 		ui.magnetZLabel->setVisible(true);
 		ui.magnetZValue->setVisible(true);
 		ui.magnetFieldLabel->setVisible(true);
+		ui.presentFieldFrame->setVisible(true);
 	}
 	else
 	{
@@ -1498,7 +1562,10 @@ void MultiAxisOperation::actionShow_Cartesian_Coordinates(void)
 		ui.magnetZValue->setVisible(false);
 
 		if (!ui.actionShow_Spherical_Coordinates->isChecked())
+		{
 			ui.magnetFieldLabel->setVisible(false);
+			ui.presentFieldFrame->setVisible(false);
+		}
 	}
 }
 
@@ -1514,6 +1581,7 @@ void MultiAxisOperation::actionShow_Spherical_Coordinates(void)
 		ui.magnetPhiLabel->setVisible(true);
 		ui.magnetPhiValue->setVisible(true);
 		ui.magnetFieldLabel->setVisible(true);
+		ui.presentFieldFrame->setVisible(true);
 	}
 	else
 	{
@@ -1525,7 +1593,23 @@ void MultiAxisOperation::actionShow_Spherical_Coordinates(void)
 		ui.magnetPhiValue->setVisible(false);
 
 		if (!ui.actionShow_Cartesian_Coordinates->isChecked())
+		{
 			ui.magnetFieldLabel->setVisible(false);
+			ui.presentFieldFrame->setVisible(false);
+		}
+	}
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::actionShow_Polar_Coordinates(void)
+{
+	if (ui.actionShow_Polar_Coordinates->isChecked())
+	{
+		ui.polarFieldFrame->setVisible(true);
+	}
+	else
+	{
+		ui.polarFieldFrame->setVisible(false);
 	}
 }
 
@@ -1695,6 +1779,9 @@ void MultiAxisOperation::actionOptions(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::setStatusMsg(QString msg)
 {
+	// restore last style
+	statusMisc->setStyleSheet(lastStatusMiscStyle);
+
 	// always save the msg
 	lastStatusString = msg;
 
@@ -1703,8 +1790,30 @@ void MultiAxisOperation::setStatusMsg(QString msg)
 }
 
 //---------------------------------------------------------------------------
+void MultiAxisOperation::pinErrorString(QString errMsg, bool highlight)
+{
+	QString err;
+
+	lastStatusMiscStyle = statusMisc->styleSheet();
+
+	if (highlight)
+	{
+		statusMisc->setStyleSheet("color: red; font: bold");
+		err = "Error: " + errMsg;
+	}
+	else
+		err = errMsg;
+
+	statusMisc->setText(err);
+
+	qDebug() << err;	// send to log
+}
+
+//---------------------------------------------------------------------------
 void MultiAxisOperation::showErrorString(QString errMsg)
 {
+	lastStatusMiscStyle = statusMisc->styleSheet();
+
 	// reselect last good vector row if applicable
 	if (targetSource == VECTOR_TABLE)
 	{
@@ -1733,6 +1842,8 @@ void MultiAxisOperation::showErrorString(QString errMsg)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::parserErrorString(QString errMsg)
 {
+	lastStatusMiscStyle = statusMisc->styleSheet();
+
 	errorStatusIsActive = true;
 	statusMisc->setStyleSheet("color: red; font: bold");
 	statusMisc->setText("Remote Error: " + errMsg);
@@ -1742,7 +1853,7 @@ void MultiAxisOperation::parserErrorString(QString errMsg)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::errorStatusTimeout(void)
 {
-	statusMisc->setStyleSheet("");
+	statusMisc->setStyleSheet(lastStatusMiscStyle);
 	statusMisc->setText(lastStatusString);	// restore normal messages
 	errorStatusIsActive = false;
 }
@@ -1799,6 +1910,9 @@ void MultiAxisOperation::setFieldUnits(FieldUnits newUnits, bool updateMenuState
 
 		tempStr = ui.polarTableWidget->horizontalHeaderItem(0)->text().replace("(T)", "(kG)");
 		ui.polarTableWidget->horizontalHeaderItem(0)->setText(tempStr);
+
+		tempStr = ui.polarMagnitudeLabel->text().replace("(T)", "(kG)");
+		ui.polarMagnitudeLabel->setText(tempStr);
 	}
 	else if (newUnits == TESLA)
 	{
@@ -1820,6 +1934,9 @@ void MultiAxisOperation::setFieldUnits(FieldUnits newUnits, bool updateMenuState
 
 		tempStr = ui.polarTableWidget->horizontalHeaderItem(0)->text().replace("(kG)", "(T)");
 		ui.polarTableWidget->horizontalHeaderItem(0)->setText(tempStr);
+
+		tempStr = ui.polarMagnitudeLabel->text().replace("(kG)", "(T)");
+		ui.polarMagnitudeLabel->setText(tempStr);
 	}
 
 	fieldUnits = newUnits;
@@ -2097,7 +2214,7 @@ void MultiAxisOperation::dataTimerTick(void)
 	else
 		zField = 0;
 
-	// update displayed field
+	// update displayed field values
 	ui.magnetXValue->setText(xFieldStr);
 	ui.magnetYValue->setText(yFieldStr);
 	ui.magnetZValue->setText(zFieldStr);
@@ -2106,6 +2223,24 @@ void MultiAxisOperation::dataTimerTick(void)
 	ui.magnetMagnitudeValue->setText(QString::number(avoidSignedZeroOutput(magnitudeField, precision), 'f', precision));
 	ui.magnetThetaValue->setText(QString::number(avoidSignedZeroOutput(thetaAngle, 2), 'f', 2));
 	ui.magnetPhiValue->setText(QString::number(avoidSignedZeroOutput(phiAngle, 2), 'f', 2));
+
+	cartesianToPolar(xField, yField, zField);
+
+    if (std::isnan(polarMagnitude))
+	{
+		ui.polarMagnitudeValue->setText("---");
+		polarMagnitude = 0.0;
+	}
+	else
+		ui.polarMagnitudeValue->setText(QString::number(avoidSignedZeroOutput(polarMagnitude, precision), 'f', precision));
+
+    if (std::isnan(polarAngle))
+	{
+		ui.polarThetaValue->setText("---");
+		polarAngle = 0.0;
+	}
+	else
+		ui.polarThetaValue->setText(QString::number(avoidSignedZeroOutput(polarAngle, 2), 'f', 2));
 
 	//---------------------------------------------------------------------------
 	// update state
@@ -2404,6 +2539,8 @@ void MultiAxisOperation::dataTimerTick(void)
 		if (switchInstalled)
 			ui.actionPersistentMode->setEnabled(true);
 	}
+
+	madeFirstMeasurement.store(true);
 }
 
 //---------------------------------------------------------------------------
@@ -2419,18 +2556,21 @@ void MultiAxisOperation::switchHeatingTimerTick(void)
 		ui.mainTabWidget->setEnabled(true);
 		ui.mainToolBar->setEnabled(true);
 
-		// allow target changes
-		ui.makeAlignActiveButton1->setEnabled(true);
-		ui.makeAlignActiveButton2->setEnabled(true);
-		ui.manualVectorControlGroupBox->setEnabled(true);
-		ui.autoStepGroupBox->setEnabled(true);
-		ui.autostepStartButton->setEnabled(true);
-		ui.manualPolarControlGroupBox->setEnabled(true);
-		ui.autoStepGroupBoxPolar->setEnabled(true);
-		ui.autostepStartButtonPolar->setEnabled(true);
-		ui.actionRamp->setEnabled(true);
-		ui.actionPause->setEnabled(true);
-		ui.actionZero->setEnabled(true);
+		// allow target changes, but don't override autostep UI state
+		if (!autostepTimer->isActive() && !autostepPolarTimer->isActive())
+		{
+			ui.makeAlignActiveButton1->setEnabled(true);
+			ui.makeAlignActiveButton2->setEnabled(true);
+			ui.manualVectorControlGroupBox->setEnabled(true);
+			ui.autoStepGroupBox->setEnabled(true);
+			ui.autostepStartButton->setEnabled(true);
+			ui.manualPolarControlGroupBox->setEnabled(true);
+			ui.autoStepGroupBoxPolar->setEnabled(true);
+			ui.autostepStartButtonPolar->setEnabled(true);
+			ui.actionRamp->setEnabled(true);
+			ui.actionPause->setEnabled(true);
+			ui.actionZero->setEnabled(true);
+		}
 
 		setStatusMsg("All active axes initialized successfully; switches heated");
 	}
@@ -2908,6 +3048,8 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 
 								if (forceMatch && (state == PAUSED || state == AT_ZERO))
 									xProcess->sendRamp();	// start ramping to target
+								else if (forceMatch && state == HOLDING)
+									xMismatch = false;	// reached matching current
 							}
 						}
 					}
@@ -2915,10 +3057,10 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 				else
 				{
 					xMismatch = false;	// switch is heated so there can be no mismatch!
-					State state = xProcess->getState();
+                    //State state = xProcess->getState();
 
-					if (state == PAUSED || state == AT_ZERO)
-						xProcess->sendRamp();	// ramp it to HOLDING state
+                    //if (state == PAUSED || state == AT_ZERO)
+                    //	xProcess->sendRamp();	// ramp it to HOLDING state
 				}
 			}
 			else
@@ -2927,6 +3069,9 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 		else
 			xMismatch = false; // axes not active
 	}
+	else
+		xMismatch = false; // axis not active or has no switch
+
 
 	if (magnetParams->GetYAxisParams()->activate && magnetParams->GetYAxisParams()->switchInstalled)
 	{
@@ -2975,6 +3120,8 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 
 								if (forceMatch && (state == PAUSED || state == AT_ZERO))
 									yProcess->sendRamp();	// start ramping to target
+								else if (forceMatch && state == HOLDING)
+									yMismatch = false;	// reached matching current
 							}
 						}
 					}
@@ -2982,10 +3129,10 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 				else
 				{
 					yMismatch = false;	// switch is heated so there can be no mismatch!
-					State state = yProcess->getState();
+                    //State state = yProcess->getState();
 
-					if (state == PAUSED || state == AT_ZERO)
-						yProcess->sendRamp();	// ramp it to HOLDING state
+                    //if (state == PAUSED || state == AT_ZERO)
+                    //	yProcess->sendRamp();	// ramp it to HOLDING state
 				}
 			}
 			else
@@ -2994,6 +3141,9 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 		else
 			yMismatch = false; // axes not active
 	}
+	else
+		yMismatch = false; // axis not active or has no switch
+
 
 	if (magnetParams->GetZAxisParams()->activate && magnetParams->GetZAxisParams()->switchInstalled)
 	{
@@ -3042,6 +3192,8 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 
 								if (forceMatch && (state == PAUSED || state == AT_ZERO))
 									zProcess->sendRamp();	// start ramping to target
+                                else if (forceMatch && state == HOLDING)
+                                    zMismatch = false;	// reached matching current
 							}
 						}
 					}
@@ -3049,10 +3201,10 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 				else
 				{
 					zMismatch = false;	// switch is heated so there can be no mismatch!
-					State state = zProcess->getState();
+                    //State state = zProcess->getState();
 
-					if (state == PAUSED || state == AT_ZERO)
-						zProcess->sendRamp();	// ramp it to HOLDING state
+                    //if (state == PAUSED || state == AT_ZERO)
+                    //	zProcess->sendRamp();	// ramp it to HOLDING state
 				}
 			}
 			else
@@ -3061,6 +3213,8 @@ bool MultiAxisOperation::checkForSupplyMagnetCurrentMismatch(bool forceMatch)
 		else
 			zMismatch = false; // axes not active
 	}
+	else
+		zMismatch = false; // axis not active or has no switch
 
 	return (xMismatch || yMismatch || zMismatch);
 }

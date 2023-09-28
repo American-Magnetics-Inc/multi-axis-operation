@@ -12,7 +12,6 @@
   </property>
   <property name="font">
    <font>
-    <family>Segoe UI</family>
     <pointsize>9</pointsize>
    </font>
   </property>
@@ -29,7 +28,7 @@
    <property name="verticalSpacing">
     <number>14</number>
    </property>
-   <item row="2" column="1">
+   <item row="3" column="1">
     <widget class="QDialogButtonBox" name="dialogButtonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -42,71 +41,7 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0" colspan="3">
-    <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,2,1">
-     <item row="0" column="0">
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLabel" name="magnetIDLabel">
-       <property name="text">
-        <string>Magnet ID :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLineEdit" name="magnetIDEdit">
-       <property name="placeholderText">
-        <string>Enter Magnet ID # here</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>148</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QLabel" name="magnitudeLimitLabel">
-       <property name="text">
-        <string>Magnitude Limit (kG) :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QLineEdit" name="magnitudeLimitEdit">
-       <property name="placeholderText">
-        <string>Enter Magnitude Limit here</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="1" column="0">
+   <item row="2" column="0">
     <widget class="QGroupBox" name="xAxisGroupBox">
      <property name="title">
       <string> X Axis Parameters</string>
@@ -299,7 +234,113 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="2">
+   <item row="0" column="0" colspan="3">
+    <layout class="QGridLayout" name="gridLayout" columnstretch="1,1,2,1">
+     <property name="verticalSpacing">
+      <number>12</number>
+     </property>
+     <item row="2" column="2">
+      <widget class="QCheckBox" name="readParamsCheckBox">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Read the Model 430 Parameters on Connect</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <spacer name="horizontalSpacer_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLabel" name="magnetIDLabel">
+       <property name="text">
+        <string>Magnet ID :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QLabel" name="magnitudeLimitLabel">
+       <property name="text">
+        <string>Magnitude Limit (kG) :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>148</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="optionalLabel">
+       <property name="text">
+        <string>OPTIONAL :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLineEdit" name="magnetIDEdit">
+       <property name="placeholderText">
+        <string>Enter Magnet ID # here</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLineEdit" name="magnitudeLimitEdit">
+       <property name="placeholderText">
+        <string>Enter Magnitude Limit here</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QLabel" name="enterAddrLabel">
+       <property name="font">
+        <font>
+         <pointsize>7</pointsize>
+         <kerning>true</kerning>
+        </font>
+       </property>
+       <property name="text">
+        <string>[If the Read option is checked, the user must enter the correct IP address and the maximum ramp rate (A/sec) for each axis. All remaining parameters will be read from the Model 430.]</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="2">
     <widget class="QGroupBox" name="zAxisGroupBox">
      <property name="title">
       <string>Z Axis Parameters</string>
@@ -495,7 +536,7 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="1">
+   <item row="2" column="1">
     <widget class="QGroupBox" name="yAxisGroupBox">
      <property name="title">
       <string> Y Axis Parameters</string>

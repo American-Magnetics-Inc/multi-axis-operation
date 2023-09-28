@@ -296,6 +296,14 @@ void Parser::process(void)
 			}
 #else
 			std::cin.getline(input, sizeof(input));
+
+			// skip any NULL input
+			if (input[0] == NULL)
+			{
+				Sleep(10);	// throttle checks of NULL input
+				continue;
+			}
+
 			struprt(input);	// convert to all uppercase because filenames are not case sensitive on Windows
 #endif
 

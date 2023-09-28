@@ -1,46 +1,30 @@
-/****************************************************************************
-** Copyright (c) 2013-2014 Debao Zhang <hello@debao.me>
-** All right reserved.
-**
-** Permission is hereby granted, free of charge, to any person obtaining
-** a copy of this software and associated documentation files (the
-** "Software"), to deal in the Software without restriction, including
-** without limitation the rights to use, copy, modify, merge, publish,
-** distribute, sublicense, and/or sell copies of the Software, and to
-** permit persons to whom the Software is furnished to do so, subject to
-** the following conditions:
-**
-** The above copyright notice and this permission notice shall be
-** included in all copies or substantial portions of the Software.
-**
-** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-** NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-** LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-** OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-** WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**
-****************************************************************************/
+// xlsxworksheet.h
+
 #ifndef XLSXWORKSHEET_H
 #define XLSXWORKSHEET_H
 
-#include "xlsxabstractsheet.h"
-#include "xlsxcell.h"
-#include "xlsxcellrange.h"
-#include "xlsxcellreference.h"
+#include <QtGlobal>
+#include <QObject>
 #include <QStringList>
 #include <QMap>
 #include <QVariant>
 #include <QPointF>
 #include <QSharedPointer>
-class QIODevice;
-class QDateTime;
-class QUrl;
-class QImage;
+#include <QIODevice>
+#include <QDateTime>
+#include <QUrl>
+#include <QImage>
+
+#include "xlsxabstractsheet.h"
+#include "xlsxcell.h"
+#include "xlsxcellrange.h"
+#include "xlsxcellreference.h"
+#include "xlsxcelllocation.h"
+
 class WorksheetTest;
 
 QT_BEGIN_NAMESPACE_XLSX
+
 class DocumentPrivate;
 class Workbook;
 class Format;
@@ -53,30 +37,54 @@ class Relationships;
 class Chart;
 
 class WorksheetPrivate;
-class Q_XLSX_EXPORT Worksheet : public AbstractSheet
+class Worksheet : public AbstractSheet
 {
     Q_DECLARE_PRIVATE(Worksheet)
+
+private:
+    friend class DocumentPrivate;
+    friend class Workbook;
+    friend class ::WorksheetTest;
+    Worksheet(const QString &sheetName, int sheetId, Workbook *book, CreateFlag flag);
+    Worksheet *copy(const QString &distName, int distId) const;
+
+public:
+    ~Worksheet();
+
 public:
     bool write(const CellReference &row_column, const QVariant &value, const Format &format=Format());
     bool write(int row, int column, const QVariant &value, const Format &format=Format());
+
     QVariant read(const CellReference &row_column) const;
     QVariant read(int row, int column) const;
+
     bool writeString(const CellReference &row_column, const QString &value, const Format &format=Format());
     bool writeString(int row, int column, const QString &value, const Format &format=Format());
     bool writeString(const CellReference &row_column, const RichString &value, const Format &format=Format());
     bool writeString(int row, int column, const RichString &value, const Format &format=Format());
+
     bool writeInlineString(const CellReference &row_column, const QString &value, const Format &format=Format());
     bool writeInlineString(int row, int column, const QString &value, const Format &format=Format());
+
     bool writeNumeric(const CellReference &row_column, double value, const Format &format=Format());
     bool writeNumeric(int row, int column, double value, const Format &format=Format());
+
     bool writeFormula(const CellReference &row_column, const CellFormula &formula, const Format &format=Format(), double result=0);
     bool writeFormula(int row, int column, const CellFormula &formula, const Format &format=Format(), double result=0);
+
     bool writeBlank(const CellReference &row_column, const Format &format=Format());
     bool writeBlank(int row, int column, const Format &format=Format());
+
     bool writeBool(const CellReference &row_column, bool value, const Format &format=Format());
     bool writeBool(int row, int column, bool value, const Format &format=Format());
+
     bool writeDateTime(const CellReference &row_column, const QDateTime& dt, const Format &format=Format());
     bool writeDateTime(int row, int column, const QDateTime& dt, const Format &format=Format());
+
+    // dev67
+    bool writeDate(const CellReference &row_column, const QDate& dt, const Format &format=Format());
+    bool writeDate(int row, int column, const QDate& dt, const Format &format=Format());
+
     bool writeTime(const CellReference &row_column, const QTime& t, const Format &format=Format());
     bool writeTime(int row, int column, const QTime& t, const Format &format=Format());
 
@@ -89,7 +97,11 @@ public:
     Cell *cellAt(const CellReference &row_column) const;
     Cell *cellAt(int row, int column) const;
 
-    bool insertImage(int row, int column, const QImage &image);
+    int insertImage(int row, int column, const QImage &image);
+    bool getImage(int imageIndex, QImage& img);
+    bool getImage(int row, int column, QImage& img);
+    uint getImageCount();
+
     Chart *insertChart(int row, int column, const QSize &size);
 
     bool mergeCells(const CellRange &range, const Format &format=Format());
@@ -102,6 +114,7 @@ public:
     bool setColumnWidth(int colFirst, int colLast, double width);
     bool setColumnFormat(int colFirst, int colLast, const Format &format);
     bool setColumnHidden(int colFirst, int colLast, bool hidden);
+
     double columnWidth(int column);
     Format columnFormat(int column);
     bool isColumnHidden(int column);
@@ -139,30 +152,11 @@ public:
     void setOutlineSymbolsVisible(bool visible);
     bool isWhiteSpaceVisible() const;
     void setWhiteSpaceVisible(bool visible);
+ 	bool setStartPage(int spagen); //add by liufeijin20181028
 
-    double  topPageMargin();
-    void    setTopPageMargin(double topPageMargin);
-    double  leftPageMargin();
-    void    setLeftPageMargin(double leftPageMargin);
-    double  rightPageMargin();
-    void    setRightPageMargin(double rightPageMargin);
-    double  bottomPageMargin();
-    void    setBottomPageMargin(double bottomPageMargin);
-    double  headerPageMargin();
-    void    setHeaderPageMargin(double headerPageMargin);
-    double  footerPageMargin();
-    void    setFooterPageMargin(double footerPageMargin);
-
-    ~Worksheet();
-
+    QVector<CellLocation> getFullCells(int* maxRow, int* maxCol);
 
 private:
-    friend class DocumentPrivate;
-    friend class Workbook;
-    friend class ::WorksheetTest;
-    Worksheet(const QString &sheetName, int sheetId, Workbook *book, CreateFlag flag);
-    Worksheet *copy(const QString &distName, int distId) const;
-
     void saveToXmlFile(QIODevice *device) const;
     bool loadFromXmlFile(QIODevice *device);
 };

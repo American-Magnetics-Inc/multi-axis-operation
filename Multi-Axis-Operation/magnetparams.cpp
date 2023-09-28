@@ -1,5 +1,9 @@
 #include "stdafx.h"
 #include "magnetparams.h"
+#include <QtCore/qmetatype.h>
+
+#define HIDE_PARAM_READ	// define to hide the option to read params from the 430's
+
 
 //---------------------------------------------------------------------------
 MagnetParams::MagnetParams(QWidget *parent)
@@ -8,6 +12,13 @@ MagnetParams::MagnetParams(QWidget *parent)
 	ui.setupUi(this);
 	this->setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
 	readOnly = false;
+	readParams = false;
+
+#ifdef HIDE_PARAM_READ
+	ui.readParamsCheckBox->setVisible(false);
+	ui.optionalLabel->setVisible(false);
+	ui.enterAddrLabel->setVisible(false);
+#endif
 
 #if defined(Q_OS_MACOS)
     // Mac base font scaling is different than Linux and Windows
@@ -40,6 +51,126 @@ MagnetParams::~MagnetParams()
 }
 
 //---------------------------------------------------------------------------
+void MagnetParams::setReadParams(bool value)
+{
+	ui.readParamsCheckBox->setChecked(value);
+	syncUI();
+
+	if (readParams)
+	{
+		ui.readParamsCheckBox->setVisible(true);
+		ui.optionalLabel->setVisible(true);
+		ui.enterAddrLabel->setVisible(true);
+	}
+}
+
+//---------------------------------------------------------------------------
+void MagnetParams::readParamsCheckBoxClicked(int state)
+{
+	readParams = ui.readParamsCheckBox->isChecked();
+
+	if (readParams)
+	{
+		// X
+		ui.xAxisCurrentLimitValue->setPlaceholderText("Reads current limit in amps");
+		ui.xAxisCurrentLimitValue->clear();
+
+		ui.xAxisVoltageLimitValue->setPlaceholderText("Reads voltage limit in volts");
+		ui.xAxisVoltageLimitValue->clear();
+
+		ui.xAxisCoilConstValue->clear();
+
+		ui.xAxisInductanceValue->setPlaceholderText("Reads inductance in henries");
+		ui.xAxisInductanceValue->clear();
+
+		// Y
+		ui.yAxisCurrentLimitValue->setPlaceholderText("Reads current limit in amps");
+		ui.yAxisCurrentLimitValue->clear();
+
+		ui.yAxisVoltageLimitValue->setPlaceholderText("Reads voltage limit in volts");
+		ui.yAxisVoltageLimitValue->clear();
+
+		ui.yAxisCoilConstValue->clear();
+
+		ui.yAxisInductanceValue->setPlaceholderText("Reads inductance in henries");
+		ui.yAxisInductanceValue->clear();
+
+		// Z
+		ui.zAxisCurrentLimitValue->setPlaceholderText("Reads current limit in amps");
+		ui.zAxisCurrentLimitValue->clear();
+
+		ui.zAxisVoltageLimitValue->setPlaceholderText("Reads voltage limit in volts");
+		ui.zAxisVoltageLimitValue->clear();
+
+		ui.zAxisCoilConstValue->clear();
+
+		ui.zAxisInductanceValue->setPlaceholderText("Reads inductance in henries");
+		ui.zAxisInductanceValue->clear();
+
+		// X switch
+		xAxisSwitchUiConfig(false, true);
+		ui.xAxisSwitchCurrentValue->setPlaceholderText("Reads switch current in mA");
+		ui.xAxisSwitchCurrentValue->clear();
+		ui.xAxisSwitchHeatTimeValue->setPlaceholderText("Reads heating time in seconds");
+		ui.xAxisSwitchHeatTimeValue->clear();
+		ui.xAxisSwitchCoolTimeValue->setPlaceholderText("Reads cooling time in seconds");
+		ui.xAxisSwitchCoolTimeValue->clear();
+
+		// Y switch
+		yAxisSwitchUiConfig(false, true);
+		ui.yAxisSwitchCurrentValue->setPlaceholderText("Reads switch current in mA");
+		ui.yAxisSwitchCurrentValue->clear();
+		ui.yAxisSwitchHeatTimeValue->setPlaceholderText("Reads heating time in seconds");
+		ui.yAxisSwitchHeatTimeValue->clear();
+		ui.yAxisSwitchCoolTimeValue->setPlaceholderText("Reads cooling time in seconds");
+		ui.yAxisSwitchCoolTimeValue->clear();
+
+		// Z switch
+		zAxisSwitchUiConfig(false, true);
+		ui.zAxisSwitchCurrentValue->setPlaceholderText("Reads switch current in mA");
+		ui.zAxisSwitchCurrentValue->clear();
+		ui.zAxisSwitchHeatTimeValue->setPlaceholderText("Reads heating time in seconds");
+		ui.zAxisSwitchHeatTimeValue->clear();
+		ui.zAxisSwitchCoolTimeValue->setPlaceholderText("Reads cooling time in seconds");
+		ui.zAxisSwitchCoolTimeValue->clear();
+	}
+	else
+	{
+		// X
+		ui.xAxisCurrentLimitValue->setPlaceholderText("Enter current limit in amps");
+		ui.xAxisVoltageLimitValue->setPlaceholderText("Enter voltage limit in volts");
+		ui.xAxisInductanceValue->setPlaceholderText("Enter inductance in henries");
+
+		// Y
+		ui.yAxisCurrentLimitValue->setPlaceholderText("Enter current limit in amps");
+		ui.yAxisVoltageLimitValue->setPlaceholderText("Enter voltage limit in volts");
+		ui.yAxisInductanceValue->setPlaceholderText("Enter inductance in henries");
+
+		// Z
+		ui.zAxisCurrentLimitValue->setPlaceholderText("Enter current limit in amps");
+		ui.zAxisVoltageLimitValue->setPlaceholderText("Enter voltage limit in volts");
+		ui.zAxisInductanceValue->setPlaceholderText("Enter inductance in henries");
+
+		// X switch
+		ui.xAxisSwitchCurrentValue->setPlaceholderText("Enter switch current in mA");
+		ui.xAxisSwitchHeatTimeValue->setPlaceholderText("Enter heating time in seconds");
+		ui.xAxisSwitchCoolTimeValue->setPlaceholderText("Enter cooling time in seconds");
+
+		// Y switch
+		ui.yAxisSwitchCurrentValue->setPlaceholderText("Enter switch current in mA");
+		ui.yAxisSwitchHeatTimeValue->setPlaceholderText("Enter heating time in seconds");
+		ui.yAxisSwitchCoolTimeValue->setPlaceholderText("Enter cooling time in seconds");
+
+		// Z switch
+		ui.zAxisSwitchCurrentValue->setPlaceholderText("Enter switch current in mA");
+		ui.zAxisSwitchHeatTimeValue->setPlaceholderText("Enter heating time in seconds");
+		ui.zAxisSwitchCoolTimeValue->setPlaceholderText("Enter cooling time in seconds");
+	}
+
+	setCoilConstantPlaceholderText();
+}
+
+//---------------------------------------------------------------------------
 void MagnetParams::actionActivate(bool checked)
 {
 	x.activate = ui.xAxisGroupBox->isChecked();
@@ -48,9 +179,11 @@ void MagnetParams::actionActivate(bool checked)
 }
 
 //---------------------------------------------------------------------------
-void MagnetParams::setFieldUnits(FieldUnits units)
+void MagnetParams::setFieldUnits(FieldUnits newUnits)
 {
 	QString tempStr;
+
+	units = newUnits;
 
 	if (units == KG)
 	{
@@ -79,6 +212,53 @@ void MagnetParams::setFieldUnits(FieldUnits units)
 
 		tempStr = ui.zAxisCoilConstLabel->text().replace("(kG", "(T");
 		ui.zAxisCoilConstLabel->setText(tempStr);
+	}
+
+	setCoilConstantPlaceholderText();
+}
+
+//---------------------------------------------------------------------------
+void MagnetParams::setCoilConstantPlaceholderText(void)
+{
+	if (readParams)
+	{
+		// X
+		if (units == KG)
+			ui.xAxisCoilConstValue->setPlaceholderText("Reads constant in kG/amp");
+		else if (units == TESLA)
+			ui.xAxisCoilConstValue->setPlaceholderText("Reads constant in T/amp");
+
+		// Y
+		if (units == KG)
+			ui.yAxisCoilConstValue->setPlaceholderText("Reads constant in kG/amp");
+		else if (units == TESLA)
+			ui.yAxisCoilConstValue->setPlaceholderText("Reads constant in T/amp");
+
+		// Z
+		if (units == KG)
+			ui.zAxisCoilConstValue->setPlaceholderText("Reads constant in kG/amp");
+		else if (units == TESLA)
+			ui.zAxisCoilConstValue->setPlaceholderText("Reads constant in T/amp");
+	}
+	else
+	{
+		// X
+		if (units == KG)
+			ui.xAxisCoilConstValue->setPlaceholderText("Enter constant in kG/amp");
+		else if (units == TESLA)
+			ui.xAxisCoilConstValue->setPlaceholderText("Enter constant in T/amp");
+
+		// Y
+		if (units == KG)
+			ui.yAxisCoilConstValue->setPlaceholderText("Enter constant in kG/amp");
+		else if (units == TESLA)
+			ui.yAxisCoilConstValue->setPlaceholderText("Enter constant in T/amp");
+
+		// Z
+		if (units == KG)
+			ui.zAxisCoilConstValue->setPlaceholderText("Enter constant in kG/amp");
+		else if (units == TESLA)
+			ui.zAxisCoilConstValue->setPlaceholderText("Enter constant in T/amp");
 	}
 }
 
@@ -151,6 +331,8 @@ void MagnetParams::setReadOnly(void)
 	ui.zAxisSwitchInstalledButton->setEnabled(false);
 
 	this->setWindowTitle("Magnet Parameters and Limits (Read Only)");
+	ui.readParamsCheckBox->setEnabled(false);
+
 	readOnly = true;
 }
 
@@ -178,6 +360,8 @@ void MagnetParams::clearReadOnly(void)
 	ui.zAxisGroupBox->setChecked(z.activate);
 
 	this->setWindowTitle("Magnet Parameters and Limits");
+	ui.readParamsCheckBox->setEnabled(true);
+
 	readOnly = false;
 }
 
@@ -336,91 +520,107 @@ void MagnetParams::dialogButtonClicked(QAbstractButton * button)
 			{
 				x.ipAddress = ui.xAxisIPValue->text();
 
-				temp = ui.xAxisCurrentLimitValue->text().toDouble(&ok);
-				if (ok)
-					x.currentLimit = temp;
-				else
+				if (readParams)
 				{
-					showError("Invalid X-axis Current Limit value, please check.");	// error
-					ui.xAxisCurrentLimitValue->setFocus();
-					return;
-				}
-
-				temp = ui.xAxisVoltageLimitValue->text().toDouble(&ok);
-				if (ok)
-					x.voltageLimit = temp;
-				else
-				{
-					showError("Invalid X-axis Voltage Limit value, please check.");	// error
-					ui.xAxisVoltageLimitValue->setFocus();
-					return;
-				}
-
-				temp = ui.xAxisMaxRampRateValue->text().toDouble(&ok);
-				if (ok)
-					x.maxRampRate = temp;
-				else
-				{
-					showError("Invalid X-axis Max Ramp Rate value, please check.");	// error
-					ui.xAxisMaxRampRateValue->setFocus();
-					return;
-				}
-
-				temp = ui.xAxisCoilConstValue->text().toDouble(&ok);
-				if (ok)
-					x.coilConst = temp;
-				else
-				{
-					showError("Invalid X-axis Coil Constant value, please check.");	// error
-					ui.xAxisCoilConstValue->setFocus();
-					return;
-				}
-
-				temp = ui.xAxisInductanceValue->text().toDouble(&ok);
-				if (ok)
-					x.inductance = temp;
-				else
-				{
-					showError("Invalid X-axis Inductance value, please check.");	// error
-					ui.xAxisInductanceValue->setFocus();
-					return;
-				}
-
-				if (ui.xAxisSwitchInstalledButton->isChecked())
-					x.switchInstalled = true;
-				else
-					x.switchInstalled = false;
-
-				if (x.switchInstalled)
-				{
-					temp = ui.xAxisSwitchCurrentValue->text().toDouble(&ok);
+					// only check max ramp rate as the rest is read from the device
+					temp = ui.xAxisMaxRampRateValue->text().toDouble(&ok);
 					if (ok)
-						x.switchHeaterCurrent = temp;
+						x.maxRampRate = temp;
 					else
 					{
-						showError("Invalid X-axis Switch Heater Current value, please check.");	// error
-						ui.xAxisSwitchCurrentValue->setFocus();
+						showError("Invalid X-axis Max Ramp Rate value, please check.");	// error
+						ui.xAxisMaxRampRateValue->setFocus();
+						return;
+					}
+				}
+				else
+				{
+					temp = ui.xAxisCurrentLimitValue->text().toDouble(&ok);
+					if (ok)
+						x.currentLimit = temp;
+					else
+					{
+						showError("Invalid X-axis Current Limit value, please check.");	// error
+						ui.xAxisCurrentLimitValue->setFocus();
 						return;
 					}
 
-					temp = ui.xAxisSwitchHeatTimeValue->text().toDouble(&ok);
+					temp = ui.xAxisVoltageLimitValue->text().toDouble(&ok);
 					if (ok)
-						x.switchHeatingTime = (int)temp;
+						x.voltageLimit = temp;
 					else
 					{
-						showError("Invalid X-axis Switch Heating Time value, please check.");	// error
-						ui.xAxisSwitchHeatTimeValue->setFocus();
+						showError("Invalid X-axis Voltage Limit value, please check.");	// error
+						ui.xAxisVoltageLimitValue->setFocus();
 						return;
 					}
 
-					temp = ui.xAxisSwitchCoolTimeValue->text().toDouble(&ok);
+					temp = ui.xAxisMaxRampRateValue->text().toDouble(&ok);
 					if (ok)
-						x.switchCoolingTime = (int)temp;
+						x.maxRampRate = temp;
 					else
 					{
-						showError("Invalid X-axis Switch Cooling Time value, please check.");	// error
-						ui.xAxisSwitchCoolTimeValue->setFocus();
+						showError("Invalid X-axis Max Ramp Rate value, please check.");	// error
+						ui.xAxisMaxRampRateValue->setFocus();
 						return;
+					}
+
+					temp = ui.xAxisCoilConstValue->text().toDouble(&ok);
+					if (ok)
+						x.coilConst = temp;
+					else
+					{
+						showError("Invalid X-axis Coil Constant value, please check.");	// error
+						ui.xAxisCoilConstValue->setFocus();
+						return;
+					}
+
+					temp = ui.xAxisInductanceValue->text().toDouble(&ok);
+					if (ok)
+						x.inductance = temp;
+					else
+					{
+						showError("Invalid X-axis Inductance value, please check.");	// error
+						ui.xAxisInductanceValue->setFocus();
+						return;
+					}
+
+					if (ui.xAxisSwitchInstalledButton->isChecked())
+						x.switchInstalled = true;
+					else
+						x.switchInstalled = false;
+
+					if (x.switchInstalled)
+					{
+						temp = ui.xAxisSwitchCurrentValue->text().toDouble(&ok);
+						if (ok)
+							x.switchHeaterCurrent = temp;
+						else
+						{
+							showError("Invalid X-axis Switch Heater Current value, please check.");	// error
+							ui.xAxisSwitchCurrentValue->setFocus();
+							return;
+						}
+
+						temp = ui.xAxisSwitchHeatTimeValue->text().toDouble(&ok);
+						if (ok)
+							x.switchHeatingTime = (int)temp;
+						else
+						{
+							showError("Invalid X-axis Switch Heating Time value, please check.");	// error
+							ui.xAxisSwitchHeatTimeValue->setFocus();
+							return;
+						}
+
+						temp = ui.xAxisSwitchCoolTimeValue->text().toDouble(&ok);
+						if (ok)
+							x.switchCoolingTime = (int)temp;
+						else
+						{
+							showError("Invalid X-axis Switch Cooling Time value, please check.");	// error
+							ui.xAxisSwitchCoolTimeValue->setFocus();
+							return;
+						}
 					}
 				}
 			}
@@ -430,91 +630,107 @@ void MagnetParams::dialogButtonClicked(QAbstractButton * button)
 			{
 				y.ipAddress = ui.yAxisIPValue->text();
 
-				temp = ui.yAxisCurrentLimitValue->text().toDouble(&ok);
-				if (ok)
-					y.currentLimit = temp;
-				else
+				if (readParams)
 				{
-					showError("Invalid Y-axis Current Limit value, please check.");	// error
-					ui.yAxisCurrentLimitValue->setFocus();
-					return;
-				}
-
-				temp = ui.yAxisVoltageLimitValue->text().toDouble(&ok);
-				if (ok)
-					y.voltageLimit = temp;
-				else
-				{
-					showError("Invalid Y-axis Voltage Limit value, please check.");	// error
-					ui.yAxisVoltageLimitValue->setFocus();
-					return;
-				}
-
-				temp = ui.yAxisMaxRampRateValue->text().toDouble(&ok);
-				if (ok)
-					y.maxRampRate = temp;
-				else
-				{
-					showError("Invalid Y-axis Max Ramp Rate value, please check.");	// error
-					ui.yAxisMaxRampRateValue->setFocus();
-					return;
-				}
-
-				temp = ui.yAxisCoilConstValue->text().toDouble(&ok);
-				if (ok)
-					y.coilConst = temp;
-				else
-				{
-					showError("Invalid Y-axis Coil Constant value, please check.");	// error
-					ui.yAxisCoilConstValue->setFocus();
-					return;
-				}
-
-				temp = ui.yAxisInductanceValue->text().toDouble(&ok);
-				if (ok)
-					y.inductance = temp;
-				else
-				{
-					showError("Invalid Y-axis Inductance value, please check.");	// error
-					ui.yAxisInductanceValue->setFocus();
-					return;
-				}
-
-				if (ui.yAxisSwitchInstalledButton->isChecked())
-					y.switchInstalled = true;
-				else
-					y.switchInstalled = false;
-
-				if (y.switchInstalled)
-				{
-					temp = ui.yAxisSwitchCurrentValue->text().toDouble(&ok);
+					// only check max ramp rate as the rest is read from the device
+					temp = ui.yAxisMaxRampRateValue->text().toDouble(&ok);
 					if (ok)
-						y.switchHeaterCurrent = temp;
+						y.maxRampRate = temp;
 					else
 					{
-						showError("Invalid Y-axis Switch Heater Current value, please check.");	// error
-						ui.yAxisSwitchCurrentValue->setFocus();
+						showError("Invalid Y-axis Max Ramp Rate value, please check.");	// error
+						ui.yAxisMaxRampRateValue->setFocus();
+						return;
+					}
+				}
+				else
+				{
+					temp = ui.yAxisCurrentLimitValue->text().toDouble(&ok);
+					if (ok)
+						y.currentLimit = temp;
+					else
+					{
+						showError("Invalid Y-axis Current Limit value, please check.");	// error
+						ui.yAxisCurrentLimitValue->setFocus();
 						return;
 					}
 
-					temp = ui.yAxisSwitchHeatTimeValue->text().toDouble(&ok);
+					temp = ui.yAxisVoltageLimitValue->text().toDouble(&ok);
 					if (ok)
-						y.switchHeatingTime = (int)temp;
+						y.voltageLimit = temp;
 					else
 					{
-						showError("Invalid Y-axis Switch Heating Time value, please check.");	// error
-						ui.yAxisSwitchHeatTimeValue->setFocus();
+						showError("Invalid Y-axis Voltage Limit value, please check.");	// error
+						ui.yAxisVoltageLimitValue->setFocus();
 						return;
 					}
 
-					temp = ui.yAxisSwitchCoolTimeValue->text().toDouble(&ok);
+					temp = ui.yAxisMaxRampRateValue->text().toDouble(&ok);
 					if (ok)
-						y.switchCoolingTime = (int)temp;
+						y.maxRampRate = temp;
 					else
 					{
-						showError("Invalid Y-axis Switch Cooling Time value, please check.");	// error
-						ui.yAxisSwitchCoolTimeValue->setFocus();
+						showError("Invalid Y-axis Max Ramp Rate value, please check.");	// error
+						ui.yAxisMaxRampRateValue->setFocus();
 						return;
+					}
+
+					temp = ui.yAxisCoilConstValue->text().toDouble(&ok);
+					if (ok)
+						y.coilConst = temp;
+					else
+					{
+						showError("Invalid Y-axis Coil Constant value, please check.");	// error
+						ui.yAxisCoilConstValue->setFocus();
+						return;
+					}
+
+					temp = ui.yAxisInductanceValue->text().toDouble(&ok);
+					if (ok)
+						y.inductance = temp;
+					else
+					{
+						showError("Invalid Y-axis Inductance value, please check.");	// error
+						ui.yAxisInductanceValue->setFocus();
+						return;
+					}
+
+					if (ui.yAxisSwitchInstalledButton->isChecked())
+						y.switchInstalled = true;
+					else
+						y.switchInstalled = false;
+
+					if (y.switchInstalled)
+					{
+						temp = ui.yAxisSwitchCurrentValue->text().toDouble(&ok);
+						if (ok)
+							y.switchHeaterCurrent = temp;
+						else
+						{
+							showError("Invalid Y-axis Switch Heater Current value, please check.");	// error
+							ui.yAxisSwitchCurrentValue->setFocus();
+							return;
+						}
+
+						temp = ui.yAxisSwitchHeatTimeValue->text().toDouble(&ok);
+						if (ok)
+							y.switchHeatingTime = (int)temp;
+						else
+						{
+							showError("Invalid Y-axis Switch Heating Time value, please check.");	// error
+							ui.yAxisSwitchHeatTimeValue->setFocus();
+							return;
+						}
+
+						temp = ui.yAxisSwitchCoolTimeValue->text().toDouble(&ok);
+						if (ok)
+							y.switchCoolingTime = (int)temp;
+						else
+						{
+							showError("Invalid Y-axis Switch Cooling Time value, please check.");	// error
+							ui.yAxisSwitchCoolTimeValue->setFocus();
+							return;
+						}
 					}
 				}
 			}
@@ -524,91 +740,106 @@ void MagnetParams::dialogButtonClicked(QAbstractButton * button)
 			{
 				z.ipAddress = ui.zAxisIPValue->text();
 
-				temp = ui.zAxisCurrentLimitValue->text().toDouble(&ok);
-				if (ok)
-					z.currentLimit = temp;
-				else
+				if (readParams)
 				{
-					showError("Invalid Z-axis Current Limit value, please check.");	// error
-					ui.zAxisCurrentLimitValue->setFocus();
-					return;
-				}
-
-				temp = ui.zAxisVoltageLimitValue->text().toDouble(&ok);
-				if (ok)
-					z.voltageLimit = temp;
-				else
-				{
-					showError("Invalid Z-axis Voltage Limit value, please check.");	// error
-					ui.zAxisVoltageLimitValue->setFocus();
-					return;
-				}
-
-				temp = ui.zAxisMaxRampRateValue->text().toDouble(&ok);
-				if (ok)
-					z.maxRampRate = temp;
-				else
-				{
-					showError("Invalid Z-axis Max Ramp Rate value, please check.");	// error
-					ui.zAxisMaxRampRateValue->setFocus();
-					return;
-				}
-
-				temp = ui.zAxisCoilConstValue->text().toDouble(&ok);
-				if (ok)
-					z.coilConst = temp;
-				else
-				{
-					showError("Invalid Z-axis Coil Constant value, please check.");	// error
-					ui.zAxisCoilConstValue->setFocus();
-					return;
-				}
-
-				temp = ui.zAxisInductanceValue->text().toDouble(&ok);
-				if (ok)
-					z.inductance = temp;
-				else
-				{
-					showError("Invalid Z-axis Inductance value, please check.");	// error
-					ui.zAxisInductanceValue->setFocus();
-					return;
-				}
-
-				if (ui.zAxisSwitchInstalledButton->isChecked())
-					z.switchInstalled = true;
-				else
-					z.switchInstalled = false;
-
-				if (z.switchInstalled)
-				{
-					temp = ui.zAxisSwitchCurrentValue->text().toDouble(&ok);
+					temp = ui.zAxisMaxRampRateValue->text().toDouble(&ok);
 					if (ok)
-						z.switchHeaterCurrent = temp;
+						z.maxRampRate = temp;
 					else
 					{
-						showError("Invalid Z-axis Switch Heater Current value, please check.");	// error
-						ui.zAxisSwitchCurrentValue->setFocus();
+						showError("Invalid Z-axis Max Ramp Rate value, please check.");	// error
+						ui.zAxisMaxRampRateValue->setFocus();
+						return;
+					}
+				}
+				else
+				{
+					temp = ui.zAxisCurrentLimitValue->text().toDouble(&ok);
+					if (ok)
+						z.currentLimit = temp;
+					else
+					{
+						showError("Invalid Z-axis Current Limit value, please check.");	// error
+						ui.zAxisCurrentLimitValue->setFocus();
 						return;
 					}
 
-					temp = ui.zAxisSwitchHeatTimeValue->text().toDouble(&ok);
+					temp = ui.zAxisVoltageLimitValue->text().toDouble(&ok);
 					if (ok)
-						z.switchHeatingTime = (int)temp;
+						z.voltageLimit = temp;
 					else
 					{
-						showError("Invalid Z-axis Switch Heating Time value, please check.");	// error
-						ui.zAxisSwitchHeatTimeValue->setFocus();
+						showError("Invalid Z-axis Voltage Limit value, please check.");	// error
+						ui.zAxisVoltageLimitValue->setFocus();
 						return;
 					}
 
-					temp = ui.zAxisSwitchCoolTimeValue->text().toDouble(&ok);
+					temp = ui.zAxisMaxRampRateValue->text().toDouble(&ok);
 					if (ok)
-						z.switchCoolingTime = (int)temp;
+						z.maxRampRate = temp;
 					else
 					{
-						showError("Invalid Z-axis Switch Cooling Time value, please check.");	// error
-						ui.zAxisSwitchCoolTimeValue->setFocus();
+						showError("Invalid Z-axis Max Ramp Rate value, please check.");	// error
+						ui.zAxisMaxRampRateValue->setFocus();
 						return;
+					}
+
+					temp = ui.zAxisCoilConstValue->text().toDouble(&ok);
+					if (ok)
+						z.coilConst = temp;
+					else
+					{
+						showError("Invalid Z-axis Coil Constant value, please check.");	// error
+						ui.zAxisCoilConstValue->setFocus();
+						return;
+					}
+
+					temp = ui.zAxisInductanceValue->text().toDouble(&ok);
+					if (ok)
+						z.inductance = temp;
+					else
+					{
+						showError("Invalid Z-axis Inductance value, please check.");	// error
+						ui.zAxisInductanceValue->setFocus();
+						return;
+					}
+
+					if (ui.zAxisSwitchInstalledButton->isChecked())
+						z.switchInstalled = true;
+					else
+						z.switchInstalled = false;
+
+					if (z.switchInstalled)
+					{
+						temp = ui.zAxisSwitchCurrentValue->text().toDouble(&ok);
+						if (ok)
+							z.switchHeaterCurrent = temp;
+						else
+						{
+							showError("Invalid Z-axis Switch Heater Current value, please check.");	// error
+							ui.zAxisSwitchCurrentValue->setFocus();
+							return;
+						}
+
+						temp = ui.zAxisSwitchHeatTimeValue->text().toDouble(&ok);
+						if (ok)
+							z.switchHeatingTime = (int)temp;
+						else
+						{
+							showError("Invalid Z-axis Switch Heating Time value, please check.");	// error
+							ui.zAxisSwitchHeatTimeValue->setFocus();
+							return;
+						}
+
+						temp = ui.zAxisSwitchCoolTimeValue->text().toDouble(&ok);
+						if (ok)
+							z.switchCoolingTime = (int)temp;
+						else
+						{
+							showError("Invalid Z-axis Switch Cooling Time value, please check.");	// error
+							ui.zAxisSwitchCoolTimeValue->setFocus();
+							return;
+						}
 					}
 				}
 			}
@@ -621,6 +852,7 @@ void MagnetParams::dialogButtonClicked(QAbstractButton * button)
 		{
 			// cancel button pressed, discard data
 			emit reject();
+			restore();
 		}
 	}
 }
@@ -635,6 +867,7 @@ void MagnetParams::save(void)
 	settings.setValue("MagnetParams/HaveSaved", true);
 	settings.setValue("MagnetParams/MagnetID", ui.magnetIDEdit->text());
 	settings.setValue("MagnetParams/MagnitudeLimit", ui.magnitudeLimitEdit->text());
+	settings.setValue("MagnetParams/ReadParams", ui.readParamsCheckBox->isChecked());
 
 	// X-axis settings
 	settings.setValue("MagnetParams/X/Enabled", ui.xAxisGroupBox->isChecked());
@@ -708,6 +941,10 @@ void MagnetParams::restore(void)
 	QSettings settings;
 	QString tempStr;
 
+	readParams = settings.value("MagnetParams/ReadParams").toBool();
+	ui.readParamsCheckBox->setChecked(readParams);
+	connect(ui.readParamsCheckBox, SIGNAL(stateChanged(int)), this, SLOT(readParamsCheckBoxClicked(int)));
+
 	if (settings.value("MagnetParams/HaveSaved").toBool())
 	{
 		tempStr = settings.value("MagnetParams/MagnetID").toString();
@@ -724,11 +961,11 @@ void MagnetParams::restore(void)
 			tempStr = settings.value("MagnetParams/X/IPAddr").toString();
 			ui.xAxisIPValue->setText(tempStr);
 			x.ipAddress = tempStr;
-
+				
 			tempStr = settings.value("MagnetParams/X/CurrentLimit").toString();
 			ui.xAxisCurrentLimitValue->setText(tempStr);
 			x.currentLimit = tempStr.toDouble();
-
+				
 			tempStr = settings.value("MagnetParams/X/VoltageLimit").toString();
 			ui.xAxisVoltageLimitValue->setText(tempStr);
 			x.voltageLimit = tempStr.toDouble();
@@ -736,11 +973,11 @@ void MagnetParams::restore(void)
 			tempStr = settings.value("MagnetParams/X/MaxRampRate").toString();
 			ui.xAxisMaxRampRateValue->setText(tempStr);
 			x.maxRampRate = tempStr.toDouble();
-
+				
 			tempStr = settings.value("MagnetParams/X/CoilConst").toString();
 			ui.xAxisCoilConstValue->setText(tempStr);
 			x.coilConst = tempStr.toDouble();
-
+				
 			tempStr = settings.value("MagnetParams/X/Inductance").toString();
 			ui.xAxisInductanceValue->setText(tempStr);
 			x.inductance = tempStr.toDouble();
@@ -945,6 +1182,9 @@ void MagnetParams::restore(void)
 		z.switchHeatingTime = 0;
 		z.switchCoolingTime = 0;
 	}
+
+	// configure interface for parameter read on Connect
+	readParamsCheckBoxClicked(readParams);
 }
 
 //---------------------------------------------------------------------------

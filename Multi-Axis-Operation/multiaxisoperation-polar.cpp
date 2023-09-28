@@ -55,6 +55,10 @@ void MultiAxisOperation::restorePolarTab(QSettings *settings)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::setNormalUnitVector(QVector3D *v1, QVector3D *v2)
 {
+	// find and save the normal unit vector for the two alignment vectors
+	// and also save the quaternion of the first alignment vector as the 
+	// starting reference for polar rotation
+
 	crossResult = QVector3D::crossProduct(*v1, *v2);
 	crossResult.normalize();
 
@@ -72,6 +76,9 @@ void MultiAxisOperation::setNormalUnitVector(QVector3D *v1, QVector3D *v2)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::polarToCartesian(double magnitude, double angle, QVector3D *conversion)
 {
+	// implementation of rotation in the alignment plane using quaternions
+	// see: https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation
+
 	double angleRad = angle / RAD_TO_DEG;
 
 	// specify the rotation quaternion based on the crossResult
@@ -83,7 +90,8 @@ void MultiAxisOperation::polarToCartesian(double magnitude, double angle, QVecto
 	rotationQuaternion.setVector(rotationVector);
 	rotationQuaternion.setScalar(cos(angleRad / 2.0));
 
-	// calculate polar rotation in sample alignment plane
+	// calculate polar rotation in sample alignment plane (Hamilton product)
+	// p' = q p q^(-1)
 	QQuaternion result = (rotationQuaternion * referenceQuaternion) * rotationQuaternion.conjugated();
 
 	// load conversion vector
@@ -106,7 +114,7 @@ void MultiAxisOperation::altPolarToCartesian(double magnitude, double angle, QVe
 	// Scalar part of the quaternion
 	double s = cos(angleRad / 2.0);
 
-	// Do the math
+	// Do the math, see: https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions
 	QVector3D vprime = 2.0 * QVector3D::dotProduct(u, v) * u + (s * s - QVector3D::dotProduct(u, u)) * v + 2.0 * s * QVector3D::crossProduct(u, v);
 
 	// load conversion vector
@@ -115,6 +123,37 @@ void MultiAxisOperation::altPolarToCartesian(double magnitude, double angle, QVe
 	conversion->setZ(vprime.z());
 
     *conversion *= magnitude;	// multiply by magnitude
+}
+
+//---------------------------------------------------------------------------
+// Project present 430 field values in magnet axes to sample alignment plane
+// Save result to members polarMagnitude and polarAngle
+void MultiAxisOperation::cartesianToPolar(double x, double y, double z)
+{
+	// first, find projection vector of present magnet field state to
+	// sample alignment plane, see:
+	// https://www.maplesoft.com/support/help/maple/view.aspx?path=MathApps%2FProjectionOfVectorOntoPlane
+
+	QVector3D magnetField(x, y, z);
+
+	QVector3D projected = magnetField - ((QVector3D::dotProduct(magnetField, crossResult) / (crossResult.length() * crossResult.length())) * crossResult);
+	polarMagnitude = projected.length();
+
+	// next, find angle between the projection vector and the reference vector
+	// (i.e. sample alignment vector 1), see:
+	// https://www.omnicalculator.com/math/angle-between-two-vectors
+
+	QVector3D v = referenceQuaternion.vector();
+
+	double angle = acos(QVector3D::dotProduct(projected, v) / (projected.length() * v.length()));
+
+	// determine sign
+	double sign = QVector3D::dotProduct(crossResult, QVector3D::crossProduct(v, projected));
+
+	if (sign < 0)
+		angle = -angle;
+
+	polarAngle = angle * RAD_TO_DEG;	// in degrees
 }
 
 //---------------------------------------------------------------------------
@@ -355,6 +394,7 @@ void MultiAxisOperation::polarSelectionChanged(void)
 void MultiAxisOperation::polarTableAddRowAbove(void)
 {
 	int newRow = -1;
+	tableIsLoading = true;
 
 	// find selected vector
 	QList<QTableWidgetItem *> list = ui.polarTableWidget->selectedItems();
@@ -378,14 +418,19 @@ void MultiAxisOperation::polarTableAddRowAbove(void)
 	{
 		initNewPolarRow(newRow);
 		updatePresentPolar(newRow, false);
+
+		tableIsLoading = false;
 		polarSelectionChanged();
 	}
+
+	tableIsLoading = false;
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::polarTableAddRowBelow(void)
 {
 	int newRow = -1;
+	tableIsLoading = true;
 
 	// find selected vector
 	QList<QTableWidgetItem *> list = ui.polarTableWidget->selectedItems();
@@ -409,8 +454,12 @@ void MultiAxisOperation::polarTableAddRowBelow(void)
 	{
 		initNewPolarRow(newRow);
 		updatePresentPolar(newRow, false);
+
+		tableIsLoading = false;
 		polarSelectionChanged();
 	}
+
+	tableIsLoading = false;
 }
 
 //---------------------------------------------------------------------------
@@ -644,6 +693,10 @@ void MultiAxisOperation::goToPolarVector(int polarIndex, bool makeTarget)
 		{
 			if (makeTarget)
 			{
+				// save polar target values
+				polarTargetMagnitude = coord1;
+				polarTargetAngle = coord2;
+
 				sendNextVector(vector.x(), vector.y(), vector.z());
 				targetSource = POLAR_TABLE;
 				lastPolar = polarIndex;
@@ -822,9 +875,13 @@ void MultiAxisOperation::startPolarAutostep(void)
 
 					elapsedHoldTimerTicksPolar = 0;
 					autostepPolarTimer->start();
+					ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping (Active)");
 
 					ui.autostepStartButtonPolar->setEnabled(false);
 					ui.autostartStopButtonPolar->setEnabled(true);
+					ui.polarAppFrame->setEnabled(false);
+					ui.executePolarCheckBox->setEnabled(false);
+					ui.executePolarNowButton->setEnabled(false);
 					ui.manualPolarControlGroupBox->setEnabled(false);
 					ui.actionLoad_Polar_Table->setEnabled(false);
 
@@ -866,6 +923,7 @@ void MultiAxisOperation::abortPolarAutostep(QString errorMessage)
 	if (autostepPolarTimer->isActive())	// first checks for active autostep sequence
 	{
 		autostepPolarTimer->stop();
+		ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping");
 		while (errorStatusIsActive)	// show any error condition first
 		{
 			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -890,6 +948,7 @@ void MultiAxisOperation::stopPolarAutostep(void)
 	if (autostepPolarTimer->isActive())
 	{
 		autostepPolarTimer->stop();
+		ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping");
 		lastTargetMsg.clear();
 		setStatusMsg("Polar Auto-Stepping aborted via Stop button");
 		enablePolarTableControls();
@@ -1071,7 +1130,7 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 							{
 								// update the HOLDING countdown
 								QString tempStr = statusMisc->text();
-								int index = tempStr.indexOf('(');
+								qsizetype index = tempStr.indexOf('(');
 								if (index >= 1)
 									tempStr.truncate(index - 1);
 
@@ -1083,6 +1142,7 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 					else
 					{
 						autostepPolarTimer->stop();
+						ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping");
 						lastTargetMsg.clear();
 						setStatusMsg("Polar Auto-Stepping aborted due to non-integer dwell time on line #" + QString::number(presentPolar + 1));
 						enablePolarTableControls();
@@ -1092,6 +1152,7 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 				else
 				{
 					autostepPolarTimer->stop();
+					ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping");
 					lastTargetMsg.clear();
 					setStatusMsg("Polar Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentPolar + 1));
 					enablePolarTableControls();
@@ -1104,7 +1165,7 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 				{
 					// remove any erroneous countdown text
 					QString tempStr = statusMisc->text();
-					int index = tempStr.indexOf('(');
+					qsizetype index = tempStr.indexOf('(');
 					if (index >= 1)
 						tempStr.truncate(index - 1);
 
@@ -1153,6 +1214,7 @@ void MultiAxisOperation::autostepPolarTimerTick(void)
 				lastTargetMsg = "Polar Auto-Step Completed @ Polar Vector #" + QString::number(presentPolar + 1);
 				setStatusMsg(lastTargetMsg);
 				autostepPolarTimer->stop();
+				ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping");
 				enablePolarTableControls();
 				haveExecuted = false;
 				suspendPolarAutostepFlag = false;
@@ -1170,6 +1232,9 @@ void MultiAxisOperation::enablePolarTableControls(void)
 	ui.polarRemainingTimeValue->setEnabled(false);
 	ui.autostepStartButtonPolar->setEnabled(true);
 	ui.autostartStopButtonPolar->setEnabled(false);
+	ui.polarAppFrame->setEnabled(true);
+	ui.executePolarCheckBox->setEnabled(true);
+	ui.executePolarNowButton->setEnabled(true);
 	ui.manualPolarControlGroupBox->setEnabled(true);
 	ui.actionLoad_Polar_Table->setEnabled(true);
 
@@ -1291,6 +1356,7 @@ void MultiAxisOperation::executePolarNowClick(void)
 	}
 	else // all good! start!
 	{
+		statusMisc->setText(lastStatusString);
 		executePolarApp();
 	}
 }
@@ -1298,9 +1364,67 @@ void MultiAxisOperation::executePolarNowClick(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::executePolarApp(void)
 {
+	int precision = 6;
 	QString program = ui.polarAppLocationEdit->text();
 	QString args = ui.polarAppArgsEdit->text();
 	QStringList arguments = args.split(" ", Qt::SkipEmptyParts);
+
+	if (fieldUnits == TESLA)
+		precision = 7;
+
+	// loop through argument list and replace "special" variables with present value
+	for (int i = 0; i < arguments.count(); i++)
+	{
+		QString testString = arguments[i].toUpper();
+
+		if (testString.contains("TARG"))
+		{
+			// prep for substituting a TARGET value in the field
+			double x, y, z, mag, az, inc;
+
+			this->get_active_cartesian(&x, &y, &z);
+			this->get_active(&mag, &az, &inc);
+
+			if (testString == "%POLAR:TARG:MAG%" || testString == "$POLAR:TARG:MAG")
+				arguments[i] = QString::number(avoidSignedZeroOutput(polarTargetMagnitude, precision), 'f', precision);
+			else if (testString == "%POLAR:TARG:ANGLE%" || testString == "$POLAR:TARG:ANGLE")
+				arguments[i] = QString::number(avoidSignedZeroOutput(polarTargetAngle, 4), 'f', 4);
+			else if (testString == "%TARG:MAG%" || testString == "$TARG:MAG")
+				arguments[i] = QString::number(avoidSignedZeroOutput(mag, precision), 'f', precision);
+			else if (testString == "%TARG:AZ%" || testString == "$TARG:AZ")
+				arguments[i] = QString::number(avoidSignedZeroOutput(az, 4), 'f', 4);
+			else if (testString == "%TARG:INC%" || testString == "$TARG:INC")
+				arguments[i] = QString::number(avoidSignedZeroOutput(inc, 4), 'f', 4);
+			else if (testString == "%TARG:X%" || testString == "$TARG:X")
+				arguments[i] = QString::number(avoidSignedZeroOutput(x, precision), 'f', precision);
+			else if (testString == "%TARG:Y%" || testString == "$TARG:Y")
+				arguments[i] = QString::number(avoidSignedZeroOutput(y, precision), 'f', precision);
+			else if (testString == "%TARG:Z%" || testString == "$TARG:Z")
+				arguments[i] = QString::number(avoidSignedZeroOutput(z, precision), 'f', precision);
+		}
+		else
+		{
+			if (testString.contains("POLAR"))
+				cartesianToPolar(xField, yField, zField);	// project magnet field vector to sample alignment plane
+
+			if (testString == "%POLAR:MAG%" || testString == "$POLAR:MAG")
+				arguments[i] = QString::number(avoidSignedZeroOutput(polarMagnitude, precision), 'f', precision);
+			else if (testString == "%POLAR:ANGLE%" || testString == "$POLAR:ANGLE")
+				arguments[i] = QString::number(avoidSignedZeroOutput(polarAngle, 4), 'f', 4);
+			else if (testString == "%MAGNITUDE%" || testString == "$MAGNITUDE" || testString == "%MAG%" || testString == "$MAG")
+				arguments[i] = QString::number(avoidSignedZeroOutput(magnitudeField, precision), 'f', precision);
+			else if (testString == "%AZIMUTH%" || testString == "$AZIMUTH" || testString == "%AZ%" || testString == "$AZ")
+				arguments[i] = QString::number(avoidSignedZeroOutput(thetaAngle, 4), 'f', 4);
+			else if (testString == "%INCLINATION%" || testString == "$INCLINATION" || testString == "%INC%" || testString == "$INC")
+				arguments[i] = QString::number(avoidSignedZeroOutput(phiAngle, 4), 'f', 4);
+			else if (testString == "%FIELDX%" || testString == "$FIELDX")
+				arguments[i] = QString::number(avoidSignedZeroOutput(xField, precision), 'f', precision);
+			else if (testString == "%FIELDY%" || testString == "$FIELDY")
+				arguments[i] = QString::number(avoidSignedZeroOutput(yField, precision), 'f', precision);
+			else if (testString == "%FIELDZ%" || testString == "$FIELDZ")
+				arguments[i] = QString::number(avoidSignedZeroOutput(zField, precision), 'f', precision);
+		}
+	}
 
 	// if a python script, use python path for executable
 	if (ui.polarPythonCheckBox->isChecked())
@@ -1310,11 +1434,59 @@ void MultiAxisOperation::executePolarApp(void)
 	}
 
 	// launch detached background process
-	QProcess *process = new QProcess(this);
+	process = new QProcess(this);
 	process->setProgram(program);
 	process->setArguments(arguments);
-	process->startDetached();
+
+	connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+		[=](int exitCode, QProcess::ExitStatus exitStatus) { finishedPolarApp(exitCode, exitStatus); });
+
+	// disable Execute Now and Start buttons
+	ui.executePolarNowButton->setEnabled(false);
+	ui.autostepStartButtonPolar->setEnabled(false);
+	ui.executeNowButton->setEnabled(false);
+	ui.autostepStartButton->setEnabled(false);
+
+	process->start(program, arguments);
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::finishedPolarApp(int exitCode, QProcess::ExitStatus exitStatus)
+{
+	if (!connected)
+		return;
+
+	QString output = process->readAllStandardOutput();
+
+	// strip cr/lf
+	output = output.simplified();
+
 	process->deleteLater();
+	process = nullptr;
+
+	// check for error state, and if error stop autostepping and show error
+	if (exitCode)
+	{
+		if (autostepPolarTimer->isActive())	// first checks for active autostep sequence
+		{
+			autostepPolarTimer->stop();
+			ui.autoStepGroupBoxPolar->setTitle("Auto-Stepping");
+			pinErrorString("Polar auto-stepping aborted: " + output, true);
+			enablePolarTableControls();
+			polarRangeChanged();
+			haveExecuted = false;
+		}
+		else
+			pinErrorString(output, true);
+	}
+
+	if (!autostepPolarTimer->isActive())	// re-enable Execute Now buttons
+	{
+		ui.executePolarNowButton->setEnabled(true);
+		ui.autostepStartButtonPolar->setEnabled(true);
+		ui.executeNowButton->setEnabled(true);
+		ui.autostepStartButton->setEnabled(true);
+	}
 }
 
 //---------------------------------------------------------------------------

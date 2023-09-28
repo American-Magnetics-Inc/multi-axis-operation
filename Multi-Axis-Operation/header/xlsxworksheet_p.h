@@ -1,40 +1,20 @@
-/****************************************************************************
-** Copyright (c) 2013-2014 Debao Zhang <hello@debao.me>
-** All right reserved.
-**
-** Permission is hereby granted, free of charge, to any person obtaining
-** a copy of this software and associated documentation files (the
-** "Software"), to deal in the Software without restriction, including
-** without limitation the rights to use, copy, modify, merge, publish,
-** distribute, sublicense, and/or sell copies of the Software, and to
-** permit persons to whom the Software is furnished to do so, subject to
-** the following conditions:
-**
-** The above copyright notice and this permission notice shall be
-** included in all copies or substantial portions of the Software.
-**
-** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-** NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-** LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-** OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-** WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**
-****************************************************************************/
+// xlsxworksheet_p.h
+
 #ifndef XLSXWORKSHEET_P_H
 #define XLSXWORKSHEET_P_H
 
-//
-//  W A R N I N G
-//  -------------
-//
-// This file is not part of the Qt Xlsx API.  It exists for the convenience
-// of the Qt Xlsx.  This header file may change from
-// version to version without notice, or even be removed.
-//
-// We mean it.
-//
+#include <QtGlobal>
+#include <QObject>
+#include <QString>
+#include <QVector>
+#include <QImage>
+#include <QSharedPointer>
+
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 0, 0 )
+#include <QRegularExpression>
+#else
+#include <QRegExp>
+#endif
 
 #include "xlsxworksheet.h"
 #include "xlsxabstractsheet_p.h"
@@ -43,14 +23,10 @@
 #include "xlsxconditionalformatting.h"
 #include "xlsxcellformula.h"
 
-#include <QImage>
-#include <QSharedPointer>
-#include <QRegularExpression>
-
 class QXmlStreamWriter;
 class QXmlStreamReader;
 
-namespace QXlsx {
+QT_BEGIN_NAMESPACE_XLSX
 
 const int XLSX_ROW_MAX = 1048576;
 const int XLSX_COLUMN_MAX = 16384;
@@ -133,28 +109,49 @@ struct XlsxRowInfo
 
 struct XlsxColumnInfo
 {
-    XlsxColumnInfo(int firstColumn=0, int lastColumn=1, double width=0, const Format &format=Format(), bool hidden=false) :
-        firstColumn(firstColumn), lastColumn(lastColumn), customWidth(false), width(width), format(format), hidden(hidden)
-      , outlineLevel(0), collapsed(false)
+    XlsxColumnInfo( int firstColumn, // = 0,
+                    int lastColumn, // = 1,
+                    bool isSetWidth,
+                    double width = 0,
+                    const Format &format = Format(),
+                    bool hidden = false)
+        : firstColumn(firstColumn),
+          lastColumn(lastColumn),
+          customWidth(false),
+          isSetWidth(isSetWidth),
+          width(width),
+          format(format),
+          hidden(hidden),
+          outlineLevel(0),
+          collapsed(false)
     {
 
     }
+
     int firstColumn;
     int lastColumn;
     bool customWidth;
-    double width;    
+    double width;
+    bool isSetWidth;
     Format format;
     bool hidden;
     int outlineLevel;
     bool collapsed;
 };
 
-class XLSX_AUTOTEST_EXPORT WorksheetPrivate : public AbstractSheetPrivate
+// #ifndef QMapIntSharedPointerCell
+// typedef QMap<int, QSharedPointer<Cell> > QMapIntSharedPointerCell;
+// #endif
+
+class WorksheetPrivate : public AbstractSheetPrivate
 {
     Q_DECLARE_PUBLIC(Worksheet)
+
 public:
     WorksheetPrivate(Worksheet *p, Worksheet::CreateFlag flag);
     ~WorksheetPrivate();
+
+public:
     int checkDimensions(int row, int col, bool ignore_row=false, bool ignore_col=false);
     Format cellFormat(int row, int col) const;
     QString generateDimensionString() const;
@@ -168,6 +165,7 @@ public:
     void saveXmlHyperlinks(QXmlStreamWriter &writer) const;
     void saveXmlDrawings(QXmlStreamWriter &writer) const;
     void saveXmlDataValidations(QXmlStreamWriter &writer) const;
+
     int rowPixelsSize(int row) const;
     int colPixelsSize(int col) const;
 
@@ -180,13 +178,15 @@ public:
     void loadXmlHyperlinks(QXmlStreamReader &reader);
 
     QList<QSharedPointer<XlsxRowInfo> > getRowInfoList(int rowFirst, int rowLast);
-    QList <QSharedPointer<XlsxColumnInfo> > getColumnInfoList(int colFirst, int colLast);
+    QList<QSharedPointer<XlsxColumnInfo> > getColumnInfoList(int colFirst, int colLast);
     QList<int> getColumnIndexes(int colFirst, int colLast);
     bool isColumnRangeValid(int colFirst, int colLast);
 
     SharedStrings *sharedStrings() const;
 
+public:
     QMap<int, QMap<int, QSharedPointer<Cell> > > cellTable;
+
     QMap<int, QMap<int, QString> > comments;
     QMap<int, QMap<int, QSharedPointer<XlsxHyperlinkData> > > urlTable;
     QList<CellRange> merges;
@@ -196,7 +196,8 @@ public:
 
     QList<DataValidation> dataValidationsList;
     QList<ConditionalFormatting> conditionalFormattingList;
-    QMap<int, CellFormula> sharedFormulaMap;
+
+    QMap<int, CellFormula> sharedFormulaMap; // shared formula map
 
     CellRange dimension;
     int previous_row;
@@ -211,6 +212,30 @@ public:
     int default_row_height;
     bool default_row_zeroed;
 
+    // pagesetup and print settings add by liufeijin 20181028, liufeijin
+    QString PpaperSize;
+    QString Pscale;
+    QString PfirstPageNumber;
+    QString Porientation;
+    QString PuseFirstPageNumber;
+    QString PhorizontalDpi;
+    QString PverticalDpi;
+    QString Prid;
+    QString Pcopies;
+
+    // pageMargins, liufeijin
+    QString PMheader;
+    QString PMfooter;
+    QString PMtop;
+    QString PMbotton;
+    QString PMleft;
+    QString PMright;
+
+    // header footer, liufeijin
+    QString MoodFooter;
+    QString ModdHeader;
+    QString MoodalignWithMargins;  // add align 20190619
+
     XlsxSheetFormatProps sheetFormatProps;
 
     bool windowProtection;
@@ -224,17 +249,16 @@ public:
     bool showOutlineSymbols;
     bool showWhiteSpace;
 
-    double topPageMargin;
-    double rightPageMargin;
-    double leftPageMargin;
-    double bottomPageMargin;
-    double headerPageMargin;
-    double footerPageMargin;
-
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 0, 0 )
     QRegularExpression urlPattern;
+#else
+    QRegExp urlPattern;
+#endif
+
 private:
+
     static double calculateColWidth(int characters);
 };
 
-}
+QT_END_NAMESPACE_XLSX
 #endif // XLSXWORKSHEET_P_H

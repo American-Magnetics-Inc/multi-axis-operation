@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>720</height>
+    <height>772</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -18,7 +18,6 @@
   </property>
   <property name="font">
    <font>
-    <family>Segoe UI</family>
     <pointsize>9</pointsize>
    </font>
   </property>
@@ -26,7 +25,7 @@
    <string>Multi-Axis Operation</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="mainVerticalLayout" stretch="1,0,10">
+   <layout class="QVBoxLayout" name="mainVerticalLayout" stretch="1,0,0,10">
     <property name="leftMargin">
      <number>11</number>
     </property>
@@ -38,12 +37,12 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>100</height>
+        <height>0</height>
        </size>
       </property>
       <property name="font">
        <font>
-        <family>Segoe UI</family>
+        <pointsize>9</pointsize>
        </font>
       </property>
       <property name="frameShape">
@@ -55,7 +54,7 @@
       <property name="lineWidth">
        <number>0</number>
       </property>
-      <layout class="QHBoxLayout" name="presentFieldLayout" stretch="3">
+      <layout class="QHBoxLayout" name="presentFieldLayout" stretch="0">
        <property name="spacing">
         <number>14</number>
        </property>
@@ -71,9 +70,7 @@
           <widget class="QLabel" name="magnetZValue">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>18</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
              <stylestrategy>PreferAntialias</stylestrategy>
             </font>
@@ -109,9 +106,7 @@ color: rgb(255, 255, 255);</string>
           <widget class="QLabel" name="magnetYValue">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>18</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
              <stylestrategy>PreferAntialias</stylestrategy>
             </font>
@@ -148,7 +143,6 @@ color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -171,7 +165,6 @@ color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -193,9 +186,7 @@ color: rgb(255, 255, 255);</string>
           <widget class="QLabel" name="magnetPhiValue">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>18</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
              <stylestrategy>PreferAntialias</stylestrategy>
             </font>
@@ -248,7 +239,6 @@ color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -270,9 +260,7 @@ color: rgb(255, 255, 255);</string>
           <widget class="QLabel" name="magnetXValue">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>18</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
              <stylestrategy>PreferAntialias</stylestrategy>
             </font>
@@ -309,7 +297,6 @@ color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -331,9 +318,7 @@ color: rgb(255, 255, 255);</string>
           <widget class="QLabel" name="magnetThetaValue">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>18</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
              <stylestrategy>PreferAntialias</stylestrategy>
             </font>
@@ -370,9 +355,11 @@ color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
+           </property>
+           <property name="toolTip">
+            <string>Range: 0 to 180 degrees</string>
            </property>
            <property name="text">
             <string>φ (degrees)</string>
@@ -393,7 +380,6 @@ color: rgb(255, 255, 255);</string>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -415,9 +401,7 @@ color: rgb(255, 255, 255);</string>
           <widget class="QLabel" name="magnetFieldLabel">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>10</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -448,9 +432,7 @@ color: rgb(255, 255, 255);</string>
           <widget class="QLabel" name="magnetMagnitudeValue">
            <property name="font">
             <font>
-             <family>Segoe UI</family>
              <pointsize>18</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
              <stylestrategy>PreferAntialias</stylestrategy>
             </font>
@@ -488,6 +470,255 @@ color: rgb(255, 255, 255);</string>
      </widget>
     </item>
     <item>
+     <widget class="QFrame" name="polarFieldFrame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>100</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+       </font>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="lineWidth">
+       <number>0</number>
+      </property>
+      <layout class="QGridLayout" name="gridLayout" columnstretch="1,0,1,1,1">
+       <property name="horizontalSpacing">
+        <number>14</number>
+       </property>
+       <property name="verticalSpacing">
+        <number>7</number>
+       </property>
+       <item row="0" column="0" colspan="5">
+        <widget class="QLabel" name="polarFieldLabel">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(230,231,232);</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="text">
+          <string>Polar Rotation in Sample Alignment Plane (Projected)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>6</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QLabel" name="polarThetaLabel">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>θ (degrees)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <spacer name="polarSpacer2_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>107</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="0">
+        <spacer name="polarSpacer1">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>107</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="2" column="1" colspan="2">
+        <widget class="QLabel" name="polarMagnitudeValue">
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>18</pointsize>
+           <bold>true</bold>
+           <stylestrategy>PreferAntialias</stylestrategy>
+          </font>
+         </property>
+         <property name="cursor">
+          <cursorShape>IBeamCursor</cursorShape>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(41,57,85);
+color: rgb(255, 255, 255);</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+         <property name="scaledContents">
+          <bool>false</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QLabel" name="polarThetaValue">
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>18</pointsize>
+           <bold>true</bold>
+           <stylestrategy>PreferAntialias</stylestrategy>
+          </font>
+         </property>
+         <property name="cursor">
+          <cursorShape>IBeamCursor</cursorShape>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(41,57,85);
+color: rgb(255, 255, 255);</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="text">
+          <string>---</string>
+         </property>
+         <property name="scaledContents">
+          <bool>false</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <spacer name="polarSpacer2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>107</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <spacer name="polarSpacer1_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>107</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="1" colspan="2">
+        <widget class="QLabel" name="polarMagnitudeLabel">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Polar Magnitude, ρ (kG)</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item>
      <widget class="Line" name="separationLine">
       <property name="frameShadow">
        <enum>QFrame::Sunken</enum>
@@ -501,8 +732,8 @@ color: rgb(255, 255, 255);</string>
      <widget class="QTabWidget" name="mainTabWidget">
       <property name="font">
        <font>
-        <weight>50</weight>
-        <bold>false</bold>
+        <pointsize>9</pointsize>
+        <bold>true</bold>
        </font>
       </property>
       <property name="currentIndex">
@@ -512,6 +743,12 @@ color: rgb(255, 255, 255);</string>
        <bool>true</bool>
       </property>
       <widget class="QWidget" name="vectorTableTab">
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
        <attribute name="title">
         <string>Vector Table</string>
        </attribute>
@@ -799,6 +1036,12 @@ color: rgb(255, 255, 255);</string>
            </item>
            <item>
             <widget class="QGroupBox" name="autoStepGroupBox">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>211</height>
+              </size>
+             </property>
              <property name="title">
               <string> Auto-Stepping </string>
              </property>
@@ -924,7 +1167,7 @@ color: rgb(255, 255, 255);</string>
          <widget class="QTableWidgetWithCopyPaste" name="vectorsTableWidget">
           <property name="font">
            <font>
-            <weight>50</weight>
+            <pointsize>9</pointsize>
             <bold>false</bold>
            </font>
           </property>
@@ -963,9 +1206,7 @@ color: rgb(255, 255, 255);</string>
             <string>Magnitude (kG)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
           <column>
@@ -973,9 +1214,7 @@ color: rgb(255, 255, 255);</string>
             <string>θ (degrees)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
           <column>
@@ -983,9 +1222,7 @@ color: rgb(255, 255, 255);</string>
             <string>φ (degrees)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
           <column>
@@ -993,9 +1230,7 @@ color: rgb(255, 255, 255);</string>
             <string>Time (sec)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
           <column>
@@ -1038,14 +1273,12 @@ color: rgb(255, 255, 255);</string>
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>0</height>
+            <height>137</height>
            </size>
           </property>
           <property name="font">
            <font>
-            <family>Arial</family>
             <pointsize>8</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -1274,6 +1507,12 @@ color: rgb(255, 255, 255);</string>
        </layout>
       </widget>
       <widget class="QWidget" name="alignmentTab">
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
        <attribute name="title">
         <string>Sample Alignment</string>
        </attribute>
@@ -1303,9 +1542,7 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
-               <family>Segoe UI</family>
                <pointsize>14</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -1337,9 +1574,7 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
-               <family>Segoe UI</family>
                <pointsize>14</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -1443,9 +1678,7 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
-               <family>Segoe UI</family>
                <pointsize>14</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -1602,9 +1835,7 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
-               <family>Segoe UI</family>
                <pointsize>14</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -1633,9 +1864,7 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
-               <family>Segoe UI</family>
                <pointsize>14</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -1744,9 +1973,7 @@ color: rgb(255, 255, 255);</string>
              </property>
              <property name="font">
               <font>
-               <family>Segoe UI</family>
                <pointsize>14</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
               </font>
              </property>
@@ -1846,6 +2073,12 @@ color: rgb(255, 255, 255);</string>
        </layout>
       </widget>
       <widget class="QWidget" name="rotationTab">
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+         <bold>false</bold>
+        </font>
+       </property>
        <attribute name="title">
         <string>Polar Rotation in Sample Alignment Plane</string>
        </attribute>
@@ -2142,6 +2375,12 @@ color: rgb(255, 255, 255);</string>
            </item>
            <item>
             <widget class="QGroupBox" name="autoStepGroupBoxPolar">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>211</height>
+              </size>
+             </property>
              <property name="title">
               <string> Auto-Stepping </string>
              </property>
@@ -2271,7 +2510,6 @@ color: rgb(255, 255, 255);</string>
           <property name="font">
            <font>
             <pointsize>9</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -2310,9 +2548,7 @@ color: rgb(255, 255, 255);</string>
             <string>Magnitude (kG)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
           <column>
@@ -2320,9 +2556,7 @@ color: rgb(255, 255, 255);</string>
             <string>θ (degrees)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
           <column>
@@ -2330,9 +2564,7 @@ color: rgb(255, 255, 255);</string>
             <string>Time (sec)</string>
            </property>
            <property name="font">
-            <font>
-             <family>Segoe UI</family>
-            </font>
+            <font/>
            </property>
           </column>
          </widget>
@@ -2386,14 +2618,12 @@ color: rgb(255, 255, 255);</string>
           <property name="minimumSize">
            <size>
             <width>0</width>
-            <height>0</height>
+            <height>137</height>
            </size>
           </property>
           <property name="font">
            <font>
-            <family>Arial</family>
             <pointsize>8</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>
@@ -2674,6 +2904,7 @@ selection-color: rgb(0, 0, 0);</string>
     </widget>
     <addaction name="actionShow_Cartesian_Coordinates"/>
     <addaction name="actionShow_Spherical_Coordinates"/>
+    <addaction name="actionShow_Polar_Coordinates"/>
     <addaction name="separator"/>
     <addaction name="menuSpherical_Coordinates"/>
     <addaction name="separator"/>
@@ -2794,10 +3025,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Show Cartesian Coordinates</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionShow_Spherical_Coordinates">
@@ -2811,10 +3039,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Show Spherical Coordinates</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionUse_Mathematical_Convention">
@@ -2828,10 +3053,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Use Mathematical Convention</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionUse_ISO_Convention">
@@ -2842,10 +3064,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Use ISO Convention</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionLoad_Vector_Table">
@@ -2857,10 +3076,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Load Vector Table...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionSave_Settings">
@@ -2872,10 +3088,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Save Settings...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionLoad_Settings">
@@ -2887,10 +3100,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Load Settings...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="action_SphericalHelp">
@@ -2902,10 +3112,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Explanation?...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionDefine">
@@ -2917,10 +3124,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Define Parameters/Limits...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionConnect">
@@ -2939,10 +3143,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Connect to Model 430's</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionExit">
@@ -2950,9 +3151,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Exit</string>
    </property>
    <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionView_Help">
@@ -2964,10 +3163,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>View Help...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionAbout">
@@ -2979,10 +3175,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>About...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionPause">
@@ -2994,10 +3187,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Pause</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionRamp">
@@ -3009,10 +3199,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Ramp</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionZero">
@@ -3020,10 +3207,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Zero</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionGenerate_Excel_Report">
@@ -3035,10 +3219,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Generate Excel Report...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionKilogauss">
@@ -3052,10 +3233,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Kilogauss (kG)</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionTesla">
@@ -3066,10 +3244,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Tesla (T)</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionTest_Mode">
@@ -3080,9 +3255,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Shorted-Leads Test Mode</string>
    </property>
    <property name="font">
-    <font>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionSave_Vector_Table">
@@ -3094,10 +3267,7 @@ selection-color: rgb(0, 0, 0);</string>
     <string>Save Vector Table...</string>
    </property>
    <property name="font">
-    <font>
-     <family>Segoe UI</family>
-     <pointsize>9</pointsize>
-    </font>
+    <font/>
    </property>
   </action>
   <action name="actionAutosave_Report">
@@ -3141,6 +3311,9 @@ selection-color: rgb(0, 0, 0);</string>
    <property name="text">
     <string>Persistent Mode</string>
    </property>
+   <property name="toolTip">
+    <string>Enters/Exits Persistent Mode</string>
+   </property>
   </action>
   <action name="actionHelp">
    <property name="icon">
@@ -3181,6 +3354,14 @@ selection-color: rgb(0, 0, 0);</string>
    </property>
    <property name="text">
     <string>Options...</string>
+   </property>
+  </action>
+  <action name="actionShow_Polar_Coordinates">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Polar Coordinates</string>
    </property>
   </action>
  </widget>

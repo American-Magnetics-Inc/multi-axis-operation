@@ -9,7 +9,7 @@
 #else
 // right now keep using the library form of QtXlsxWriter on Windows due to issues with
 // linking Qxlsx to private API, and using pre-compiled headers in VS2017
-#include <QtXlsxWriter/xlsxdocument.h>
+#include <xlsxdocument.h>
 #endif
 
 //---------------------------------------------------------------------------
@@ -383,6 +383,7 @@ void MultiAxisOperation::vectorSelectionChanged(void)
 void MultiAxisOperation::vectorTableAddRowAbove(void)
 {
 	int newRow = -1;
+	tableIsLoading = true;
 
 	// find selected vector
 	QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
@@ -406,14 +407,19 @@ void MultiAxisOperation::vectorTableAddRowAbove(void)
 	{
 		initNewRow(newRow);
 		updatePresentVector(newRow, false);
+
+		tableIsLoading = false;
 		vectorSelectionChanged();
 	}
+
+	tableIsLoading = false;
 }
 
 //---------------------------------------------------------------------------
 void MultiAxisOperation::vectorTableAddRowBelow(void)
 {
 	int newRow = -1;
+	tableIsLoading = true;
 
 	// find selected vector
 	QList<QTableWidgetItem *> list = ui.vectorsTableWidget->selectedItems();
@@ -437,8 +443,12 @@ void MultiAxisOperation::vectorTableAddRowBelow(void)
 	{
 		initNewRow(newRow);
 		updatePresentVector(newRow, false);
+
+		tableIsLoading = false;
 		vectorSelectionChanged();
 	}
+
+	tableIsLoading = false;
 }
 
 //---------------------------------------------------------------------------
@@ -899,7 +909,7 @@ void MultiAxisOperation::goToVector(int vectorIndex, bool makeTarget)
 		{
 			if (makeTarget)
 			{
-				sendNextVector(x, y, z);
+				sendNextVector(x, y, z);	// send down to connected Model 430's
 				targetSource = VECTOR_TABLE;
 				lastVector = vectorIndex;
 
@@ -1084,9 +1094,13 @@ void MultiAxisOperation::startAutostep(void)
 
 					elapsedHoldTimerTicks = 0;
 					autostepTimer->start();
+					ui.autoStepGroupBox->setTitle("Auto-Stepping (Active)");
 
 					ui.autostepStartButton->setEnabled(false);
 					ui.autostartStopButton->setEnabled(true);
+					ui.appFrame->setEnabled(false);
+					ui.executeCheckBox->setEnabled(false);
+					ui.executeNowButton->setEnabled(false);
 					ui.manualVectorControlGroupBox->setEnabled(false);
 					ui.actionLoad_Vector_Table->setEnabled(false);
 
@@ -1128,6 +1142,7 @@ void MultiAxisOperation::abortAutostep(QString errorString)
 	if (autostepTimer->isActive())	// first checks for active autostep sequence
 	{
 		autostepTimer->stop();
+		ui.autoStepGroupBox->setTitle("Auto-Stepping");
 		while (errorStatusIsActive)	// show any error condition first
 		{
 			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -1153,6 +1168,7 @@ void MultiAxisOperation::stopAutostep(void)
 	if (autostepTimer->isActive())
 	{
 		autostepTimer->stop();
+		ui.autoStepGroupBox->setTitle("Auto-Stepping");
 		lastTargetMsg.clear();
 		setStatusMsg("Auto-Stepping aborted via Stop button");
 		enableVectorTableControls();
@@ -1346,6 +1362,7 @@ void MultiAxisOperation::autostepTimerTick(void)
 					else
 					{
 						autostepTimer->stop();
+						ui.autoStepGroupBox->setTitle("Auto-Stepping");
 						lastTargetMsg.clear();
 						setStatusMsg("Auto-Stepping aborted due to non-integer dwell time on line #" + QString::number(presentVector + 1));
 						enableVectorTableControls();
@@ -1355,6 +1372,7 @@ void MultiAxisOperation::autostepTimerTick(void)
 				else
 				{
 					autostepTimer->stop();
+					ui.autoStepGroupBox->setTitle("Auto-Stepping");
 					lastTargetMsg.clear();
 					setStatusMsg("Auto-Stepping aborted due to unknown dwell time on line #" + QString::number(presentVector + 1));
 					enableVectorTableControls();
@@ -1416,6 +1434,7 @@ void MultiAxisOperation::autostepTimerTick(void)
 				lastTargetMsg = "Auto-Step Completed @ Vector #" + QString::number(presentVector + 1);
 				setStatusMsg(lastTargetMsg);
 				autostepTimer->stop();
+				ui.autoStepGroupBox->setTitle("Auto-Stepping");
 				enableVectorTableControls();
 				doAutosaveReport();
 				haveExecuted = false;
@@ -1476,6 +1495,9 @@ void MultiAxisOperation::enableVectorTableControls(void)
 	ui.autostepRemainingTimeValue->setEnabled(false);
 	ui.autostepStartButton->setEnabled(true);
 	ui.autostartStopButton->setEnabled(false);
+	ui.appFrame->setEnabled(true);
+	ui.executeCheckBox->setEnabled(true);
+	ui.executeNowButton->setEnabled(true);
 	ui.manualVectorControlGroupBox->setEnabled(true);
 	ui.actionLoad_Vector_Table->setEnabled(true);
 
@@ -1598,6 +1620,7 @@ void MultiAxisOperation::executeNowClick(void)
 	}
 	else // all good! start!
 	{
+		statusMisc->setText(lastStatusString);
 		executeApp();
 	}
 }
@@ -1605,9 +1628,54 @@ void MultiAxisOperation::executeNowClick(void)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::executeApp(void)
 {
+	int precision = 6;
 	QString program = ui.appLocationEdit->text();
 	QString args = ui.appArgsEdit->text();
 	QStringList arguments = args.split(" ", Qt::SkipEmptyParts);
+
+	if (fieldUnits == TESLA)
+		precision = 7;
+
+	// loop through argument list and replace "special" variables with present value
+	for (int i = 0; i < arguments.count(); i++)
+	{
+		QString testString = arguments[i].toUpper();
+
+		if (testString == "%MAGNITUDE%" || testString == "$MAGNITUDE" || testString == "%MAG%" || testString == "$MAG")
+			arguments[i] = QString::number(avoidSignedZeroOutput(magnitudeField, precision), 'f', precision);
+		else if (testString == "%AZIMUTH%" || testString == "$AZIMUTH" || testString == "%AZ%" || testString == "$AZ")
+			arguments[i] = QString::number(avoidSignedZeroOutput(thetaAngle, 4), 'f', 4);
+		else if (testString == "%INCLINATION%" || testString == "$INCLINATION" || testString == "%INC%" || testString == "$INC")
+			arguments[i] = QString::number(avoidSignedZeroOutput(phiAngle, 4), 'f', 4);
+		else if (testString == "%FIELDX%" || testString == "$FIELDX")
+			arguments[i] = QString::number(avoidSignedZeroOutput(xField, precision), 'f', precision);
+		else if (testString == "%FIELDY%" || testString == "$FIELDY")
+			arguments[i] = QString::number(avoidSignedZeroOutput(yField, precision), 'f', precision);
+		else if (testString == "%FIELDZ%" || testString == "$FIELDZ")
+			arguments[i] = QString::number(avoidSignedZeroOutput(zField, precision), 'f', precision);
+
+		if (testString.contains("TARG"))
+		{
+			// prep for substituting a TARGET value in the field
+			double x, y, z, mag, az, inc;
+
+			this->get_active_cartesian(&x, &y, &z);
+			this->get_active(&mag, &az, &inc);
+
+			if (testString == "%TARG:MAG%" || testString == "$TARG:MAG")
+				arguments[i] = QString::number(avoidSignedZeroOutput(mag, precision), 'f', precision);
+			else if (testString == "%TARG:AZ%" || testString == "$TARG:AZ")
+				arguments[i] = QString::number(avoidSignedZeroOutput(az, 4), 'f', 4);
+			else if (testString == "%TARG:INC%" || testString == "$TARG:INC")
+				arguments[i] = QString::number(avoidSignedZeroOutput(inc, 4), 'f', 4);
+			else if (testString == "%TARG:X%" || testString == "$TARG:X")
+				arguments[i] = QString::number(avoidSignedZeroOutput(x, precision), 'f', precision);
+			else if (testString == "%TARG:Y%" || testString == "$TARG:Y")
+				arguments[i] = QString::number(avoidSignedZeroOutput(y, precision), 'f', precision);
+			else if (testString == "%TARG:Z%" || testString == "$TARG:Z")
+				arguments[i] = QString::number(avoidSignedZeroOutput(z, precision), 'f', precision);
+		}
+	}
 
 	// if a python script, use python path for executable
 	if (ui.pythonCheckBox->isChecked())
@@ -1617,11 +1685,59 @@ void MultiAxisOperation::executeApp(void)
 	}
 
 	// launch detached background process
-	QProcess *process = new QProcess(this);
+	process = new QProcess(this);
 	process->setProgram(program);
 	process->setArguments(arguments);
-	process->startDetached();
+
+	connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+		[=](int exitCode, QProcess::ExitStatus exitStatus) { finishedApp(exitCode, exitStatus); });
+
+	// disable Execute Now and Start buttons
+	ui.executeNowButton->setEnabled(false);
+	ui.autostepStartButton->setEnabled(false);
+	ui.executePolarNowButton->setEnabled(false);
+	ui.autostepStartButtonPolar->setEnabled(false);
+
+	process->start(program, arguments);
+}
+
+//---------------------------------------------------------------------------
+void MultiAxisOperation::finishedApp(int exitCode, QProcess::ExitStatus exitStatus)
+{
+	if (!connected)
+		return;
+
+	QString output = process->readAllStandardOutput();
+
+	// strip cr/lf
+	output = output.simplified();
+
 	process->deleteLater();
+	process = nullptr;
+
+	// check for error state, and if error stop autostepping and show error
+	if (exitCode)
+	{
+		if (autostepTimer->isActive())	// first checks for active autostep sequence
+		{
+			autostepTimer->stop();
+			ui.autoStepGroupBox->setTitle("Auto-Stepping");
+			pinErrorString("Auto-stepping aborted: " + output, true);
+			enableVectorTableControls();
+			autostepRangeChanged();
+			haveExecuted = false;
+		}
+		else
+			pinErrorString(output, true);
+	}
+
+	if (!autostepTimer->isActive())	// re-enable Execute Now buttons
+	{
+		ui.executeNowButton->setEnabled(true);
+		ui.autostepStartButton->setEnabled(true);
+		ui.executePolarNowButton->setEnabled(true);
+		ui.autostepStartButtonPolar->setEnabled(true);
+	}
 }
 
 //---------------------------------------------------------------------------

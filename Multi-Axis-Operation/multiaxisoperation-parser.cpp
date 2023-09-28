@@ -77,6 +77,18 @@ void MultiAxisOperation::set_align1(double mag, double azimuth, double inclinati
 	ui.alignPhiSpinBox1->setValue(inclination);
 
 	ui.makeAlignActiveButton1->setChecked(true);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	makeAlignVector1Active(true);
 }
 
@@ -84,6 +96,18 @@ void MultiAxisOperation::set_align1(double mag, double azimuth, double inclinati
 void MultiAxisOperation::set_align1_active(void)
 {
 	ui.makeAlignActiveButton1->setChecked(true);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	makeAlignVector1Active(true);
 }
 
@@ -109,6 +133,18 @@ void MultiAxisOperation::set_align2(double mag, double azimuth, double inclinati
 	ui.alignPhiSpinBox2->setValue(inclination);
 
 	ui.makeAlignActiveButton2->setChecked(true);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	makeAlignVector2Active(true);
 }
 
@@ -116,6 +152,18 @@ void MultiAxisOperation::set_align2(double mag, double azimuth, double inclinati
 void MultiAxisOperation::set_align2_active(void)
 {
 	ui.makeAlignActiveButton2->setChecked(true);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	makeAlignVector2Active(true);
 }
 
@@ -256,6 +304,18 @@ void MultiAxisOperation::set_vector(double mag, double az, double inc, int time)
 
 	// make present vector and goto
 	ui.vectorsTableWidget->selectRow(newRow);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	goToSelectedVector();
 }
 
@@ -288,6 +348,18 @@ void MultiAxisOperation::set_vector_cartesian(double x, double y, double z, int 
 
 	// make present vector and goto
 	ui.vectorsTableWidget->selectRow(newRow);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	goToSelectedVector();
 }
 
@@ -367,6 +439,18 @@ void MultiAxisOperation::goto_vector(int tableRow)
 	if (tableRow >= 0 && tableRow < ui.vectorsTableWidget->rowCount())
 	{
 		ui.vectorsTableWidget->selectRow(tableRow);
+
+		// wait for first measurement to occur
+		while (!madeFirstMeasurement.load())
+		{
+			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+			usleep(100000);
+#else
+			Sleep(100);
+#endif
+		}
+
 		goToSelectedVector();
 	}
 	else
@@ -389,6 +473,18 @@ void MultiAxisOperation::set_polar(double mag, double angle, int time)
 
 	// make present vector and goto
 	ui.polarTableWidget->selectRow(newRow);
+
+	// wait for first measurement to occur
+	while (!madeFirstMeasurement.load())
+	{
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+		usleep(100000);
+#else
+		Sleep(100);
+#endif
+	}
+
 	goToSelectedPolarVector();
 }
 
@@ -398,6 +494,18 @@ void MultiAxisOperation::goto_polar(int tableRow)
 	if (tableRow >= 0 && tableRow < ui.polarTableWidget->rowCount())
 	{
 		ui.polarTableWidget->selectRow(tableRow);
+
+		// wait for first measurement to occur
+		while (!madeFirstMeasurement.load())
+		{
+			QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+			usleep(100000);
+#else
+			Sleep(100);
+#endif
+		}
+
 		goToSelectedPolarVector();
 	}
 	else

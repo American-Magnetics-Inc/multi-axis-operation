@@ -48,6 +48,7 @@ struct AxesParams
 	int switchHeatingTime;
 };
 
+
 class MagnetParams : public QDialog
 {
 	Q_OBJECT
@@ -55,7 +56,9 @@ class MagnetParams : public QDialog
 public:
 	MagnetParams(QWidget *parent = Q_NULLPTR);
 	~MagnetParams();
-	void setFieldUnits(FieldUnits units);
+	bool readsParams(void) { return readParams; }
+	void setReadParams(bool value);
+	void setFieldUnits(FieldUnits newUnits);
 	void convertFieldValues(FieldUnits newUnits);
 	QString getMagnetID(void) { return magnetID; }
 	void setMagnetID(QString id) { magnetID = id; }
@@ -71,17 +74,21 @@ public:
 	void save(void);
 
 public slots:
+	void readParamsCheckBoxClicked(int state);
 	void actionActivate(bool checked);
 	void switchConfigClicked(bool checked);
-	void dialogButtonClicked(QAbstractButton * button);
+	void dialogButtonClicked(QAbstractButton* button);
 
 private:
 	Ui::MagnetParams ui;
 	AxesParams x, y, z;
 	double magnitudeLimit;
 	QString magnetID;
+	FieldUnits units;
 	bool readOnly;
+	bool readParams;	// if true, then param table is read from Model 430's, except max ramp rate
 
+	void setCoilConstantPlaceholderText(void);
 	void showError(QString errMsg);
 	void xAxisSwitchUiConfig(bool checked, bool updateUI);
 	void yAxisSwitchUiConfig(bool checked, bool updateUI);

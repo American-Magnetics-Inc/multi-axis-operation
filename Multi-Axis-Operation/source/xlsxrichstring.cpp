@@ -1,33 +1,13 @@
-/****************************************************************************
-** Copyright (c) 2013-2014 Debao Zhang <hello@debao.me>
-** All right reserved.
-**
-** Permission is hereby granted, free of charge, to any person obtaining
-** a copy of this software and associated documentation files (the
-** "Software"), to deal in the Software without restriction, including
-** without limitation the rights to use, copy, modify, merge, publish,
-** distribute, sublicense, and/or sell copies of the Software, and to
-** permit persons to whom the Software is furnished to do so, subject to
-** the following conditions:
-**
-** The above copyright notice and this permission notice shall be
-** included in all copies or substantial portions of the Software.
-**
-** THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-** EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-** MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-** NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-** LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-** OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-** WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-**
-****************************************************************************/
-#include "xlsxrichstring.h"
-#include "xlsxrichstring_p.h"
-#include "xlsxformat_p.h"
+// xlsxrichstring.cpp
+
+#include <QtGlobal>
 #include <QDebug>
 #include <QTextDocument>
 #include <QTextFragment>
+
+#include "xlsxrichstring.h"
+#include "xlsxrichstring_p.h"
+#include "xlsxformat_p.h"
 
 QT_BEGIN_NAMESPACE_XLSX
 
@@ -67,7 +47,7 @@ RichString::RichString()
 /*!
     Constructs a plain string with the given \a text.
 */
-RichString::RichString(const QString text)
+RichString::RichString(const QString& text)
     :d(new RichStringPrivate)
 {
     addFragment(text, Format());
@@ -104,11 +84,13 @@ RichString &RichString::operator =(const RichString &other)
 */
 RichString::operator QVariant() const
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-	return QVariant(QMetaType::fromType<RichString>(), this);
+    const auto& cref
+#if QT_VERSION >= 0x060000 // Qt 6.0 or over
+        = QMetaType::fromType<RichString>();
 #else
-    return QVariant(qMetaTypeId<RichString>(), this);
+        = qMetaTypeId<RichString>() ;
 #endif
+    return QVariant(cref, this);
 }
 
 /*!
@@ -134,7 +116,7 @@ bool RichString::isNull() const
  */
 bool RichString::isEmtpy() const
 {
-    foreach (const QString str, d->fragmentTexts) {
+    for (const auto& str : d->fragmentTexts) {
         if (!str.isEmpty())
             return false;
     }
@@ -172,23 +154,16 @@ void RichString::setHtml(const QString &text)
 {
     QTextDocument doc;
     doc.setHtml(text);
-
     QTextBlock block = doc.firstBlock();
-    while (block.isValid()) {
-        QTextBlock::iterator it;
-        for (it = block.begin(); !(it.atEnd()); ++it) {
-            QTextFragment textFragment = it.fragment();
-            if (textFragment.isValid()) {
-                Format fmt;
-                fmt.setFont(textFragment.charFormat().font());
-                fmt.setFontColor(textFragment.charFormat().foreground().color());
-                addFragment(textFragment.text(), fmt);
-            }
+    QTextBlock::iterator it;
+    for (it = block.begin(); !(it.atEnd()); ++it) {
+        QTextFragment textFragment = it.fragment();
+        if (textFragment.isValid()) {
+            Format fmt;
+            fmt.setFont(textFragment.charFormat().font());
+            fmt.setFontColor(textFragment.charFormat().foreground().color());
+            addFragment(textFragment.text(), fmt);
         }
-
-        block = block.next();
-        if (block.isValid()) 
-            addFragment(QStringLiteral("\n"), Format());
     }
 }
 
@@ -340,7 +315,12 @@ bool operator !=(const QString &rs1, const RichString &rs2)
 
 uint qHash(const RichString &rs, uint seed) Q_DECL_NOTHROW
 {
-    return qHash(rs.d->idKey(), seed);
+#if QT_VERSION >= QT_VERSION_CHECK( 5, 0, 0 )
+   return qHash(rs.d->idKey(), seed);
+#else
+   Q_UNUSED(seed);
+   return qHash(rs.d->idKey());
+#endif
 }
 
 #ifndef QT_NO_DEBUG_STREAM
