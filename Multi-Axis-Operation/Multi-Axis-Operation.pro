@@ -18,10 +18,15 @@ include(Multi-Axis-Operation.pri)
 win32:RC_FILE = Multi-Axis-Operation.rc
 RESOURCES += multiaxisoperation.qrc
 #QMAKE_CXXFLAGS += "-DDEBUG"
+linux-g++ {
+QMAKE_CXXFLAGS += "-Wno-unused-parameter"
+QMAKE_CXXFLAGS += "-fno-sized-deallocation"
+}
 macx-clang {
 ICON = Multi-Axis-Operation.icns
 #QMAKE_CXXFLAGS += "-DDEBUG"
 # suppress CLANG warnings on Mac
 QMAKE_CXXFLAGS += "-Wno-inconsistent-missing-override"
 QMAKE_CXXFLAGS += "-Wno-unused-parameter" # this doesn't seem to work due to -Wall option later in cmd line
+QMAKE_CXXFLAGS += "-fno-sized-deallocation"
 }

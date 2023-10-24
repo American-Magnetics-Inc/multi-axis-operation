@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "processmanager.h"
 
+#if defined(Q_OS_LINUX)
+#include <unistd.h>
+#endif
+
 const int QUERY_TIMEOUT = 3000;	// timeout in msec
 
 //#define LOCAL_DEBUG
@@ -80,9 +84,14 @@ void ProcessManager::connectProcess(QString anIPAddress, QString exepath, Axis a
 #if defined(Q_OS_WIN)
 		process->start();
 #else
+        QString joinedArgs = args.join(' ');
+        QStringList splitArgs = joinedArgs.split(' ');
         process->setProcessChannelMode(QProcess::SeparateChannels);
-        exepath += " " + args.join(' ');
-        process->startCommand(exepath, QIODevice::ReadWrite);
+        process->setArguments(splitArgs);
+
+        qDebug() << process->program() << process->arguments();
+
+        process->start();
 #endif
 	}
 	else
@@ -103,6 +112,10 @@ void ProcessManager::processStateChanged(QProcess::ProcessState newState)
 //---------------------------------------------------------------------------
 void ProcessManager::processStarted(void)
 {
+#if defined(Q_OS_LINUX)
+    usleep(1000000);
+#endif
+
 	QString cmd("*IDN?\n");
 
 #ifdef LOCAL_DEBUG
@@ -615,7 +628,7 @@ double ProcessManager::getInductance(bool* error)
 //---------------------------------------------------------------------------
 bool ProcessManager::getSwitchInstallation(bool* error)
 {
-	bool ok;
+    bool ok = false;
 	int temp;
 
 	{
@@ -674,7 +687,7 @@ double ProcessManager::getSwitchCurrent(bool* error)
 //---------------------------------------------------------------------------
 int ProcessManager::getSwitchHeatingTime(bool* error)
 {
-	bool ok;
+    bool ok = false;
 	int temp;
 
 	{
@@ -705,7 +718,7 @@ int ProcessManager::getSwitchHeatingTime(bool* error)
 //---------------------------------------------------------------------------
 int ProcessManager::getSwitchCoolingTime(bool* error)
 {
-	bool ok;
+    bool ok = false;
 	int temp;
 
 	{

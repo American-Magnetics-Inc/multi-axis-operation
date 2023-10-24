@@ -2,6 +2,10 @@
 #include "multiaxisoperation.h"
 #include "conversions.h"
 
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+#include <unistd.h>
+#endif
+
 
 //---------------------------------------------------------------------------
 // Contains methods related to the stdin/stdout parser thread.

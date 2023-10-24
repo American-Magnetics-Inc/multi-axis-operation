@@ -16,6 +16,7 @@ HEADERS += \
     $$PWD/header/xlsxcell_p.h \
     $$PWD/header/xlsxcellformula.h \
     $$PWD/header/xlsxcellformula_p.h \
+    $$PWD/header/xlsxcelllocation.h \
     $$PWD/header/xlsxcellrange.h \
     $$PWD/header/xlsxcellreference.h \
     $$PWD/header/xlsxchart.h \
@@ -28,6 +29,7 @@ HEADERS += \
     $$PWD/header/xlsxcontenttypes_p.h \
     $$PWD/header/xlsxdatavalidation.h \
     $$PWD/header/xlsxdatavalidation_p.h \
+    $$PWD/header/xlsxdatetype.h \
     $$PWD/header/xlsxdocpropsapp_p.h \
     $$PWD/header/xlsxdocpropscore_p.h \
     $$PWD/header/xlsxdocument.h \
@@ -61,13 +63,15 @@ HEADERS += \
     $$PWD/parser.h \
     $$PWD/processmanager.h \
     $$PWD/qtablewidgetwithcopypaste.h \
-    $$PWD/stdafx.h
+    $$PWD/stdafx.h \
+    $$PWD/version.h
 SOURCES += \
     $$PWD/optionsdialog.cpp \
     $$PWD/source/xlsxabstractooxmlfile.cpp \
     $$PWD/source/xlsxabstractsheet.cpp \
     $$PWD/source/xlsxcell.cpp \
     $$PWD/source/xlsxcellformula.cpp \
+    $$PWD/source/xlsxcelllocation.cpp \
     $$PWD/source/xlsxcellrange.cpp \
     $$PWD/source/xlsxcellreference.cpp \
     $$PWD/source/xlsxchart.cpp \
@@ -76,6 +80,7 @@ SOURCES += \
     $$PWD/source/xlsxconditionalformatting.cpp \
     $$PWD/source/xlsxcontenttypes.cpp \
     $$PWD/source/xlsxdatavalidation.cpp \
+    $$PWD/source/xlsxdatetype.cpp \
     $$PWD/source/xlsxdocpropsapp.cpp \
     $$PWD/source/xlsxdocpropscore.cpp \
     $$PWD/source/xlsxdocument.cpp \

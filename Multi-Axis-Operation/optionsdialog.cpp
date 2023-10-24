@@ -33,7 +33,12 @@ void OptionsDialog::restoreSettings(void)
 	ui.settlingTimeEdit->setText(QString::number(m_settlingTime));
 
 #if defined(Q_OS_WIN)
+#if defined (_WIN64)
 	QString exepath = "C:/Program Files/American Magnetics, Inc/Magnet-DAQ/Magnet-DAQ.exe";
+#else
+	// this assumes customer installed Win32 version of Magnet-DAQ as well
+	QString exepath = "C:/Program Files (x86)/American Magnetics, Inc/Magnet-DAQ/Magnet-DAQ.exe";
+#endif
 #elif defined(Q_OS_MAC)
 	QString exepath = "/Applications/Magnet-DAQ.app/Contents/MacOS/Magnet-DAQ";
 #else
@@ -98,7 +103,11 @@ bool OptionsDialog::readSettingsFromDialog(void)
 		showError("Invalid Magnet-DAQ executable or app bundle location, please check.");	// error
 		ui.magnetDAQLocationEdit->setFocus();
 		return false;
-	}
+    }
+    else
+    {
+        m_magnetDAQLocation = checkStr; // set it!
+    }
 
 	// read minimized preference
 	m_magnetDAQMinimized = ui.minimizedCheckBox->isChecked();

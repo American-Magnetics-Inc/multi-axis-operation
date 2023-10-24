@@ -540,7 +540,7 @@ void MultiAxisOperation::actionConnect(void)
 	longestHeatingTime = 0;
 	longestCoolingTime = 0;
 	switchInstalled = false;
-	processError = false;
+    processError.store(false);
 	supplyCurrentMismatch = false;
 	madeFirstMeasurement.store(false);
 
@@ -591,7 +591,7 @@ void MultiAxisOperation::actionConnect(void)
 		progressDialog.setValue(25);
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-		if (progressDialog.wasCanceled() || processError)
+        if (progressDialog.wasCanceled() || processError.load())
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
@@ -622,7 +622,7 @@ void MultiAxisOperation::actionConnect(void)
 		progressDialog.setValue(50);
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-		if (progressDialog.wasCanceled() || processError)
+        if (progressDialog.wasCanceled() || processError.load())
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
@@ -653,7 +653,7 @@ void MultiAxisOperation::actionConnect(void)
 		progressDialog.setValue(75);
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-		if (progressDialog.wasCanceled() || processError)
+        if (progressDialog.wasCanceled() || processError.load())
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
@@ -694,7 +694,7 @@ void MultiAxisOperation::actionConnect(void)
 		progressDialog.setValue(80);
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-		if (progressDialog.wasCanceled() || processError)
+        if (progressDialog.wasCanceled() || processError.load())
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
@@ -739,7 +739,7 @@ void MultiAxisOperation::actionConnect(void)
 		progressDialog.setValue(90);
         QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
-		if (progressDialog.wasCanceled() || processError)
+        if (progressDialog.wasCanceled() || processError.load())
 		{
 			closeConnection();
 			setStatusMsg("Connect action canceled");
@@ -784,7 +784,7 @@ void MultiAxisOperation::actionConnect(void)
 		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 
 		// start data collection and update interface to indicate successfully connected status
-		if (x_activated && y_activated && z_activated && !processError)
+        if (x_activated && y_activated && z_activated && !processError.load())
 		{
 			connected = true;
 
@@ -3269,9 +3269,9 @@ void MultiAxisOperation::switchControl(bool heatSwitch)
 //---------------------------------------------------------------------------
 void MultiAxisOperation::magnetDAQVersionError(void)
 {
-    if (!processError)
+    if (!processError.load())
     {
-        processError = true;
+        processError.store(true);
 
         QMessageBox msgBox;
 

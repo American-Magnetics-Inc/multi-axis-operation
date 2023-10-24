@@ -1,6 +1,6 @@
 [logo]:http://www.americanmagnetics.com/images/header_r2_c1.jpg "AMI Logo"
 
-<img src="http://www.americanmagnetics.com/images/header_r2_c1.jpg" alt="logo" style="zoom:67%;" />
+<img src="http://www.americanmagnetics.com/images/header_r2_c1.jpg" alt="logo"  />
 
 # Multi-Axis Operation Application #
 
@@ -8,7 +8,7 @@ This repository is the source code and binary distribution point for the Multi-A
 
 <img src="https://bitbucket.org/americanmagneticsinc/multi-axis-operation/raw/955267b3717e5ad5ce4e7a5473f428ce88c2d481/help/images/screenshot1.png" alt="screenshot" style="zoom:67%;" />
 
-**The current application version is 1.04.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
+**The current application version is 1.05.** Integrated Help is included in the app and can be previewed in PDF format [here](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation-Help.pdf).
 
 **NOTE:** This application *requires* the AMI [Magnet-DAQ](https://bitbucket.org/americanmagneticsinc/magnet-daq) application as a prerequisite. The latest version of Magnet-DAQ is recommended. Magnet-DAQ is also open-source subject to GPL v3 or later. The default path is **/usr/lib/magnet-daq** on Linux. The macOS version of Magnet-DAQ default path is set at **/Applications/Magnet-DAQ.app**. The path can now be adjusted in the Multi-Axis-Operation using the *Control | Options...* dialog (or *Preferences* on macOS).
 
@@ -18,7 +18,7 @@ An example of calling the Multi-Axis Operation application from within LabVIEW (
 
 ## What's new? ##
 
-The app is now distributed with Linux and macOS ready-to-use binaries, along with the x64 and x86 Windows support. The Linux deployment folder format is improved and should deploy more reliably.
+The app is now distributed with Linux and macOS ready-to-use binaries, along with the x64 and x86 Windows support. The Linux deployment binary format is updated and should deploy and run more reliably on various Linux distributions.
 
 #### External App/Script Execution Feature with "Special Variables"
 
@@ -34,15 +34,15 @@ The main window now supports optional polar coordinates display of the present f
 
 ## How do I install? ##
 
-Pre-compiled, *ready-to-use* version 1.04 binaries are available in the Downloads section of this repository:
+Pre-compiled, *ready-to-use* version 1.05 binaries are available in the Downloads section of this repository:
 
 * [Installer for 64-bit Microsoft Windows 7 or later](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/MultiAxis-Setup.msi) - Simply download and run the installer.
 
 * [Installer for 32-bit Microsoft Windows 7 or later](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/MultiAxis-Setup-Win32.msi)
 
-The Linux and Mac version binaries are still at version 1.02 but will be updated soon:
+* [Executable for 64-bit Linux (Ubuntu 18.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.tar.gz) - See the README file in the download for the instructions for deploying on Ubuntu. (AMI is working on .deb and possibly .rpm packages for future release.)
 
-* [Executable for 64-bit Linux (Ubuntu 18.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.tar.gz) - See the README file in the download for the instructions for deploying on Ubuntu.
+The Mac version binary is still at version 1.02 but will be updated soon:
 
 * [Application for 64-bit Apple macOS (Sierra or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.dmg) - Open the DMG download and copy the Multi-Axis-Operation.app folder to your desired location.
 

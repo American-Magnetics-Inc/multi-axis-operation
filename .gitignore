@@ -271,3 +271,5 @@ __pycache__/
 /Distribution/BitBucket-Issue-Migration
 *.directory
 /Distribution/v1.03
+/Distribution/v1.04/MultiAxis-Setup-Win32.msi
+/Distribution/v1.04/MultiAxis-Setup.msi
