@@ -42,9 +42,7 @@ Pre-compiled, *ready-to-use* version 1.05 binaries are available in the Download
 
 * [Executable for 64-bit Linux (Ubuntu 18.04 or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.tar.gz) - See the README file in the download for the instructions for deploying on Ubuntu. (AMI is working on .deb and possibly .rpm packages for future release.)
 
-The Mac version binary is still at version 1.02 but will be updated soon:
-
-* [Application for 64-bit Apple macOS (Sierra or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.dmg) - Open the DMG download and copy the Multi-Axis-Operation.app folder to your desired location.
+* [Application for 64-bit Apple macOS (High Sierra or later recommended)](https://bitbucket.org/americanmagneticsinc/multi-axis-operation/downloads/Multi-Axis-Operation.dmg) - Open the DMG download and copy the Multi-Axis-Operation.app folder to your desired location (Applications folder recommended). Enabling execution via Gatekeeper may be required.
 
 ## How do I compile the source? ##
 
@@ -70,7 +68,7 @@ Please note that this is not *required* since binary distributions are provided 
 	* *For Windows*: The MagnetDAQ-Setup folder contains a setup project for producing a Windows installer. This requires the [Visual Studio Installer](https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2017InstallerProjects) extension. A bin folder is referenced by the installer where you should place the Qt runtime binaries and plugins for packaging by the installer.
 	* *For Linux:* See the README file in the binary download (see above) for the instructions for deploying on Ubuntu. Other versions of Linux may require a different procedure.
 	* Linux high-DPI display support functions flawlessly in KDE Plasma (not surprising since KDE is Qt-based). The application may exhibit various unaddressed issues with high-DPI display in other desktop managers such as Unity and Gnome, as does the general desktop environment for those desktop managers at present.
-	* *For Mac*: Simply copy the .app folder to the desired location. In order to include the Qt runtime libraries in any app bundle you compile yourself, you should use the [Mac Deployment Tool](https://doc.qt.io/qt-6/macos-deployment.html). The macOS "dark mode" is supported.
+	* *For Mac*: Simply copy the .app folder to the desired location. In order to include the Qt runtime libraries in any app bundle you compile yourself, you should use the [Mac Deployment Tool](https://doc.qt.io/qt-6/macos-deployment.html). The macOS "dark mode" is supported. Note that the UI files may need require you to enlarge all the font sizes by a factor of ~1.4.
 ## License ##
 
 The Multi-Axis Operation program is free software: you can redistribute it and/or modify it under the terms of the [GNU General Public License](https://www.gnu.org/licenses/gpl.html) as published by the Free Software Foundation, either version 3 of the License, or any later version.
