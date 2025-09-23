@@ -1653,6 +1653,12 @@ void MultiAxisOperation::executeApp(void)
 			arguments[i] = QString::number(avoidSignedZeroOutput(yField, precision), 'f', precision);
 		else if (testString == "%FIELDZ%" || testString == "$FIELDZ")
 			arguments[i] = QString::number(avoidSignedZeroOutput(zField, precision), 'f', precision);
+		else if (testString == "%IPADDRX%" || testString == "$IPADDRX")
+			arguments[i] = magnetParams->GetXAxisParams()->ipAddress;
+		else if (testString == "%IPADDRY%" || testString == "$IPADDRY")
+			arguments[i] = magnetParams->GetYAxisParams()->ipAddress;
+		else if (testString == "%IPADDRZ%" || testString == "$IPADDRZ")
+			arguments[i] = magnetParams->GetZAxisParams()->ipAddress;
 
 		if (testString.contains("TARG"))
 		{

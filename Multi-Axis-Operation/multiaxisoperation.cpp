@@ -670,7 +670,7 @@ void MultiAxisOperation::actionConnect(void)
 				x_activated = true;
 
 				// switch heating/cooling required?
-				if (magnetParams->GetXAxisParams()->switchInstalled)
+				if (magnetParams->GetXAxisParams()->switchInstalled && !ui.actionTest_Mode->isChecked())
 				{
 					switchInstalled = true;
 					longestHeatingTime = magnetParams->GetXAxisParams()->switchHeatingTime;
@@ -711,7 +711,7 @@ void MultiAxisOperation::actionConnect(void)
 				y_activated = true;
 
 				// switch heating/cooling required?
-				if (magnetParams->GetYAxisParams()->switchInstalled)
+				if (magnetParams->GetYAxisParams()->switchInstalled && !ui.actionTest_Mode->isChecked())
 				{
 					switchInstalled = true;
 
@@ -756,7 +756,7 @@ void MultiAxisOperation::actionConnect(void)
 				z_activated = true;
 
 				// switch heating/cooling required?
-				if (magnetParams->GetZAxisParams()->switchInstalled)
+				if (magnetParams->GetZAxisParams()->switchInstalled && !ui.actionTest_Mode->isChecked())
 				{
 					switchInstalled = true;
 
